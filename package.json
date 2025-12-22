@@ -1,0 +1,46 @@
+{
+  "name": "sistema-tickets",
+  "version": "1.0.0",
+  "description": "",
+  "main": "electron-main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "desktop": "electron .",
+    "build:desktop": "electron-builder --win"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^7.0.11",
+    "pg": "^8.16.3",
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "electron": "24.8.6",
+    "electron-builder": "^24.13.3",
+    "electron-packager": "^17.1.2",
+    "nodemon": "^3.1.11"
+  },
+  "build": {
+    "appId": "bioherts.tickets",
+    "productName": "BIOHERTS Tickets",
+    "files": [
+      "electron-main.cjs",
+      "public/**/*",
+      "src/**/*",
+      ".env"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  }
+}

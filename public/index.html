@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>BIOHERTS Tickets</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://*.gstatic.com https://cdn.socket.io; img-src 'self' data: https:; connect-src *; frame-src 'self' https://accounts.google.com https://*.gstatic.com; style-src 'self' 'unsafe-inline';">
+  <style>
+    :root{--bg:#0d1117;--bg2:#161b22;--brd:#30363d;--txt:#e6edf3;--mut:#8b949e;--naranja:#ff7a00;--nsoft:#ff7a0033;--gris:#808080;--r1:12px;--r2:8px;--t:.15s ease}
+    *{box-sizing:border-box;font-family:system-ui,sans-serif}
+    body{margin:0;color:var(--txt);min-height:100vh;background:var(--bg);background-image:radial-gradient(1000px 500px at 18% -10%, rgba(22,27,34,.7), rgba(22,27,34,0) 55%),radial-gradient(900px 420px at 82% 110%, rgba(22,27,34,.6), rgba(22,27,34,0) 55%),linear-gradient(120deg, rgba(255,255,255,.03), rgba(255,255,255,0) 55%);background-attachment:fixed}
+    .app{max-width:1180px;margin:30px auto;padding:0 24px 40px}
+    .app-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+    .app-header-left{display:flex;gap:12px;align-items:center}
+    .logo{cursor:pointer;font-size:34px;font-weight:800;letter-spacing:.06em;color:var(--txt);text-transform:uppercase}
+    .logo-stack{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+    .app-subtitle{color:var(--mut);font-size:13px}
+    .app-title h1{margin:0;font-size:26px;font-weight:700;letter-spacing:.06em}
+    .app-title small{color:var(--mut);font-size:13px}
+    .btn{border:none;cursor:pointer;border-radius:999px;padding:7px 16px;font-size:13px;font-weight:500;transition:var(--t);white-space:nowrap}
+    .btn:active{transform:scale(.96)}
+    .btn-outline{background:#111827;border:1px solid #0b1220;color:#fff}
+    .btn-outline:hover{background:#0b1220}
+    .btn-primary{background:var(--naranja);color:#0d1117}
+    .btn-primary:hover{background:#ff8c1c}
+    .btn-ghost{background:#21262d;border:1px solid var(--brd);color:var(--txt)}
+    .btn-ghost:hover{background:#2b3138}
+    .btn-small{padding:4px 10px;font-size:11px}
+    .btn-success{background:#238636;color:#fff}
+    .btn-success:hover{background:#2ea043}
+    .btn-danger{background:#da3633;color:#fff}
+    .btn-danger:hover{background:#f85149}
+    .btn-warning{background:#ffdf8b20;border:1px solid #ffdf8b55;color:#ffdf8b}
+    .btn-warning:hover{background:#ffdf8b33}
+    .input{width:100%;padding:8px 10px;border-radius:6px;background:#0d1117;border:1px solid var(--brd);color:var(--txt);font-size:13px;outline:none;transition:border-color var(--t),box-shadow var(--t)}
+    .input::placeholder{color:var(--mut)}
+    .input:focus{border-color:var(--naranja);box-shadow:0 0 0 1px var(--nsoft)}
+    .input.select{appearance:none;padding-right:26px}
+    .card{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r1);padding:20px;margin-bottom:20px}
+    .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .card-header h2{margin:0;font-size:18px}
+    .card-body-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .card-body-grid .full{grid-column:1/-1}
+    .filters{display:grid;grid-template-columns:.9fr 1fr 1fr auto auto auto;gap:8px;align-items:center;margin-bottom:14px}
+    .filters-total{color:var(--mut);font-size:13px}
+    .tickets-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .ticket-card{background:#0d1117;border:1px solid var(--brd);border-radius:var(--r2);padding:12px;display:flex;flex-direction:column;gap:8px;transition:var(--t)}
+    .ticket-card:hover{border-color:var(--naranja);box-shadow:0 4px 14px #0009;transform:translateY(-1px)}
+    .ticket-card.pendiente{background:#22c55e;color:#0d1117;border-color:#16a34a}
+    .ticket-card.pendiente .ticket-desc,.ticket-card.pendiente .ticket-meta{color:#0d1117}
+    .ticket-card.hecho{background:#ef4444;color:#fff;border-color:#b91c1c}
+    .ticket-card.hecho .ticket-desc,.ticket-card.hecho .ticket-meta{color:#fff}
+    .ticket-header{display:flex;justify-content:space-between;align-items:center}
+    .ticket-header h3{margin:0;font-size:15px}
+    .ticket-desc{margin:0;font-size:13px}
+    .ticket-meta{font-size:12px;color:var(--mut)}
+    .badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:600}
+    .badge-pendiente{background:var(--nsoft);color:var(--naranja)}
+    .badge-hecho{background:#1f6f3a60;color:#39c96d}
+    .ticket-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+    @media(max-width:880px){.app{padding:0 14px 28px}.card-body-grid{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:repeat(2,1fr)}.app-header{flex-direction:column;align-items:flex-start;gap:10px}}
+
+    #login { display:flex; align-items:center; justify-content:center; height: calc(100vh - 68px); }
+    .login-card { width: 380px; background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(245,245,245,0.92)); border: 1px solid #e6e6e6; border-radius: 12px; padding: 26px; box-shadow: 0 14px 36px rgba(0,0,0,0.35); transition: transform var(--t), box-shadow var(--t), border-color var(--t); }
+    .login-card:hover { border-color: var(--naranja); box-shadow: 0 18px 44px rgba(0,0,0,0.45); }
+    .login-avatar { width: 130px; height: 130px; border-radius: 50%; background: #fff; margin: 0 auto 18px; display:flex; align-items:center; justify-content:center; box-shadow: 0 10px 26px rgba(0,0,0,.35); border: 2px solid #fff; transition: box-shadow var(--t), border-color var(--t); }
+    .login-avatar:hover { border-color: var(--naranja); box-shadow: 0 16px 36px rgba(0,0,0,.45); }
+    .login-avatar img { width: 120px; height: 120px; object-fit: contain; border-radius: 50%; filter: drop-shadow(0 3px 10px rgba(0,0,0,.4)); }
+    .login-field { display:flex; align-items:center; gap:10px; background:#f8f8f8; padding:12px; border-radius:10px; margin-bottom:12px; border:1px solid #e3e3e3; transition: border-color var(--t), box-shadow var(--t), background var(--t); }
+    .login-field:hover { border-color: var(--naranja); box-shadow: 0 0 0 2px var(--nsoft); background:#fff; }
+    .login-field:focus-within { border-color: var(--naranja); box-shadow: 0 0 0 3px var(--nsoft); background:#fff; }
+    .login-actions { display:flex; align-items:center; justify-content:space-between; margin:8px 0 16px; font-size:12px; color:#555; }
+    .login-actions a { color: var(--mut); text-decoration: none; transition: color var(--t); }
+    .login-actions a:hover { color: var(--naranja); }
+    .login-btn { width:100%; padding:12px; border-radius:999px; background: var(--naranja); color:#0d1117; border: none; font-weight:600; letter-spacing:.02em; box-shadow: 0 6px 18px #ff7a0033; transition: transform var(--t), box-shadow var(--t), background var(--t); }
+    .login-btn:hover { background:#ff8c1c; box-shadow: 0 10px 24px #ff7a0044; }
+    .login-btn:active { transform: translateY(1px); }
+    .logo-btn{height:28px; cursor:pointer; border-radius:6px; padding:2px; background:#21262d; border:1px solid var(--brd)}
+    .logo-btn:hover{background:#2b3138}
+    .menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+    .layout{display:grid;grid-template-columns:220px 1fr;gap:16px}
+    .sidebar{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r1);padding:16px;height:calc(100% - 0px)}
+    .sidebar-user{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:12px}
+    .sidebar-nav{display:flex;flex-direction:column;gap:8px}
+    .content{min-height:600px}
+    .avatar-icon{width:100%;height:100%;max-width:120px;max-height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff}
+    .avatar-icon svg{width:70%;height:70%}
+  </style>
+</head>
+<body>
+  
+
+  
+
+  <div class="app">
+    <div class="app-header">
+      <div class="app-header-left">
+        <div class="logo-stack">
+          <div class="logo">BIOHERTZ</div>
+          <div class="app-subtitle">Tickets y equipos</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <select class="input select" id="categoria"><option value="">Categoría</option><option value="tickets">Tickets</option><option value="equipos">Equipos</option></select>
+        <input class="input" id="buscar-global" placeholder="Buscar" />
+        <span class="filters-total" id="status"></span>
+      </div>
+    </div>
+
+    <div class="layout" id="app-layout" style="display:none;">
+      <aside class="sidebar">
+        <div class="sidebar-user">
+          <div class="login-avatar" style="width:80px; height:80px;" id="sidebar-avatar-slot"></div>
+          <div id="user-nombre" class="app-title"><h1 style="font-size:14px;">Invitado</h1></div>
+        </div>
+        <nav class="sidebar-nav">
+          <button id="navDashboard" class="btn btn-ghost" style="width:100%;">Dashboard</button>
+          <button id="navTickets" class="btn btn-ghost" style="width:100%;">Tickets</button>
+          <button id="navEquipos" class="btn btn-ghost" style="width:100%;">Equipos</button>
+          <button id="navClientes" class="btn btn-ghost" style="width:100%;">Clientes</button>
+          <button id="navSettings" class="btn btn-ghost" style="width:100%;">Ajustes</button>
+        </nav>
+      </aside>
+      <main class="content">
+        <section id="dashboard" style="display:none;">
+          <div class="card">
+            <div class="card-header"><h2>Dashboard</h2></div>
+            <div class="menu-grid">
+              <div class="card" style="background:#0d1117;">
+                <div class="card-header"><h2>Pendientes asignados</h2></div>
+                <div style="font-size:32px; font-weight:700;" id="assigned-count">0</div>
+              </div>
+              <div class="card" style="background:#0d1117;">
+                <div class="card-header"><h2>Tickets totales</h2></div>
+                <div style="font-size:32px; font-weight:700;" id="total-tickets-count">0</div>
+              </div>
+              <div class="card" style="background:#0d1117;">
+                <div class="card-header"><h2>Equipos</h2></div>
+                <div style="font-size:32px; font-weight:700;" id="total-equipos-count">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h2>Mis pendientes</h2></div>
+            <div id="assigned-list" class="tickets-grid"></div>
+          </div>
+        </section>
+
+        <section id="menu" style="display:none;">
+          <div class="card">
+            <div class="card-header"><h2>Menú</h2></div>
+            <div class="menu-grid">
+              <button id="btnIrTickets" class="btn btn-primary">Tickets</button>
+              <button id="btnIrEquipos" class="btn btn-success">Equipos</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="settings" style="display:none;">
+          <div class="card">
+            <div class="card-header"><h2>Ajustes</h2></div>
+            <div class="card-body" style="display:flex; align-items:center; gap:16px;">
+              <div class="login-avatar" id="settings-avatar-slot" style="width:120px; height:120px;"></div>
+              <div>
+                <input type="file" id="avatar-file" accept="image/*" style="display:none;" />
+                <button id="btnChangeAvatar" class="btn btn-ghost">Cambiar foto</button>
+                <button id="btnLogout" class="btn btn-outline btn-small" style="margin-left:8px;">Cerrar sesión</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="clientes-section" style="display:none;">
+          <div class="card">
+            <div class="card-header" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <h2>Clientes</h2>
+                <span id="clientes-total" class="muted"></span>
+              </div>
+              <button id="toggleClienteForm" class="btn btn-primary btn-small">Crear cliente</button>
+            </div>
+            <div id="cliente-form" style="display:none; margin:10px 0; display:flex; gap:8px; flex-wrap:wrap;">
+              <input id="cli-nombre" class="input" placeholder="Nombre (opcional)" />
+              <input id="cli-empresa" class="input" placeholder="Empresa (opcional)" />
+              <button id="btnCrearCliente" class="btn btn-success">Guardar</button>
+            </div>
+            <div id="clientes" class="tickets-grid"></div>
+          </div>
+        </section>
+
+        <section id="nuevo-ticket" style="display:none;">
+      <div class="card">
+        <div class="card-header">
+          <h2>Nuevo Ticket</h2>
+        </div>
+        <div class="card-body-grid">
+          <input id="titulo" class="input full" placeholder="Título" />
+          <input id="descripcion" class="input full" placeholder="Descripción" />
+          <select id="asignado-select" class="input">
+            <option value="">Asignar responsable (opcional)</option>
+          </select>
+          <input id="equipo" class="input" type="number" placeholder="ID equipo (opcional)" />
+          <button id="btnCrearTicket" class="btn btn-primary">Crear Ticket</button>
+        </div>
+      </div>
+    </section>
+
+        <section id="tickets-section" style="display:none;">
+      <div class="card">
+        <div class="card-header">
+          <h2>Tickets</h2>
+          <div>
+            <span id="tickets-total" class="muted"></span>
+          </div>
+        </div>
+        <div id="filtros" class="filters">
+          <select id="filtro-estado" class="input select">
+            <option value="">Todos</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="hecho">Terminado</option>
+          </select>
+          <select id="filtro-asignado-select" class="input select">
+            <option value="">Asignado: Todos</option>
+          </select>
+          <input id="filtro-q" class="input" placeholder="Buscar" />
+          <button id="btnFiltrar" class="btn btn-secondary">Filtrar</button>
+          <button id="btnLimpiar" class="btn btn-ghost">Limpiar</button>
+          <select id="page-size" class="input select small">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50" selected>50</option>
+          </select>
+          <button id="btnPrev" class="btn btn-secondary btn-small">Prev</button>
+          <button id="btnNext" class="btn btn-primary btn-small">Next</button>
+        </div>
+        <div id="tickets" class="tickets-grid"></div>
+      </div>
+        </section>
+
+        <section id="equipos-list" style="display:none;">
+      <div class="card">
+        <div class="card-header">
+          <h2>Equipos</h2>
+          <div>
+            <span id="equipos-total" class="muted"></span>
+          </div>
+        </div>
+        <div id="filtros-equipos" class="filters">
+          <select id="eq-filtro-estado" class="input select">
+            <option value="">Todos</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+          <input id="eq-filtro-q" class="input" placeholder="Buscar general" />
+          <input id="eq-filtro-marca" class="input" placeholder="Marca" />
+          <input id="eq-filtro-aplicacion" class="input" placeholder="Aplicación" />
+          <input id="eq-filtro-modelo" class="input" placeholder="Modelo" />
+          <input id="eq-filtro-anio" class="input" type="number" placeholder="Año venta" />
+          <input id="eq-filtro-serie" class="input" placeholder="Serie" />
+          <input id="eq-filtro-cliente" class="input" placeholder="Cliente" />
+          <select id="eq-page-size" class="input select small">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+          <button id="eq-btnFiltrar" class="btn btn-secondary btn-small">Filtrar</button>
+          <button id="eq-btnLimpiar" class="btn btn-ghost btn-small">Limpiar</button>
+          <button id="eq-btnPrev" class="btn btn-secondary btn-small">Prev</button>
+          <button id="eq-btnNext" class="btn btn-primary btn-small">Next</button>
+        </div>
+        <div id="nuevo-equipo" style="margin-bottom:10px; display:flex; gap:8px; flex-wrap:wrap;">
+          <input id="eq-nombre" class="input" placeholder="Nombre" />
+          <input id="eq-marca" class="input" placeholder="Marca" />
+          <input id="eq-modelo" class="input" placeholder="Modelo" />
+          <input id="eq-numero_serie" class="input" placeholder="N° serie" />
+          <input id="eq-ubicacion" class="input" placeholder="Ubicación" />
+          <input id="eq-aplicacion" class="input" placeholder="Aplicación" />
+          <select id="eq-cliente-id" class="input"><option value="">Cliente</option></select>
+          <input id="eq-anio_venta" class="input" type="number" placeholder="Año venta" />
+          <select id="eq-estado" class="input select">
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+          <input id="eq-man-fecha" class="input" type="date" placeholder="Fecha mantención (opcional)" />
+          <input id="eq-man-trabajo" class="input" placeholder="Trabajo realizado (opcional)" />
+          <input id="eq-man-nota" class="input" placeholder="Nota (opcional)" />
+          <button id="btnCrearEquipo" class="btn btn-success">Crear Equipo</button>
+        </div>
+        <div id="equipos" class="tickets-grid"></div>
+      </div>
+        </section>
+      </main>
+    </div>
+  </div>
+  
+  <section id="login" style="display:flex; align-items:center; justify-content:center; height: calc(100vh - 68px);">
+    <div class="login-card">
+      <div class="login-avatar" id="login-avatar-slot"></div>
+      <div class="login-field">
+        <input id="email" class="input" type="email" placeholder="Correo electrónico" />
+      </div>
+      <div class="login-field">
+        <input id="password" class="input" type="password" placeholder="Contraseña" />
+      </div>
+      <div class="login-actions">
+        <label><input id="rememberMe" type="checkbox" /> Recordarme</label>
+        <a href="#" id="toggleRegister">Crear cuenta</a>
+      </div>
+      <button id="btnLogin" class="login-btn">Iniciar sesión</button>
+      <div id="loginResult" style="margin-top:8px; color:#ff7a00;"></div>
+      <div id="googleSignIn" style="margin-top:10px;"></div>
+      <div id="registerPanel" style="display:none; margin-top:16px;">
+        <div class="login-field"><input id="reg-nombre" class="input" placeholder="Nombre" /></div>
+        <div class="login-field"><input id="reg-email" class="input" type="email" placeholder="Correo Gmail" /></div>
+        <div class="login-field"><input id="reg-password" class="input" type="password" placeholder="Contraseña" /></div>
+        <div class="login-field">
+          <select id="reg-rol" class="input select">
+            <option value="user">Usuario</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        <button id="btnRegister" class="btn btn-primary" style="width:100%;">Registrarse</button>
+        <div id="registerResult" style="margin-top:8px; color:#ff7a00;"></div>
+        <div id="googleRegister" style="margin-top:10px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="./renderer.js"></script>
+</body>
+</html>

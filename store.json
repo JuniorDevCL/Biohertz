@@ -1,0 +1,71 @@
+{
+  "seq": {
+    "usuarios": 6,
+    "tickets": 3,
+    "comentarios": 1,
+    "equipos": 1
+  },
+  "usuarios": [
+    {
+      "id": 1,
+      "nombre": "Demo",
+      "email": "demo@example.com",
+      "password": "$2b$10$yo046MZYZtYDAMgW/8vd4.CztWxkzozt74VfbMHeRc7gieSyOkHjG",
+      "rol": "admin"
+    },
+    {
+      "id": 2,
+      "nombre": "cualquier",
+      "email": "cualquier@correo.com",
+      "password": "$2b$10$RXj5QpLG1MgkoPyL0J144OKjmhq9oqjXJXMrIYzc83Ez0zhJ0ZQ0u",
+      "rol": "user"
+    },
+    {
+      "id": 3,
+      "nombre": "Usuario",
+      "email": "",
+      "password": "$2b$10$gVHWY6OkW8FUfOeUNgZ1HeAdXPRWcZ1deNHsIXCeR59xEZktvm3JO",
+      "rol": "user"
+    },
+    {
+      "id": 4,
+      "nombre": "Alexis",
+      "email": "alexis.cruces2122@gmail.com",
+      "password": "$2b$10$oYjGm0IokQde/2j3trRZtec4K70aJR10GNs8P.gpxzgHK3v3IFGj6",
+      "rol": "admin"
+    },
+    {
+      "id": 5,
+      "nombre": "Alexis",
+      "email": "alexis.cruces2122@gmail.com",
+      "password": "$2b$10$UBdcovyUi.CN33oeXYuBbO9drg9pIofLHp1QdPnuYAgw/NFfqCRw6",
+      "rol": "admin"
+    }
+  ],
+  "tickets": [
+    {
+      "id": 1,
+      "titulo": "Prueba offline",
+      "descripcion": "ticket local",
+      "creado_por": 1,
+      "asignado_a": null,
+      "equipo_id": null,
+      "estado": "pendiente",
+      "creado_en": "2025-12-10T04:48:43.962Z",
+      "actualizado_en": "2025-12-10T04:48:43.962Z"
+    },
+    {
+      "id": 2,
+      "titulo": "Ticket de prueba dashboard",
+      "descripcion": "Asignado al usuario actual",
+      "creado_por": 1,
+      "asignado_a": 1,
+      "equipo_id": null,
+      "estado": "pendiente",
+      "creado_en": "2025-12-14T05:40:34.103Z",
+      "actualizado_en": "2025-12-14T05:40:34.103Z"
+    }
+  ],
+  "comentarios": [],
+  "equipos": []
+}
