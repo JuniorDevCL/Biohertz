@@ -22,8 +22,9 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(process.cwd(), 'public')));
 
-app.get('/', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({ mensaje: 'API OK' });
 });
 

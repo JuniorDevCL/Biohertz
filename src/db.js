@@ -85,6 +85,7 @@ if (isOffline) {
         saveStore(store);
         return { rows: [t], rowCount: 1 };
       }
+
       if (s.includes('FROM tickets t') && s.startsWith('SELECT')) {
         const limit = Number(params[params.length - 2]) || 50;
         const offset = Number(params[params.length - 1]) || 0;

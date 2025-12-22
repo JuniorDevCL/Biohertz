@@ -5,6 +5,7 @@
   "main": "electron-main.cjs",
   "type": "module",
   "scripts": {
+    "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "desktop": "electron .",
     "build:desktop": "electron-builder --win"
