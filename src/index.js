@@ -5,10 +5,6 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 dotenv.config();
-try {
-  const alt = path.join(process.cwd(), 'resources', 'app', '.env');
-  if (fs.existsSync(alt)) dotenv.config({ path: alt });
-} catch {}
 
 import authRoutes from './routes/auth.js';
 import ticketsRoutes from './routes/tickets.js';
