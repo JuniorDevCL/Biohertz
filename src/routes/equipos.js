@@ -94,13 +94,27 @@ router.post('/', authRequired, async (req, res) => {
     await ensureExtendedSchema();
     const { nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, mantenciones } = req.body;
     if (!nombre) return res.status(400).json({ error: 'Nombre es obligatorio' });
-    if (!cliente_id) return res.status(400).json({ error: 'Debe seleccionar un cliente' });
+    // if (!cliente_id) return res.status(400).json({ error: 'Debe seleccionar un cliente' }); // Permitir STOCK (null)
+
+    let finalClienteName = cliente;
+    let finalClienteId = (cliente_id && cliente_id !== 'STOCK') ? parseInt(cliente_id) : null;
+
+    if (!finalClienteName && finalClienteId) {
+      try {
+        const cRes = await pool.query('SELECT * FROM clientes WHERE id = $1', [finalClienteId]);
+        if (cRes.rowCount > 0) {
+          finalClienteName = cRes.rows[0].nombre;
+        }
+      } catch (e) {
+        console.warn('Could not fetch client name for equipment creation', e);
+      }
+    }
 
     const insert = await pool.query(
       `INSERT INTO equipos (nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, mantenciones, creado_en, actualizado_en)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, COALESCE($11::jsonb, '[]'::jsonb), NOW(), NOW())
        RETURNING *`,
-      [nombre, marca || null, modelo || null, numero_serie || null, ubicacion || null, estado || 'activo', aplicacion || null, cliente || null, cliente_id ? parseInt(cliente_id) : null, anio_venta ? parseInt(anio_venta) : null, mantenciones ? JSON.stringify(mantenciones) : null]
+      [nombre, marca || null, modelo || null, numero_serie || null, ubicacion || null, estado || 'activo', aplicacion || null, finalClienteName || null, finalClienteId, anio_venta ? parseInt(anio_venta) : null, mantenciones ? JSON.stringify(mantenciones) : null]
     );
 
     res.status(201).json({ mensaje: 'Equipo creado', equipo: insert.rows[0] });
@@ -119,6 +133,25 @@ router.patch('/:id', authRequired, async (req, res) => {
     await ensureExtendedSchema();
     const { nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, mantenciones } = req.body;
 
+    let finalClienteName = cliente;
+    let finalClienteId = cliente_id;
+
+    // If updating client_id but not client name, try to fetch name
+    if (cliente_id !== undefined && cliente === undefined) {
+       const cid = (cliente_id && cliente_id !== 'STOCK') ? parseInt(cliente_id) : null;
+       if (cid) {
+          try {
+             const cRes = await pool.query('SELECT nombre FROM clientes WHERE id = $1', [cid]);
+             if (cRes.rowCount > 0) {
+                finalClienteName = cRes.rows[0].nombre;
+             }
+          } catch (e) { console.warn('Error fetching client name in patch', e); }
+       } else if (cliente_id === null || cliente_id === 'STOCK') {
+           // If clearing client, clear name too if not provided
+           finalClienteName = null;
+       }
+    }
+
     const update = await pool.query(
       `UPDATE equipos
        SET nombre = COALESCE($1, nombre),
@@ -135,7 +168,7 @@ router.patch('/:id', authRequired, async (req, res) => {
            actualizado_en = NOW()
        WHERE id = $12
        RETURNING *`,
-      [nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id ? parseInt(cliente_id) : null, anio_venta ? parseInt(anio_venta) : null, mantenciones ? JSON.stringify(mantenciones) : null, id]
+      [nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, finalClienteName, (finalClienteId && finalClienteId !== 'STOCK') ? parseInt(finalClienteId) : (finalClienteId === null || finalClienteId === 'STOCK' ? null : undefined), anio_venta ? parseInt(anio_venta) : null, mantenciones ? JSON.stringify(mantenciones) : null, id]
     );
 
     if (update.rowCount === 0) return res.status(404).json({ error: 'Equipo no encontrado' });

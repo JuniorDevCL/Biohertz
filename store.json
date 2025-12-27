@@ -1,32 +1,12 @@
 {
   "seq": {
-    "usuarios": 6,
-    "tickets": 3,
-    "comentarios": 1,
-    "equipos": 1
+    "usuarios": 33,
+    "tickets": 78,
+    "comentarios": 21,
+    "equipos": 83,
+    "clientes": 47
   },
   "usuarios": [
-    {
-      "id": 1,
-      "nombre": "Demo",
-      "email": "demo@example.com",
-      "password": "$2b$10$yo046MZYZtYDAMgW/8vd4.CztWxkzozt74VfbMHeRc7gieSyOkHjG",
-      "rol": "admin"
-    },
-    {
-      "id": 2,
-      "nombre": "cualquier",
-      "email": "cualquier@correo.com",
-      "password": "$2b$10$RXj5QpLG1MgkoPyL0J144OKjmhq9oqjXJXMrIYzc83Ez0zhJ0ZQ0u",
-      "rol": "user"
-    },
-    {
-      "id": 3,
-      "nombre": "Usuario",
-      "email": "",
-      "password": "$2b$10$gVHWY6OkW8FUfOeUNgZ1HeAdXPRWcZ1deNHsIXCeR59xEZktvm3JO",
-      "rol": "user"
-    },
     {
       "id": 4,
       "nombre": "Alexis",
@@ -35,10 +15,17 @@
       "rol": "admin"
     },
     {
-      "id": 5,
-      "nombre": "Alexis",
-      "email": "alexis.cruces2122@gmail.com",
-      "password": "$2b$10$UBdcovyUi.CN33oeXYuBbO9drg9pIofLHp1QdPnuYAgw/NFfqCRw6",
+      "id": 31,
+      "nombre": "ejemplo",
+      "email": "ejemplo@gmail.com",
+      "password": "$2b$10$8EeQ.PMxSH7tjQATnCoKduE2CkzFSOmfgcwRBu6RAN3p2D5Id60WW",
+      "rol": "user"
+    },
+    {
+      "id": 32,
+      "nombre": "Test User",
+      "email": "testuser_1766727049871@test.com",
+      "password": "$2b$10$XfbKTbMExGBlqCHILJuoCOwbMA7O2S.gh8S0bu9UB8hbByZDRvJ1O",
       "rol": "admin"
     }
   ],
@@ -47,25 +34,1472 @@
       "id": 1,
       "titulo": "Prueba offline",
       "descripcion": "ticket local",
-      "creado_por": 1,
+      "creado_por": 4,
       "asignado_a": null,
       "equipo_id": null,
-      "estado": "pendiente",
+      "estado": "hecho",
       "creado_en": "2025-12-10T04:48:43.962Z",
-      "actualizado_en": "2025-12-10T04:48:43.962Z"
+      "actualizado_en": "2025-12-26T04:02:38.778Z"
     },
     {
       "id": 2,
       "titulo": "Ticket de prueba dashboard",
       "descripcion": "Asignado al usuario actual",
-      "creado_por": 1,
-      "asignado_a": 1,
+      "creado_por": 4,
+      "asignado_a": 4,
       "equipo_id": null,
       "estado": "pendiente",
       "creado_en": "2025-12-14T05:40:34.103Z",
-      "actualizado_en": "2025-12-14T05:40:34.103Z"
+      "actualizado_en": "2025-12-26T04:02:18.140Z"
+    },
+    {
+      "id": 6,
+      "titulo": "Falla en Monitor",
+      "descripcion": "No enciende correctamente",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": null,
+      "estado": "pendiente",
+      "creado_en": "2025-12-26T04:08:15.928Z",
+      "actualizado_en": "2025-12-26T04:08:15.928Z"
+    },
+    {
+      "id": 28,
+      "titulo": "Prueba de ticket",
+      "descripcion": null,
+      "creado_por": 6,
+      "asignado_a": 4,
+      "equipo_id": null,
+      "estado": "pendiente",
+      "creado_en": "2025-12-26T05:07:41.891Z",
+      "actualizado_en": "2025-12-26T05:07:41.891Z"
+    },
+    {
+      "id": 31,
+      "titulo": "No conecta a internet",
+      "descripcion": "Problema reportado con el equipo Tablet Samsung - 471. No conecta a internet.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 58,
+      "estado": "terminado",
+      "creado_en": "2025-12-11T18:15:07.972Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 32,
+      "titulo": "Cambio de disco duro",
+      "descripcion": "Problema reportado con el equipo Tablet HP - 713. Cambio de disco duro.",
+      "creado_por": 4,
+      "asignado_a": null,
+      "equipo_id": 42,
+      "estado": "en_proceso",
+      "creado_en": "2025-12-21T21:12:50.048Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 33,
+      "titulo": "No reconoce USB",
+      "descripcion": "Problema reportado con el equipo Scanner Dell - 192. No reconoce USB.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 71,
+      "estado": "terminado",
+      "creado_en": "2025-12-01T16:21:23.625Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 34,
+      "titulo": "Falla de encendido",
+      "descripcion": "Problema reportado con el equipo Scanner Canon - 622. Falla de encendido.",
+      "creado_por": 4,
+      "asignado_a": null,
+      "equipo_id": 73,
+      "estado": "pendiente",
+      "creado_en": "2025-12-11T05:32:21.373Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 35,
+      "titulo": "Cambio de disco duro",
+      "descripcion": "Problema reportado con el equipo Monitor Cardíaco X1. Cambio de disco duro.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 4,
+      "estado": "en_proceso",
+      "creado_en": "2025-12-13T09:51:51.884Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 36,
+      "titulo": "Mantenimiento preventivo",
+      "descripcion": "Problema reportado con el equipo Laptop Lenovo - 831. Mantenimiento preventivo.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 49,
+      "estado": "terminado",
+      "creado_en": "2025-12-05T20:04:12.151Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 37,
+      "titulo": "Ruido extraño en ventilador",
+      "descripcion": "Problema reportado con el equipo Impresora HP - 974. Ruido extraño en ventilador.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 31,
+      "estado": "terminado",
+      "creado_en": "2025-12-16T21:56:47.474Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 38,
+      "titulo": "Configuración de correo",
+      "descripcion": "Problema reportado con el equipo Scanner Lenovo - 945. Configuración de correo.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 52,
+      "estado": "en_proceso",
+      "creado_en": "2025-12-17T21:34:30.090Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 39,
+      "titulo": "Monitor parpadea",
+      "descripcion": "Problema reportado con el equipo Scanner HP - 254. Monitor parpadea.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 67,
+      "estado": "terminado",
+      "creado_en": "2025-12-04T09:39:46.868Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 40,
+      "titulo": "Teclado no funciona",
+      "descripcion": "Problema reportado con el equipo Desktop Samsung - 603. Teclado no funciona.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 41,
+      "estado": "en_proceso",
+      "creado_en": "2025-12-19T10:18:12.334Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 41,
+      "titulo": "Monitor parpadea",
+      "descripcion": "Problema reportado con el equipo Scanner Canon - 264. Monitor parpadea.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 56,
+      "estado": "terminado",
+      "creado_en": "2025-12-18T23:31:59.826Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 42,
+      "titulo": "Configuración de correo",
+      "descripcion": "Problema reportado con el equipo Impresora HP - 705. Configuración de correo.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 43,
+      "estado": "terminado",
+      "creado_en": "2025-12-14T01:51:58.940Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 43,
+      "titulo": "Pantalla azul",
+      "descripcion": "Problema reportado con el equipo Impresora Canon - 134. Pantalla azul.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 61,
+      "estado": "en_proceso",
+      "creado_en": "2025-12-12T09:46:18.217Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 44,
+      "titulo": "Pantalla azul",
+      "descripcion": "Problema reportado con el equipo Tablet HP - 713. Pantalla azul.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 42,
+      "estado": "en_proceso",
+      "creado_en": "2025-12-14T02:08:39.437Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 45,
+      "titulo": "Instalación de antivirus",
+      "descripcion": "Problema reportado con el equipo Scanner Dell - 964. Instalación de antivirus.",
+      "creado_por": 4,
+      "asignado_a": null,
+      "equipo_id": 80,
+      "estado": "en_proceso",
+      "creado_en": "2025-12-03T20:44:35.366Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 46,
+      "titulo": "Ruido extraño en ventilador",
+      "descripcion": "Problema reportado con el equipo Desktop Epson - 302. Ruido extraño en ventilador.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 72,
+      "estado": "pendiente",
+      "creado_en": "2025-12-08T13:33:35.698Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 47,
+      "titulo": "Error en sistema contable",
+      "descripcion": "Problema reportado con el equipo Scanner HP - 979. Error en sistema contable.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 70,
+      "estado": "pendiente",
+      "creado_en": "2025-12-14T10:16:16.130Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 48,
+      "titulo": "No reconoce USB",
+      "descripcion": "Problema reportado con el equipo Tablet Epson - 437. No reconoce USB.",
+      "creado_por": 4,
+      "asignado_a": null,
+      "equipo_id": 77,
+      "estado": "en_proceso",
+      "creado_en": "2025-12-24T08:52:45.598Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 49,
+      "titulo": "Instalación de antivirus",
+      "descripcion": "Problema reportado con el equipo Tablet Canon - 257. Instalación de antivirus.",
+      "creado_por": 4,
+      "asignado_a": null,
+      "equipo_id": 29,
+      "estado": "pendiente",
+      "creado_en": "2025-12-02T04:33:15.181Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 50,
+      "titulo": "No reconoce USB",
+      "descripcion": "Problema reportado con el equipo Scanner Canon - 622. No reconoce USB.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 73,
+      "estado": "terminado",
+      "creado_en": "2025-12-21T22:35:44.555Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 51,
+      "titulo": "Ruido extraño en ventilador",
+      "descripcion": "Problema reportado con el equipo Laptop HP - 291. Ruido extraño en ventilador.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 36,
+      "estado": "pendiente",
+      "creado_en": "2025-12-12T11:15:22.328Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 52,
+      "titulo": "Impresora atascada",
+      "descripcion": "Problema reportado con el equipo Laptop Lenovo - 831. Impresora atascada.",
+      "creado_por": 4,
+      "asignado_a": null,
+      "equipo_id": 49,
+      "estado": "pendiente",
+      "creado_en": "2025-11-28T18:22:11.257Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 53,
+      "titulo": "Teclado no funciona",
+      "descripcion": "Problema reportado con el equipo Laptop Lenovo - 831. Teclado no funciona.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 49,
+      "estado": "terminado",
+      "creado_en": "2025-12-01T22:39:59.633Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 54,
+      "titulo": "Pantalla azul",
+      "descripcion": "Problema reportado con el equipo Scanner HP - 979. Pantalla azul.",
+      "creado_por": 4,
+      "asignado_a": null,
+      "equipo_id": 70,
+      "estado": "terminado",
+      "creado_en": "2025-11-27T18:32:26.464Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 55,
+      "titulo": "No conecta a internet",
+      "descripcion": "Problema reportado con el equipo Laptop Apple - 374. No conecta a internet.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 62,
+      "estado": "pendiente",
+      "creado_en": "2025-11-30T21:57:00.889Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 56,
+      "titulo": "Falla de encendido",
+      "descripcion": "Problema reportado con el equipo Scanner Canon - 622. Falla de encendido.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 73,
+      "estado": "en_proceso",
+      "creado_en": "2025-11-30T05:38:02.091Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 57,
+      "titulo": "Ruido extraño en ventilador",
+      "descripcion": "Problema reportado con el equipo Scanner Apple - 945. Ruido extraño en ventilador.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 32,
+      "estado": "pendiente",
+      "creado_en": "2025-12-17T09:58:32.608Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 58,
+      "titulo": "No conecta a internet",
+      "descripcion": "Problema reportado con el equipo Servidor Lenovo - 378. No conecta a internet.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 48,
+      "estado": "en_proceso",
+      "creado_en": "2025-12-02T23:09:41.459Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 59,
+      "titulo": "Teclado no funciona",
+      "descripcion": "Problema reportado con el equipo Impresora HP - 446. Teclado no funciona.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 40,
+      "estado": "pendiente",
+      "creado_en": "2025-12-13T17:59:01.584Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 60,
+      "titulo": "Cambio de disco duro",
+      "descripcion": "Problema reportado con el equipo Monitor Cardíaco X1. Cambio de disco duro.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 5,
+      "estado": "pendiente",
+      "creado_en": "2025-12-16T03:31:21.234Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 61,
+      "titulo": "Teclado no funciona",
+      "descripcion": "Problema reportado con el equipo Scanner Lenovo - 945. Teclado no funciona.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 52,
+      "estado": "pendiente",
+      "creado_en": "2025-12-20T07:50:19.954Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 62,
+      "titulo": "Actualización de software",
+      "descripcion": "Problema reportado con el equipo Scanner Apple - 945. Actualización de software.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 32,
+      "estado": "terminado",
+      "creado_en": "2025-12-23T18:58:29.942Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 63,
+      "titulo": "Impresora atascada",
+      "descripcion": "Problema reportado con el equipo Scanner Apple - 279. Impresora atascada.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 45,
+      "estado": "pendiente",
+      "creado_en": "2025-12-02T19:44:09.839Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 64,
+      "titulo": "Configuración de correo",
+      "descripcion": "Problema reportado con el equipo Laptop HP - 451. Configuración de correo.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 50,
+      "estado": "en_proceso",
+      "creado_en": "2025-12-04T02:10:24.306Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 65,
+      "titulo": "No conecta a internet",
+      "descripcion": "Problema reportado con el equipo Scanner Apple - 279. No conecta a internet.",
+      "creado_por": 4,
+      "asignado_a": null,
+      "equipo_id": 45,
+      "estado": "en_proceso",
+      "creado_en": "2025-12-24T09:30:39.462Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 66,
+      "titulo": "Actualización de software",
+      "descripcion": "Problema reportado con el equipo Scanner Apple - 720. Actualización de software.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 66,
+      "estado": "terminado",
+      "creado_en": "2025-11-27T13:25:28.696Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 67,
+      "titulo": "Monitor parpadea",
+      "descripcion": "Problema reportado con el equipo Monitor Apple - 517. Monitor parpadea.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 83,
+      "estado": "en_proceso",
+      "creado_en": "2025-12-18T00:36:00.575Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 68,
+      "titulo": "Teclado no funciona",
+      "descripcion": "Problema reportado con el equipo Servidor Canon - 412. Teclado no funciona.",
+      "creado_por": 4,
+      "asignado_a": null,
+      "equipo_id": 47,
+      "estado": "terminado",
+      "creado_en": "2025-12-09T08:41:03.384Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 69,
+      "titulo": "Falla de encendido",
+      "descripcion": "Problema reportado con el equipo Impresora HP - 705. Falla de encendido.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 43,
+      "estado": "en_proceso",
+      "creado_en": "2025-12-07T10:30:35.972Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 70,
+      "titulo": "Impresora atascada",
+      "descripcion": "Problema reportado con el equipo Servidor HP - 666. Impresora atascada.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 27,
+      "estado": "terminado",
+      "creado_en": "2025-12-24T21:23:30.554Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 71,
+      "titulo": "Instalación de antivirus",
+      "descripcion": "Problema reportado con el equipo Laptop Canon - 416. Instalación de antivirus.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 33,
+      "estado": "en_proceso",
+      "creado_en": "2025-12-24T12:55:39.279Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 72,
+      "titulo": "No reconoce USB",
+      "descripcion": "Problema reportado con el equipo Impresora Lenovo - 728. No reconoce USB.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 54,
+      "estado": "en_proceso",
+      "creado_en": "2025-12-23T11:20:56.029Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 73,
+      "titulo": "Cambio de disco duro",
+      "descripcion": "Problema reportado con el equipo Scanner HP - 243. Cambio de disco duro.",
+      "creado_por": 4,
+      "asignado_a": null,
+      "equipo_id": 26,
+      "estado": "terminado",
+      "creado_en": "2025-12-16T10:59:40.392Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 74,
+      "titulo": "Ampliación de RAM",
+      "descripcion": "Problema reportado con el equipo Impresora HP - 255. Ampliación de RAM.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 78,
+      "estado": "pendiente",
+      "creado_en": "2025-11-29T07:58:40.300Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 75,
+      "titulo": "Pantalla azul",
+      "descripcion": "Problema reportado con el equipo Impresora Lenovo - 728. Pantalla azul.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 54,
+      "estado": "pendiente",
+      "creado_en": "2025-12-07T22:27:41.942Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 76,
+      "titulo": "Instalación de antivirus",
+      "descripcion": "Problema reportado con el equipo Scanner Samsung - 731. Instalación de antivirus.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 55,
+      "estado": "terminado",
+      "creado_en": "2025-12-21T16:19:02.072Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 77,
+      "titulo": "Cambio de disco duro",
+      "descripcion": "Problema reportado con el equipo Servidor Lenovo - 378. Cambio de disco duro.",
+      "creado_por": 4,
+      "asignado_a": 4,
+      "equipo_id": 48,
+      "estado": "pendiente",
+      "creado_en": "2025-12-06T23:17:14.724Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 78,
+      "titulo": "Configuración de correo",
+      "descripcion": "Problema reportado con el equipo Servidor Samsung - 894. Configuración de correo.",
+      "creado_por": 4,
+      "asignado_a": null,
+      "equipo_id": 25,
+      "estado": "terminado",
+      "creado_en": "2025-11-29T17:01:05.688Z",
+      "actualizado_en": "2025-12-26T05:58:06.709Z"
     }
   ],
-  "comentarios": [],
-  "equipos": []
+  "comentarios": [
+    {
+      "id": 1,
+      "ticket_id": 1,
+      "autor_id": 4,
+      "contenido": "se envio el presupuesto",
+      "creado_en": "2025-12-25T18:14:27.000Z"
+    },
+    {
+      "id": 2,
+      "ticket_id": null,
+      "autor_id": 4,
+      "contenido": "Revisión completada.",
+      "creado_en": "2025-12-26T04:08:15.937Z"
+    },
+    {
+      "id": 3,
+      "ticket_id": 7,
+      "autor_id": 4,
+      "contenido": "Revisión completada.",
+      "creado_en": "2025-12-26T04:08:52.268Z"
+    },
+    {
+      "id": 4,
+      "ticket_id": 8,
+      "autor_id": 4,
+      "contenido": "Revisión completada.",
+      "creado_en": "2025-12-26T04:10:06.149Z"
+    },
+    {
+      "id": 5,
+      "ticket_id": 9,
+      "autor_id": 4,
+      "contenido": "Revisión completada.",
+      "creado_en": "2025-12-26T04:11:38.800Z"
+    },
+    {
+      "id": 6,
+      "ticket_id": 10,
+      "autor_id": 4,
+      "contenido": "Revisión completada.",
+      "creado_en": "2025-12-26T04:12:45.145Z"
+    },
+    {
+      "id": 7,
+      "ticket_id": 11,
+      "autor_id": 4,
+      "contenido": "Revisión completada.",
+      "creado_en": "2025-12-26T04:14:01.884Z"
+    },
+    {
+      "id": 8,
+      "ticket_id": 12,
+      "autor_id": 4,
+      "contenido": "Revisión completada.",
+      "creado_en": "2025-12-26T04:14:24.343Z"
+    },
+    {
+      "id": 9,
+      "ticket_id": 13,
+      "autor_id": 4,
+      "contenido": "Revisión completada.",
+      "creado_en": "2025-12-26T04:15:06.541Z"
+    },
+    {
+      "id": 10,
+      "ticket_id": 14,
+      "autor_id": 4,
+      "contenido": "Revisión completada.",
+      "creado_en": "2025-12-26T04:16:02.875Z"
+    },
+    {
+      "id": 11,
+      "ticket_id": 15,
+      "autor_id": 4,
+      "contenido": "Revisión completada.",
+      "creado_en": "2025-12-26T04:17:20.163Z"
+    }
+  ],
+  "equipos": [
+    {
+      "id": 1,
+      "nombre": "equipo 1",
+      "marca": "asdasd",
+      "modelo": "asdas",
+      "numero_serie": "asdasd",
+      "ubicacion": "asda",
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": null,
+      "cliente_id": null,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2025-12-23T05:19:34.222Z",
+      "actualizado_en": "2025-12-23T05:27:07.209Z"
+    },
+    {
+      "id": 3,
+      "nombre": "Ecografo",
+      "marca": "samsung",
+      "modelo": "HS23",
+      "numero_serie": "2211334",
+      "ubicacion": "Bodega 2",
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": null,
+      "cliente_id": null,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2025-12-26T03:49:28.175Z",
+      "actualizado_en": "2025-12-26T03:49:28.175Z"
+    },
+    {
+      "id": 4,
+      "nombre": "Monitor Cardíaco X1",
+      "marca": "BioBrand",
+      "modelo": "X1000",
+      "numero_serie": "SN-1766722056551",
+      "ubicacion": "Sala 1",
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": null,
+      "cliente_id": null,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2025-12-26T04:07:36.554Z",
+      "actualizado_en": "2025-12-26T04:07:36.554Z"
+    },
+    {
+      "id": 5,
+      "nombre": "Monitor Cardíaco X1",
+      "marca": "BioBrand",
+      "modelo": "X1000",
+      "numero_serie": "SN-1766722095912",
+      "ubicacion": "Sala 1",
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": null,
+      "cliente_id": null,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2025-12-26T04:08:15.914Z",
+      "actualizado_en": "2025-12-26T04:08:15.914Z"
+    },
+    {
+      "id": 25,
+      "nombre": "Servidor Samsung - 894",
+      "tipo": "Servidor",
+      "marca": "Samsung",
+      "modelo": "M-9765",
+      "cliente_id": 28,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 26,
+      "nombre": "Scanner HP - 243",
+      "tipo": "Scanner",
+      "marca": "HP",
+      "modelo": "M-8211",
+      "cliente_id": 31,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 27,
+      "nombre": "Servidor HP - 666",
+      "tipo": "Servidor",
+      "marca": "HP",
+      "modelo": "M-2031",
+      "cliente_id": 43,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 28,
+      "nombre": "Scanner Lenovo - 279",
+      "tipo": "Scanner",
+      "marca": "Lenovo",
+      "modelo": "M-2514",
+      "cliente_id": 29,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 29,
+      "nombre": "Tablet Canon - 257",
+      "tipo": "Tablet",
+      "marca": "Canon",
+      "modelo": "M-4571",
+      "cliente_id": 43,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 30,
+      "nombre": "Desktop Lenovo - 520",
+      "tipo": "Desktop",
+      "marca": "Lenovo",
+      "modelo": "M-8399",
+      "cliente_id": 43,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 31,
+      "nombre": "Impresora HP - 974",
+      "tipo": "Impresora",
+      "marca": "HP",
+      "modelo": "M-7869",
+      "cliente_id": 31,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 32,
+      "nombre": "Scanner Apple - 945",
+      "tipo": "Scanner",
+      "marca": "Apple",
+      "modelo": "M-4619",
+      "cliente_id": 41,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 33,
+      "nombre": "Laptop Canon - 416",
+      "tipo": "Laptop",
+      "marca": "Canon",
+      "modelo": "M-2326",
+      "cliente_id": 41,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 34,
+      "nombre": "Tablet Apple - 323",
+      "tipo": "Tablet",
+      "marca": "Apple",
+      "modelo": "M-6408",
+      "cliente_id": null,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z",
+      "cliente": null
+    },
+    {
+      "id": 35,
+      "nombre": "Monitor Lenovo - 868",
+      "tipo": "Monitor",
+      "marca": "Lenovo",
+      "modelo": "M-3855",
+      "cliente_id": 40,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 36,
+      "nombre": "Laptop HP - 291",
+      "tipo": "Laptop",
+      "marca": "HP",
+      "modelo": "M-8844",
+      "cliente_id": 32,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 37,
+      "nombre": "Tablet Dell - 400",
+      "tipo": "Tablet",
+      "marca": "Dell",
+      "modelo": "M-4360",
+      "cliente_id": 38,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 38,
+      "nombre": "Desktop Dell - 381",
+      "tipo": "Desktop",
+      "marca": "Dell",
+      "modelo": "M-7265",
+      "cliente_id": 33,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 39,
+      "nombre": "Desktop Canon - 730",
+      "tipo": "Desktop",
+      "marca": "Canon",
+      "modelo": "M-5391",
+      "cliente_id": 36,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 40,
+      "nombre": "Impresora HP - 446",
+      "tipo": "Impresora",
+      "marca": "HP",
+      "modelo": "M-6338",
+      "cliente_id": 31,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 41,
+      "nombre": "Desktop Samsung - 603",
+      "tipo": "Desktop",
+      "marca": "Samsung",
+      "modelo": "M-9196",
+      "cliente_id": 43,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 42,
+      "nombre": "Tablet HP - 713",
+      "tipo": "Tablet",
+      "marca": "HP",
+      "modelo": "M-5729",
+      "cliente_id": 36,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 43,
+      "nombre": "Impresora HP - 705",
+      "tipo": "Impresora",
+      "marca": "HP",
+      "modelo": "M-1179",
+      "cliente_id": 39,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 44,
+      "nombre": "Monitor Canon - 269",
+      "tipo": "Monitor",
+      "marca": "Canon",
+      "modelo": "M-1772",
+      "cliente_id": 39,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 45,
+      "nombre": "Scanner Apple - 279",
+      "tipo": "Scanner",
+      "marca": "Apple",
+      "modelo": "M-8717",
+      "cliente_id": 34,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 46,
+      "nombre": "Monitor Apple - 960",
+      "tipo": "Monitor",
+      "marca": "Apple",
+      "modelo": "M-2839",
+      "cliente_id": 37,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 47,
+      "nombre": "Servidor Canon - 412",
+      "tipo": "Servidor",
+      "marca": "Canon",
+      "modelo": "M-4402",
+      "cliente_id": 28,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 48,
+      "nombre": "Servidor Lenovo - 378",
+      "tipo": "Servidor",
+      "marca": "Lenovo",
+      "modelo": "M-1395",
+      "cliente_id": 30,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 49,
+      "nombre": "Laptop Lenovo - 831",
+      "tipo": "Laptop",
+      "marca": "Lenovo",
+      "modelo": "M-3976",
+      "cliente_id": 43,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 50,
+      "nombre": "Laptop HP - 451",
+      "tipo": "Laptop",
+      "marca": "HP",
+      "modelo": "M-5185",
+      "cliente_id": 29,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 51,
+      "nombre": "Impresora Canon - 659",
+      "tipo": "Impresora",
+      "marca": "Canon",
+      "modelo": "M-3897",
+      "cliente_id": 32,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 52,
+      "nombre": "Scanner Lenovo - 945",
+      "tipo": "Scanner",
+      "marca": "Lenovo",
+      "modelo": "M-6436",
+      "cliente_id": null,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z",
+      "cliente": null
+    },
+    {
+      "id": 53,
+      "nombre": "Desktop Samsung - 201",
+      "tipo": "Desktop",
+      "marca": "Samsung",
+      "modelo": "M-4370",
+      "cliente_id": 38,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 54,
+      "nombre": "Impresora Lenovo - 728",
+      "tipo": "Impresora",
+      "marca": "Lenovo",
+      "modelo": "M-5007",
+      "cliente_id": 28,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 55,
+      "nombre": "Scanner Samsung - 731",
+      "tipo": "Scanner",
+      "marca": "Samsung",
+      "modelo": "M-9260",
+      "cliente_id": 29,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 56,
+      "nombre": "Scanner Canon - 264",
+      "tipo": "Scanner",
+      "marca": "Canon",
+      "modelo": "M-2048",
+      "cliente_id": 38,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 57,
+      "nombre": "Desktop Canon - 506",
+      "tipo": "Desktop",
+      "marca": "Canon",
+      "modelo": "M-1695",
+      "cliente_id": 28,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 58,
+      "nombre": "Tablet Samsung - 471",
+      "tipo": "Tablet",
+      "marca": "Samsung",
+      "modelo": "M-2649",
+      "cliente_id": 47,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 59,
+      "nombre": "Desktop Dell - 791",
+      "tipo": "Desktop",
+      "marca": "Dell",
+      "modelo": "M-6972",
+      "cliente_id": 33,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 60,
+      "nombre": "Tablet Dell - 193",
+      "tipo": "Tablet",
+      "marca": "Dell",
+      "modelo": "M-8069",
+      "cliente_id": 29,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 61,
+      "nombre": "Impresora Canon - 134",
+      "tipo": "Impresora",
+      "marca": "Canon",
+      "modelo": "M-9463",
+      "cliente_id": 39,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 62,
+      "nombre": "Laptop Apple - 374",
+      "tipo": "Laptop",
+      "marca": "Apple",
+      "modelo": "M-1562",
+      "cliente_id": 45,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 63,
+      "nombre": "Impresora Dell - 505",
+      "tipo": "Impresora",
+      "marca": "Dell",
+      "modelo": "M-8460",
+      "cliente_id": 41,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 64,
+      "nombre": "Scanner Canon - 473",
+      "tipo": "Scanner",
+      "marca": "Canon",
+      "modelo": "M-4165",
+      "cliente_id": 43,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 65,
+      "nombre": "Scanner Dell - 340",
+      "tipo": "Scanner",
+      "marca": "Dell",
+      "modelo": "M-3066",
+      "cliente_id": 44,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 66,
+      "nombre": "Scanner Apple - 720",
+      "tipo": "Scanner",
+      "marca": "Apple",
+      "modelo": "M-3738",
+      "cliente_id": 38,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 67,
+      "nombre": "Scanner HP - 254",
+      "tipo": "Scanner",
+      "marca": "HP",
+      "modelo": "M-8550",
+      "cliente_id": 28,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 68,
+      "nombre": "Desktop Samsung - 159",
+      "tipo": "Desktop",
+      "marca": "Samsung",
+      "modelo": "M-5733",
+      "cliente_id": null,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z",
+      "cliente": null
+    },
+    {
+      "id": 69,
+      "nombre": "Scanner Apple - 595",
+      "tipo": "Scanner",
+      "marca": "Apple",
+      "modelo": "M-6896",
+      "cliente_id": 4,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 70,
+      "nombre": "Scanner HP - 979",
+      "tipo": "Scanner",
+      "marca": "HP",
+      "modelo": "M-6489",
+      "cliente_id": 38,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 71,
+      "nombre": "Scanner Dell - 192",
+      "tipo": "Scanner",
+      "marca": "Dell",
+      "modelo": "M-5039",
+      "cliente_id": 46,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 72,
+      "nombre": "Desktop Epson - 302",
+      "tipo": "Desktop",
+      "marca": "Epson",
+      "modelo": "M-3122",
+      "cliente_id": 39,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 73,
+      "nombre": "Scanner Canon - 622",
+      "tipo": "Scanner",
+      "marca": "Canon",
+      "modelo": "M-7496",
+      "cliente_id": 4,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 74,
+      "nombre": "Laptop HP - 315",
+      "tipo": "Laptop",
+      "marca": "HP",
+      "modelo": "M-8829",
+      "cliente_id": 37,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 75,
+      "nombre": "Impresora Dell - 892",
+      "tipo": "Impresora",
+      "marca": "Dell",
+      "modelo": "M-8718",
+      "cliente_id": 30,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 76,
+      "nombre": "Laptop HP - 650",
+      "tipo": "Laptop",
+      "marca": "HP",
+      "modelo": "M-8650",
+      "cliente_id": 36,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 77,
+      "nombre": "Tablet Epson - 437",
+      "tipo": "Tablet",
+      "marca": "Epson",
+      "modelo": "M-3722",
+      "cliente_id": 28,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 78,
+      "nombre": "Impresora HP - 255",
+      "tipo": "Impresora",
+      "marca": "HP",
+      "modelo": "M-9740",
+      "cliente_id": 30,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 79,
+      "nombre": "Servidor Dell - 555",
+      "tipo": "Servidor",
+      "marca": "Dell",
+      "modelo": "M-6672",
+      "cliente_id": 41,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 80,
+      "nombre": "Scanner Dell - 964",
+      "tipo": "Scanner",
+      "marca": "Dell",
+      "modelo": "M-4480",
+      "cliente_id": 33,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 81,
+      "nombre": "Laptop Dell - 452",
+      "tipo": "Laptop",
+      "marca": "Dell",
+      "modelo": "M-7208",
+      "cliente_id": 43,
+      "estado": "inactivo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 82,
+      "nombre": "Laptop Dell - 941",
+      "tipo": "Laptop",
+      "marca": "Dell",
+      "modelo": "M-3768",
+      "cliente_id": 33,
+      "estado": "en_reparacion",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 83,
+      "nombre": "Monitor Apple - 517",
+      "tipo": "Monitor",
+      "marca": "Apple",
+      "modelo": "M-7233",
+      "cliente_id": 32,
+      "estado": "activo",
+      "creado_en": "2025-12-26T05:58:06.709Z"
+    }
+  ],
+  "clientes": [
+    {
+      "id": 4,
+      "nombre": "Juan perez",
+      "empresa": "Biohertz",
+      "creado_en": "2025-12-26T03:59:04.079Z",
+      "actualizado_en": "2025-12-26T03:59:04.079Z"
+    },
+    {
+      "id": 28,
+      "nombre": "TechSolutions SA",
+      "empresa": "TechSolutions SA",
+      "email": "contacto@techsolutionssa.com",
+      "telefono": "555-2029",
+      "creado_en": "2025-12-26T05:58:06.703Z"
+    },
+    {
+      "id": 29,
+      "nombre": "Innovatech Ltda",
+      "empresa": "Innovatech Ltda",
+      "email": "contacto@innovatechltda.com",
+      "telefono": "555-3891",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 30,
+      "nombre": "Servicios Globales",
+      "empresa": "Servicios Globales",
+      "email": "contacto@serviciosglobales.com",
+      "telefono": "555-3558",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 31,
+      "nombre": "Consultora Alpha",
+      "empresa": "Consultora Alpha",
+      "email": "contacto@consultoraalpha.com",
+      "telefono": "555-5384",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 32,
+      "nombre": "Logistica Express",
+      "empresa": "Logistica Express",
+      "email": "contacto@logisticaexpress.com",
+      "telefono": "555-3529",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 33,
+      "nombre": "Hospital Central",
+      "empresa": "Hospital Central",
+      "email": "contacto@hospitalcentral.com",
+      "telefono": "555-4045",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 34,
+      "nombre": "Clinica San Jose",
+      "empresa": "Clinica San Jose",
+      "email": "contacto@clinicasanjose.com",
+      "telefono": "555-5067",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 36,
+      "nombre": "Seguros Confianza",
+      "empresa": "Seguros Confianza",
+      "email": "contacto@segurosconfianza.com",
+      "telefono": "555-9739",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 37,
+      "nombre": "Constructora Muro",
+      "empresa": "Constructora Muro",
+      "email": "contacto@constructoramuro.com",
+      "telefono": "555-1784",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 38,
+      "nombre": "Transportes Veloz",
+      "empresa": "Transportes Veloz",
+      "email": "contacto@transportesveloz.com",
+      "telefono": "555-6944",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 39,
+      "nombre": "Agencia Creativa",
+      "empresa": "Agencia Creativa",
+      "email": "contacto@agenciacreativa.com",
+      "telefono": "555-4347",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 40,
+      "nombre": "Bufete Legal",
+      "empresa": "Bufete Legal",
+      "email": "contacto@bufetelegal.com",
+      "telefono": "555-4408",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 41,
+      "nombre": "Restaurante El Sabor",
+      "empresa": "Restaurante El Sabor",
+      "email": "contacto@restauranteelsabor.com",
+      "telefono": "555-6333",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 42,
+      "nombre": "Hotel Plaza",
+      "empresa": "Hotel Plaza",
+      "email": "contacto@hotelplaza.com",
+      "telefono": "555-3737",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 43,
+      "nombre": "Universidad del Norte",
+      "empresa": "Universidad del Norte",
+      "email": "contacto@universidaddelnorte.com",
+      "telefono": "555-5649",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 44,
+      "nombre": "Colegio San Andres",
+      "empresa": "Colegio San Andres",
+      "email": "contacto@colegiosanandres.com",
+      "telefono": "555-7428",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 45,
+      "nombre": "Farmacias Salud",
+      "empresa": "Farmacias Salud",
+      "email": "contacto@farmaciassalud.com",
+      "telefono": "555-5617",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 46,
+      "nombre": "Supermercado Ahorro",
+      "empresa": "Supermercado Ahorro",
+      "email": "contacto@supermercadoahorro.com",
+      "telefono": "555-5141",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 47,
+      "nombre": "Gimnasio Power",
+      "empresa": "Gimnasio Power",
+      "email": "contacto@gimnasiopower.com",
+      "telefono": "555-2252",
+      "creado_en": "2025-12-26T05:58:06.704Z"
+    }
+  ]
 }

@@ -86,20 +86,6 @@ if (isOffline) {
         return { rows: [t], rowCount: 1 };
       }
 
-      if (s.includes('FROM tickets t') && s.startsWith('SELECT')) {
-        const limit = Number(params[params.length - 2]) || 50;
-        const offset = Number(params[params.length - 1]) || 0;
-        const list = store.tickets.slice().sort((a, b) => String(b.creado_en).localeCompare(String(a.creado_en)));
-        const page = list.slice(offset, offset + limit).map(t => {
-          const u1 = store.usuarios.find(u => u.id === t.creado_por);
-          const u2 = t.asignado_a ? store.usuarios.find(u => u.id === t.asignado_a) : null;
-          return { ...t, creado_por_nombre: u1 ? u1.nombre : String(t.creado_por), asignado_a_nombre: u2 ? u2.nombre : null };
-        });
-        return { rows: page, rowCount: page.length };
-      }
-      if (s.startsWith('SELECT COUNT(*) FROM tickets')) {
-        return { rows: [{ count: String(store.tickets.length) }], rowCount: 1 };
-      }
       if (s.startsWith('SELECT t.*,') && s.includes('WHERE t.id =')) {
         const [id] = params;
         const t = store.tickets.find(x => String(x.id) === String(id));
@@ -110,6 +96,52 @@ if (isOffline) {
         const row = { ...t, creado_por_nombre: u1 ? u1.nombre : null, asignado_a_nombre: u2 ? u2.nombre : null, equipo_nombre: eq ? eq.nombre : null };
         return { rows: [row], rowCount: 1 };
       }
+
+      if (s.includes('FROM tickets') && (s.startsWith('SELECT') || s.startsWith('SELECT COUNT(*)'))) {
+        let list = store.tickets.slice().sort((a, b) => String(b.creado_en).localeCompare(String(a.creado_en)));
+
+        const stateMatch = s.match(/(?:t\.)?estado = \$(\d+)/);
+        if (stateMatch) {
+            const idx = parseInt(stateMatch[1]) - 1;
+            const val = params[idx];
+            list = list.filter(t => t.estado === val);
+        }
+        const assignMatch = s.match(/(?:t\.)?asignado_a = \$(\d+)/);
+        if (assignMatch) {
+            const idx = parseInt(assignMatch[1]) - 1;
+            const val = params[idx];
+            list = list.filter(t => Number(t.asignado_a) === Number(val));
+        }
+        const eqMatch = s.match(/(?:t\.)?equipo_id = \$(\d+)/);
+        if (eqMatch) {
+            const idx = parseInt(eqMatch[1]) - 1;
+            const val = params[idx];
+            list = list.filter(t => Number(t.equipo_id) === Number(val));
+        }
+        const qMatch = s.match(/\((?:t\.)?titulo ILIKE \$(\d+) OR/);
+        if (qMatch) {
+            const idx = parseInt(qMatch[1]) - 1;
+            const val = String(params[idx]).replace(/%/g, '').toLowerCase();
+            list = list.filter(t => 
+                (t.titulo && t.titulo.toLowerCase().includes(val)) || 
+                (t.descripcion && t.descripcion.toLowerCase().includes(val))
+            );
+        }
+
+        if (s.startsWith('SELECT COUNT(*)')) {
+            return { rows: [{ count: String(list.length) }], rowCount: 1 };
+        }
+
+        const limit = Number(params[params.length - 2]) || 50;
+        const offset = Number(params[params.length - 1]) || 0;
+        const page = list.slice(offset, offset + limit).map(t => {
+          const u1 = store.usuarios.find(u => u.id === t.creado_por);
+          const u2 = t.asignado_a ? store.usuarios.find(u => u.id === t.asignado_a) : null;
+          return { ...t, creado_por_nombre: u1 ? u1.nombre : String(t.creado_por), asignado_a_nombre: u2 ? u2.nombre : null };
+        });
+        return { rows: page, rowCount: page.length };
+      }
+
       if (s.startsWith('UPDATE tickets') && s.includes('SET estado')) {
         const [estado, id] = params;
         const t = store.tickets.find(x => String(x.id) === String(id));
@@ -180,15 +212,60 @@ if (isOffline) {
         return { rows: [], rowCount: 1 };
       }
 
-      if (s.startsWith('SELECT * FROM equipos') && s.includes('ORDER BY actualizado_en DESC')) {
+
+
+      if (s.startsWith('SELECT * FROM equipos WHERE cliente_id =')) {
+         const [id] = params;
+         const list = store.equipos.filter(e => String(e.cliente_id) === String(id)).sort((a, b) => String(b.actualizado_en).localeCompare(String(a.actualizado_en)));
+         return { rows: list, rowCount: list.length };
+      }
+
+      if ((s.startsWith('SELECT * FROM equipos') && s.includes('ORDER BY actualizado_en DESC')) || s.startsWith('SELECT COUNT(*) FROM equipos')) {
+        let list = store.equipos.slice().sort((a, b) => String(b.actualizado_en).localeCompare(String(a.actualizado_en)));
+
+        const stateMatch = s.match(/estado = \$(\d+)/);
+        if (stateMatch) {
+            const idx = parseInt(stateMatch[1]) - 1;
+            const val = params[idx];
+            list = list.filter(e => e.estado === val);
+        }
+        const qMatch = s.match(/\(nombre ILIKE \$(\d+) OR/);
+        if (qMatch) {
+            const idx = parseInt(qMatch[1]) - 1;
+            const val = String(params[idx]).replace(/%/g, '').toLowerCase();
+            list = list.filter(e => 
+                (e.nombre && e.nombre.toLowerCase().includes(val)) ||
+                (e.marca && e.marca.toLowerCase().includes(val)) ||
+                (e.modelo && e.modelo.toLowerCase().includes(val)) ||
+                (e.numero_serie && e.numero_serie.toLowerCase().includes(val)) ||
+                (e.ubicacion && e.ubicacion.toLowerCase().includes(val))
+             );
+         }
+         const fields = ['marca', 'aplicacion', 'modelo', 'numero_serie', 'cliente'];
+         fields.forEach(f => {
+             const regex = new RegExp(`(?:WHERE|AND)\\s+${f} ILIKE \\$(\\d+)`);
+             const m = s.match(regex);
+             if (m) {
+                const idx = parseInt(m[1]) - 1;
+                const val = String(params[idx]).replace(/%/g, '').toLowerCase();
+                list = list.filter(e => e[f] && e[f].toLowerCase().includes(val));
+            }
+        });
+        const anioMatch = s.match(/anio_venta = \$(\d+)/);
+        if (anioMatch) {
+            const idx = parseInt(anioMatch[1]) - 1;
+            const val = params[idx];
+            list = list.filter(e => Number(e.anio_venta) === Number(val));
+        }
+
+        if (s.startsWith('SELECT COUNT(*)')) {
+            return { rows: [{ count: String(list.length) }], rowCount: 1 };
+        }
+
         const limit = Number(params[params.length - 2]) || 50;
         const offset = Number(params[params.length - 1]) || 0;
-        const list = store.equipos.slice().sort((a, b) => String(b.actualizado_en).localeCompare(String(a.actualizado_en)));
         const page = list.slice(offset, offset + limit);
         return { rows: page, rowCount: page.length };
-      }
-      if (s.startsWith('SELECT COUNT(*) FROM equipos')) {
-        return { rows: [{ count: String(store.equipos.length) }], rowCount: 1 };
       }
       if (s.startsWith('SELECT * FROM equipos WHERE id =')) {
         const [id] = params;
@@ -197,7 +274,7 @@ if (isOffline) {
       }
       if (s.startsWith('INSERT INTO equipos')) {
         const [nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, mantenciones] = params;
-        if (!cliente_id) return { rows: [], rowCount: 0 };
+        // if (!cliente_id) return { rows: [], rowCount: 0 }; // Permitir nulos (STOCK)
         const id = store.seq.equipos++;
         const m = mantenciones ? JSON.parse(mantenciones) : [];
         const e = { id, nombre, marca, modelo, numero_serie, ubicacion, estado: estado || 'activo', aplicacion, cliente, cliente_id: cliente_id ? Number(cliente_id) : null, anio_venta: anio_venta ? Number(anio_venta) : null, mantenciones: Array.isArray(m) ? m : [], creado_en: nowISO(), actualizado_en: nowISO() };
@@ -258,18 +335,69 @@ if (isOffline) {
         saveStore(store);
         return { rows: [c], rowCount: 1 };
       }
-      if (s.startsWith('SELECT * FROM clientes')) {
+      if (s.startsWith('SELECT * FROM clientes') && s.includes('WHERE id =')) {
+        const [id] = params;
+        const c = store.clientes.find(x => String(x.id) === String(id));
+        return { rows: c ? [c] : [], rowCount: c ? 1 : 0 };
+      }
+
+      if (s.startsWith('UPDATE equipos SET cliente_id = NULL')) {
+        const [id] = params;
+        let count = 0;
+        store.equipos.forEach(e => {
+            if (String(e.cliente_id) === String(id)) {
+                e.cliente_id = null;
+                e.cliente = null;
+                count++;
+            }
+        });
+        if (count > 0) saveStore(store);
+        return { rows: [], rowCount: count };
+      }
+      if (s.startsWith('DELETE FROM clientes')) {
+        const [id] = params;
+        const idx = store.clientes.findIndex(x => String(x.id) === String(id));
+        if (idx === -1) return { rows: [], rowCount: 0 };
+        const deleted = store.clientes[idx];
+        store.clientes.splice(idx, 1);
+        saveStore(store);
+        return { rows: [deleted], rowCount: 1 };
+      }
+      if (s.startsWith('UPDATE clientes')) {
+        const [nombre, empresa, id] = params;
+        const c = store.clientes.find(x => String(x.id) === String(id));
+        if (!c) return { rows: [], rowCount: 0 };
+        if (nombre !== undefined && nombre !== null) c.nombre = nombre;
+        if (empresa !== undefined && empresa !== null) c.empresa = empresa;
+        c.actualizado_en = nowISO();
+        saveStore(store);
+        return { rows: [c], rowCount: 1 };
+      }
+
+
+      if ((s.startsWith('SELECT * FROM clientes') && !s.includes('WHERE id =')) || s.startsWith('SELECT COUNT(*) FROM clientes')) {
+        let list = store.clientes.slice().sort((a, b) => String(b.actualizado_en).localeCompare(String(a.actualizado_en)));
+
+        const qMatch = s.match(/\(nombre ILIKE \$(\d+) OR/);
+        if (qMatch) {
+            const idx = parseInt(qMatch[1]) - 1;
+            const val = String(params[idx]).replace(/%/g, '').toLowerCase();
+            list = list.filter(c => 
+                (c.nombre && c.nombre.toLowerCase().includes(val)) ||
+                (c.empresa && c.empresa.toLowerCase().includes(val))
+            );
+        }
+
+        if (s.startsWith('SELECT COUNT(*)')) {
+            return { rows: [{ count: String(list.length) }], rowCount: 1 };
+        }
+
         const limit = Number(params[params.length - 2]) || 50;
         const offset = Number(params[params.length - 1]) || 0;
-        const list = store.clientes.slice().sort((a, b) => String(b.actualizado_en).localeCompare(String(a.actualizado_en)));
         const page = list.slice(offset, offset + limit);
         return { rows: page, rowCount: page.length };
       }
-      if (s.startsWith('SELECT * FROM equipos WHERE cliente_id =')) {
-        const [cid] = params;
-        const list = store.equipos.filter(e => String(e.cliente_id || '') === String(cid)).sort((a, b) => String(b.actualizado_en).localeCompare(String(a.actualizado_en)));
-        return { rows: list, rowCount: list.length };
-      }
+
 
       return { rows: [], rowCount: 0 };
     }

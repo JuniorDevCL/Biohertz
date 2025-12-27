@@ -5,85 +5,234 @@
   <title>BIOHERTS Tickets</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://*.gstatic.com https://cdn.socket.io; img-src 'self' data: https:; connect-src *; frame-src 'self' https://accounts.google.com https://*.gstatic.com; style-src 'self' 'unsafe-inline';">
   <style>
-    :root{--bg:#0d1117;--bg2:#161b22;--brd:#30363d;--txt:#e6edf3;--mut:#8b949e;--naranja:#ff7a00;--nsoft:#ff7a0033;--gris:#808080;--r1:12px;--r2:8px;--t:.15s ease}
-    *{box-sizing:border-box;font-family:system-ui,sans-serif}
-    body{margin:0;color:var(--txt);min-height:100vh;background:var(--bg);background-image:radial-gradient(1000px 500px at 18% -10%, rgba(22,27,34,.7), rgba(22,27,34,0) 55%),radial-gradient(900px 420px at 82% 110%, rgba(22,27,34,.6), rgba(22,27,34,0) 55%),linear-gradient(120deg, rgba(255,255,255,.03), rgba(255,255,255,0) 55%);background-attachment:fixed}
-    .app{max-width:1180px;margin:30px auto;padding:0 24px 40px}
+    :root{--bg:#eef2f6;--bg2:#fcfdfe;--brd:#cbd5e1;--txt:#1e293b;--mut:#64748b;--naranja:#f97316;--blue:#3b82f6;--green:#10b981;--nsoft:#f9731633;--gris:#94a3b8;--r1:16px;--r2:12px;--t:.2s ease;
+      --body-bg: #dde1e7;
+      --grad-color: #b3c2d1;
+    }
+    *{box-sizing:border-box;font-family:'Segoe UI', system-ui, sans-serif}
+    body{margin:0;color:var(--txt);min-height:100vh;background-color:var(--body-bg);background-image:radial-gradient(farthest-corner at 0% 0%, var(--grad-color) 0%, transparent 60%), radial-gradient(farthest-corner at 100% 100%, var(--grad-color) 0%, transparent 60%);background-attachment:fixed;background-size:cover;background-repeat:no-repeat}
+    .app{max-width:1200px;margin:30px auto;padding:0 24px 40px}
     .app-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
     .app-header-left{display:flex;gap:12px;align-items:center}
-    .logo{cursor:pointer;font-size:34px;font-weight:800;letter-spacing:.06em;color:var(--txt);text-transform:uppercase}
-    .logo-stack{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
-    .app-subtitle{color:var(--mut);font-size:13px}
-    .app-title h1{margin:0;font-size:26px;font-weight:700;letter-spacing:.06em}
+    .logo{cursor:pointer;font-size:34px;font-weight:800;letter-spacing:.04em;color:#0f172a;text-transform:uppercase;background:linear-gradient(to right, #0f172a, #334155);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .logo-stack{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+    .app-subtitle{color:var(--mut);font-size:14px;font-weight:500}
+    .app-title h1{margin:0;font-size:26px;font-weight:700;letter-spacing:.02em;color:#0f172a}
     .app-title small{color:var(--mut);font-size:13px}
-    .btn{border:none;cursor:pointer;border-radius:999px;padding:7px 16px;font-size:13px;font-weight:500;transition:var(--t);white-space:nowrap}
-    .btn:active{transform:scale(.96)}
-    .btn-outline{background:#111827;border:1px solid #0b1220;color:#fff}
-    .btn-outline:hover{background:#0b1220}
-    .btn-primary{background:var(--naranja);color:#0d1117}
-    .btn-primary:hover{background:#ff8c1c}
-    .btn-ghost{background:#21262d;border:1px solid var(--brd);color:var(--txt)}
-    .btn-ghost:hover{background:#2b3138}
-    .btn-small{padding:4px 10px;font-size:11px}
-    .btn-success{background:#238636;color:#fff}
-    .btn-success:hover{background:#2ea043}
-    .btn-danger{background:#da3633;color:#fff}
-    .btn-danger:hover{background:#f85149}
-    .btn-warning{background:#ffdf8b20;border:1px solid #ffdf8b55;color:#ffdf8b}
-    .btn-warning:hover{background:#ffdf8b33}
-    .input{width:100%;padding:8px 10px;border-radius:6px;background:#0d1117;border:1px solid var(--brd);color:var(--txt);font-size:13px;outline:none;transition:border-color var(--t),box-shadow var(--t)}
-    .input::placeholder{color:var(--mut)}
-    .input:focus{border-color:var(--naranja);box-shadow:0 0 0 1px var(--nsoft)}
-    .input.select{appearance:none;padding-right:26px}
-    .card{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r1);padding:20px;margin-bottom:20px}
-    .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-    .card-header h2{margin:0;font-size:18px}
-    .card-body-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .btn{border:none;cursor:pointer;border-radius:12px;padding:8px 20px;font-size:14px;font-weight:600;transition:var(--t);white-space:nowrap;box-shadow:0 2px 4px rgba(0,0,0,0.05)}
+    .btn:active{transform:scale(.98)}
+    .btn-outline{background:#fff;border:1px solid var(--brd);color:var(--txt)}
+    .btn-outline:hover{background:#f8fafc;border-color:var(--mut)}
+    .btn-primary{background:var(--naranja);color:#fff} /* Next is Orange */
+    .btn-primary:hover{background:#ea580c;box-shadow:0 4px 12px rgba(249,115,22,0.3)}
+    .btn-secondary{background:var(--blue);color:#fff} /* Filter/Prev is Blue */
+    .btn-secondary:hover{background:#2563eb;box-shadow:0 4px 12px rgba(59,130,246,0.3)}
+    .btn-ghost{background:transparent;border:1px solid transparent;color:var(--mut)}
+    .btn-ghost:hover{background:rgba(0,0,0,0.05);color:var(--txt)}
+    .btn-small{padding:6px 14px;font-size:12px;border-radius:8px}
+    .btn-success{background:var(--green);color:#fff}
+    .btn-success:hover{background:#059669;box-shadow:0 4px 12px rgba(16,185,129,0.3)}
+    .btn-danger{background:#ef4444;color:#fff}
+    .btn-danger:hover{background:#cc2323;box-shadow:0 4px 12px rgba(239,68,68,0.3)}
+    .btn-warning{background:#f59e0b;color:#fff}
+    .btn-warning:hover{background:#d97706}
+    .input{padding:10px 14px;border-radius:10px;background:#fff;border:1px solid var(--brd);color:var(--txt);font-size:14px;outline:none;transition:all var(--t);box-shadow:0 2px 4px rgba(0,0,0,0.02)}
+    .input.full, .login-field .input, .filters .input, .card-body-grid .input { width: 100%; }
+    .input::placeholder{color:#94a3b8}
+    .input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,0.2)}
+    .input.select{appearance:none;padding-right:30px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:16px}
+    
+    .layout{display:grid;grid-template-columns:250px 1fr;gap:24px;align-items:start}
+    
+    .card{background:var(--bg2);border:1px solid rgba(255,255,255,0.5);border-radius:var(--r1);padding:24px;margin-bottom:24px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)}
+    .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #f1f5f9}
+    .card-header h2{margin:0;font-size:20px;color:#0f172a;font-weight:700}
+    .card-body-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
     .card-body-grid .full{grid-column:1/-1}
-    .filters{display:grid;grid-template-columns:.9fr 1fr 1fr auto auto auto;gap:8px;align-items:center;margin-bottom:14px}
-    .filters-total{color:var(--mut);font-size:13px}
-    .tickets-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-    .ticket-card{background:#0d1117;border:1px solid var(--brd);border-radius:var(--r2);padding:12px;display:flex;flex-direction:column;gap:8px;transition:var(--t)}
-    .ticket-card:hover{border-color:var(--naranja);box-shadow:0 4px 14px #0009;transform:translateY(-1px)}
-    .ticket-card.pendiente{background:#22c55e;color:#0d1117;border-color:#16a34a}
-    .ticket-card.pendiente .ticket-desc,.ticket-card.pendiente .ticket-meta{color:#0d1117}
-    .ticket-card.hecho{background:#ef4444;color:#fff;border-color:#b91c1c}
-    .ticket-card.hecho .ticket-desc,.ticket-card.hecho .ticket-meta{color:#fff}
+    .menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+    @media(max-width: 1000px) { .menu-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media(max-width: 600px) { .menu-grid { grid-template-columns: 1fr; } }
+    .filters{display:grid;grid-template-columns:.9fr 1fr 1fr auto auto auto;gap:12px;align-items:center;margin-bottom:20px;background:#f8fafc;padding:12px;border-radius:12px;border:1px solid #f1f5f9}
+    .filters-total{color:var(--mut);font-size:14px;font-weight:600}
+    .tickets-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+    .ticket-card{background:#fff;border:1px solid var(--brd);border-radius:var(--r1);padding:16px;display:flex;flex-direction:column;gap:10px;transition:var(--t);box-shadow:0 2px 4px rgba(0,0,0,0.02)}
+    .ticket-card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 10px 15px -3px rgba(0,0,0,0.1)}
+    .ticket-card.pendiente{border-left:4px solid var(--green)}
+    .ticket-card.hecho{border-left:4px solid var(--naranja)}
     .ticket-header{display:flex;justify-content:space-between;align-items:center}
-    .ticket-header h3{margin:0;font-size:15px}
-    .ticket-desc{margin:0;font-size:13px}
-    .ticket-meta{font-size:12px;color:var(--mut)}
-    .badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:600}
-    .badge-pendiente{background:var(--nsoft);color:var(--naranja)}
-    .badge-hecho{background:#1f6f3a60;color:#39c96d}
-    .ticket-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-    @media(max-width:880px){.app{padding:0 14px 28px}.card-body-grid{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:repeat(2,1fr)}.app-header{flex-direction:column;align-items:flex-start;gap:10px}}
+    .ticket-header h3{margin:0;font-size:16px;color:#0f172a;font-weight:600}
+    .ticket-desc{margin:0;font-size:14px;color:#334155;line-height:1.5}
+    .ticket-meta{font-size:12px;color:#64748b;background:#f1f5f9;padding:4px 8px;border-radius:6px;width:fit-content}
+    .badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em}
+    .badge-pendiente{background:#dcfce7;color:#15803d}
+    .badge-hecho{background:#f1f5f9;color:#475569}
+    .ticket-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    @media(max-width:880px){.app{padding:0 14px 28px}.layout{grid-template-columns:1fr}.sidebar{display:none}.card-body-grid{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:repeat(2,1fr)}.app-header{flex-direction:column;align-items:flex-start;gap:10px}}
 
-    #login { display:flex; align-items:center; justify-content:center; height: calc(100vh - 68px); }
-    .login-card { width: 380px; background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(245,245,245,0.92)); border: 1px solid #e6e6e6; border-radius: 12px; padding: 26px; box-shadow: 0 14px 36px rgba(0,0,0,0.35); transition: transform var(--t), box-shadow var(--t), border-color var(--t); }
-    .login-card:hover { border-color: var(--naranja); box-shadow: 0 18px 44px rgba(0,0,0,0.45); }
-    .login-avatar { width: 130px; height: 130px; border-radius: 50%; background: #fff; margin: 0 auto 18px; display:flex; align-items:center; justify-content:center; box-shadow: 0 10px 26px rgba(0,0,0,.35); border: 2px solid #fff; transition: box-shadow var(--t), border-color var(--t); }
-    .login-avatar:hover { border-color: var(--naranja); box-shadow: 0 16px 36px rgba(0,0,0,.45); }
-    .login-avatar img { width: 120px; height: 120px; object-fit: contain; border-radius: 50%; filter: drop-shadow(0 3px 10px rgba(0,0,0,.4)); }
-    .login-field { display:flex; align-items:center; gap:10px; background:#f8f8f8; padding:12px; border-radius:10px; margin-bottom:12px; border:1px solid #e3e3e3; transition: border-color var(--t), box-shadow var(--t), background var(--t); }
-    .login-field:hover { border-color: var(--naranja); box-shadow: 0 0 0 2px var(--nsoft); background:#fff; }
-    .login-field:focus-within { border-color: var(--naranja); box-shadow: 0 0 0 3px var(--nsoft); background:#fff; }
-    .login-actions { display:flex; align-items:center; justify-content:space-between; margin:8px 0 16px; font-size:12px; color:#555; }
-    .login-actions a { color: var(--mut); text-decoration: none; transition: color var(--t); }
-    .login-actions a:hover { color: var(--naranja); }
-    .login-btn { width:100%; padding:12px; border-radius:999px; background: var(--naranja); color:#0d1117; border: none; font-weight:600; letter-spacing:.02em; box-shadow: 0 6px 18px #ff7a0033; transition: transform var(--t), box-shadow var(--t), background var(--t); }
-    .login-btn:hover { background:#ff8c1c; box-shadow: 0 10px 24px #ff7a0044; }
-    .login-btn:active { transform: translateY(1px); }
-    .logo-btn{height:28px; cursor:pointer; border-radius:6px; padding:2px; background:#21262d; border:1px solid var(--brd)}
-    .logo-btn:hover{background:#2b3138}
-    .menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-    .layout{display:grid;grid-template-columns:220px 1fr;gap:16px}
-    .sidebar{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r1);padding:16px;height:calc(100% - 0px)}
-    .sidebar-user{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:12px}
+    #login { display:flex; align-items:center; justify-content:center; min-height: 100vh; }
+    .login-card { width: 400px; background: rgba(255,255,255,0.9); backdrop-filter:blur(10px); border: 1px solid #fff; border-radius: 24px; padding: 40px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); }
+    .login-avatar { width: 100px; height: 100px; border-radius: 50%; background: #fff; margin: 0 auto 24px; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 4px solid #f8fafc; }
+    .login-field { margin-bottom:16px; }
+    .login-field input { background: #f8fafc; border: 1px solid #e2e8f0; }
+    .login-btn { width:100%; padding:14px; border-radius:12px; background: var(--blue); color:#fff; border: none; font-weight:600; font-size:16px; box-shadow: 0 4px 6px -1px rgba(59,130,246,0.5); transition:all .2s; }
+    .login-btn:hover { background: #2563eb; transform:translateY(-1px); box-shadow: 0 10px 15px -3px rgba(59,130,246,0.6); }
+
+    .sidebar{background:rgba(255,255,255,0.8);border:1px solid #fff;border-radius:24px;padding:24px;height:calc(100% - 0px);backdrop-filter:blur(12px);box-shadow:0 4px 6px -1px rgba(0,0,0,0.05)}
+    .sidebar-user{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid #e2e8f0}
     .sidebar-nav{display:flex;flex-direction:column;gap:8px}
+    .sidebar-nav button{text-align:left;padding:12px 16px;border-radius:12px;transition:all .2s ease;font-weight:500;color:#64748b}
+    .sidebar-nav button:hover{background:#f1f5f9;color:#0f172a;transform:translateX(4px)}
+    .sidebar-nav button.active{background:linear-gradient(135deg, var(--blue), #2563eb);color:#fff;box-shadow:0 4px 6px -1px rgba(59,130,246,0.4)}
+    
     .content{min-height:600px}
-    .avatar-icon{width:100%;height:100%;max-width:120px;max-height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff}
-    .avatar-icon svg{width:70%;height:70%}
+    .avatar-icon{width:100%;height:100%;max-width:120px;max-height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#f1f5f9;color:#cbd5e1}
+    .avatar-icon svg{width:60%;height:60%;fill:#cbd5e1}
+
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { text-align: left; padding: 12px 16px; background: #f8fafc; color: var(--mut); font-weight: 600; font-size: 13px; border-bottom: 1px solid var(--brd); }
+    .data-table td { padding: 12px 16px; border-bottom: 1px solid var(--brd); color: var(--txt); font-size: 14px; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .table-container { background: #fff; border-radius: var(--r1); border: 1px solid var(--brd); overflow: hidden; }
+
+    /* Dark Mode Styles */
+    [data-theme="dark"] {
+      --bg: #0b1121;
+      --bg2: #0f172a;
+      --brd: #1e293b;
+      --txt: #f8fafc;
+      --mut: #94a3b8;
+      --nsoft: rgba(249, 115, 22, 0.2);
+    }
+    body[data-theme="dark"] {
+      background-color: #020617 !important;
+      background-image: radial-gradient(farthest-corner at 0% 0%, #1e293b 0%, transparent 60%), radial-gradient(farthest-corner at 100% 100%, #1e293b 0%, transparent 60%) !important;
+      background-attachment: fixed !important;
+      background-size: cover !important;
+      background-repeat: no-repeat !important;
+    }
+    [data-theme="dark"] .card, 
+    [data-theme="dark"] .sidebar, 
+    [data-theme="dark"] .login-card {
+      background: rgba(15, 23, 42, 0.6);
+      border-color: rgba(59, 130, 246, 0.3);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    }
+    [data-theme="dark"] .input {
+      background: #1e293b;
+      border-color: #334155;
+      color: #f1f5f9;
+    }
+    [data-theme="dark"] .input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+    [data-theme="dark"] .logo {
+      background: linear-gradient(to right, #60a5fa, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    [data-theme="dark"] .app-subtitle,
+    [data-theme="dark"] .app-title small,
+    [data-theme="dark"] .filters-total {
+      color: #94a3b8;
+    }
+    [data-theme="dark"] .app-title h1,
+    [data-theme="dark"] .card-header h2,
+    [data-theme="dark"] .ticket-header h3 {
+      color: #f1f5f9;
+    }
+    [data-theme="dark"] .btn-outline {
+      background: transparent;
+      border-color: #334155;
+      color: #f1f5f9;
+    }
+    [data-theme="dark"] .btn-outline:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: #475569;
+    }
+    [data-theme="dark"] .btn-ghost {
+      color: #cbd5e1;
+    }
+    [data-theme="dark"] .btn-ghost:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    [data-theme="dark"] .ticket-card {
+      background: rgba(30, 41, 59, 0.7);
+      border-color: #334155;
+    }
+    [data-theme="dark"] .ticket-card:hover {
+      border-color: var(--blue);
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+    }
+    [data-theme="dark"] .ticket-desc {
+      color: #cbd5e1;
+    }
+    [data-theme="dark"] .ticket-meta {
+      background: #0f172a;
+      color: #94a3b8;
+    }
+    [data-theme="dark"] .filters {
+      background: rgba(15, 23, 42, 0.5);
+      border-color: #1e293b;
+    }
+    [data-theme="dark"] .sidebar-nav button:hover {
+      background: rgba(255,255,255,0.05);
+      color: #f1f5f9;
+    }
+    [data-theme="dark"] .sidebar-user {
+      border-color: #1e293b;
+    }
+    [data-theme="dark"] .card-header {
+      border-color: #1e293b;
+    }
+    [data-theme="dark"] .login-field input {
+        background: #0f172a;
+        border-color: #334155;
+        color: #fff;
+    }
+    [data-theme="dark"] .table-container {
+        background: rgba(30, 41, 59, 0.7);
+        border-color: #334155;
+    }
+    [data-theme="dark"] .data-table th {
+        background: rgba(15, 23, 42, 0.5);
+        color: #94a3b8;
+        border-bottom-color: #334155;
+    }
+    [data-theme="dark"] .data-table td {
+        border-bottom-color: #334155;
+        color: #f1f5f9;
+    }
+
+    /* Toggle Button */
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--bg2);
+      border: 1px solid var(--brd);
+      cursor: pointer;
+      color: var(--txt);
+      transition: all .2s;
+      margin-right: 16px;
+    }
+    .theme-toggle:hover {
+      background: var(--brd);
+    }
+    .theme-toggle svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
   </style>
 </head>
 <body>
@@ -94,14 +243,17 @@
   <div class="app">
     <div class="app-header">
       <div class="app-header-left">
+        <button id="themeToggle" class="theme-toggle" title="Cambiar tema">
+          <!-- Sun Icon -->
+          <svg class="sun-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          <!-- Moon Icon (hidden by default logic, swapped via JS) -->
+        </button>
         <div class="logo-stack">
           <div class="logo">BIOHERTZ</div>
           <div class="app-subtitle">Tickets y equipos</div>
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:10px;">
-        <select class="input select" id="categoria"><option value="">Categoría</option><option value="tickets">Tickets</option><option value="equipos">Equipos</option></select>
-        <input class="input" id="buscar-global" placeholder="Buscar" />
         <span class="filters-total" id="status"></span>
       </div>
     </div>
@@ -125,17 +277,21 @@
           <div class="card">
             <div class="card-header"><h2>Dashboard</h2></div>
             <div class="menu-grid">
-              <div class="card" style="background:#0d1117;">
+              <div class="card">
                 <div class="card-header"><h2>Pendientes asignados</h2></div>
                 <div style="font-size:32px; font-weight:700;" id="assigned-count">0</div>
               </div>
-              <div class="card" style="background:#0d1117;">
+              <div class="card">
                 <div class="card-header"><h2>Tickets totales</h2></div>
                 <div style="font-size:32px; font-weight:700;" id="total-tickets-count">0</div>
               </div>
-              <div class="card" style="background:#0d1117;">
+              <div class="card">
                 <div class="card-header"><h2>Equipos</h2></div>
                 <div style="font-size:32px; font-weight:700;" id="total-equipos-count">0</div>
+              </div>
+              <div class="card">
+                <div class="card-header"><h2>Clientes</h2></div>
+                <div style="font-size:32px; font-weight:700;" id="total-clientes-count">0</div>
               </div>
             </div>
           </div>
@@ -170,20 +326,68 @@
         </section>
 
         <section id="clientes-section" style="display:none;">
-          <div class="card">
-            <div class="card-header" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-              <div style="display:flex; align-items:center; gap:10px;">
-                <h2>Clientes</h2>
-                <span id="clientes-total" class="muted"></span>
+          <div style="display:grid; gap:20px;">
+            <!-- Card Creación -->
+            <div class="card">
+              <div class="card-header" style="justify-content:space-between;">
+                 <h2>Gestión de Clientes</h2>
+                 <button id="toggleClienteForm" class="btn btn-primary">Nuevo Cliente</button>
               </div>
-              <button id="toggleClienteForm" class="btn btn-primary btn-small">Crear cliente</button>
+              <div id="cliente-form" style="display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--brd);">
+                <h4 style="margin-top:0; margin-bottom:12px; color:var(--blue);">Registrar Cliente</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; align-items:end;">
+                  <div>
+                    <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:600; color:var(--mut);">Nombre del Cliente</label>
+                    <input id="cli-nombre" class="input full" placeholder="Ej: Juan Pérez" />
+                  </div>
+                  <div>
+                    <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:600; color:var(--mut);">Empresa</label>
+                    <input id="cli-empresa" class="input full" placeholder="Ej: Biohertz S.A." />
+                  </div>
+                  <button id="btnCrearCliente" class="btn btn-success" style="height:42px;">Guardar Cliente</button>
+                </div>
+              </div>
             </div>
-            <div id="cliente-form" style="display:none; margin:10px 0; display:flex; gap:8px; flex-wrap:wrap;">
-              <input id="cli-nombre" class="input" placeholder="Nombre (opcional)" />
-              <input id="cli-empresa" class="input" placeholder="Empresa (opcional)" />
-              <button id="btnCrearCliente" class="btn btn-success">Guardar</button>
+
+            <!-- Card Listado -->
+            <div class="card">
+              <div class="card-header">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <h2>Directorio</h2>
+                  <span id="clientes-total" class="badge">0</span>
+                </div>
+              </div>
+              
+              <div class="filters" style="margin-bottom:20px; grid-template-columns: 1fr;">
+                  <input id="cli-filtro-q" class="input full" placeholder="Buscar por nombre, empresa o ID..." />
+              </div>
+
+              <div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
+                  <!-- Lista (Tabla) -->
+                  <div class="table-container">
+                      <table class="data-table">
+                        <thead>
+                          <tr>
+                            <th>Nombre</th>
+                            <th>Empresa</th>
+                            <th style="text-align:right;">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody id="clientes-body"></tbody>
+                      </table>
+                  </div>
+                  
+                  <!-- Detalle Lateral -->
+                  <div id="cliente-detalle-view" style="display:none; position:sticky; top:20px; background:var(--bg2); border:1px solid var(--brd); border-radius:var(--r2); padding:20px; height:fit-content; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">
+                      <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--brd);">
+                          <h3 id="cd-nombre" style="margin:0; color:var(--blue);">Detalles</h3>
+                          <button onclick="document.getElementById('cliente-detalle-view').style.display='none'" class="btn btn-ghost btn-small" title="Cerrar">✕</button>
+                      </div>
+                      <p style="font-weight:600; margin-bottom:12px;">Equipos Asignados</p>
+                      <div id="cd-equipos-list" style="display:flex; flex-direction:column; gap:10px; max-height:calc(100vh - 200px); overflow-y:auto; padding-right:4px;"></div>
+                  </div>
+              </div>
             </div>
-            <div id="clientes" class="tickets-grid"></div>
           </div>
         </section>
 
@@ -237,62 +441,120 @@
         </section>
 
         <section id="equipos-list" style="display:none;">
-      <div class="card">
-        <div class="card-header">
-          <h2>Equipos</h2>
-          <div>
-            <span id="equipos-total" class="muted"></span>
+          <div style="display:grid; gap:20px;">
+            <!-- Card Creación -->
+            <div class="card">
+              <div class="card-header" style="justify-content:space-between;">
+                <h2>Gestión de Equipos</h2>
+                <button id="toggleEquipoForm" class="btn btn-primary">Nuevo Equipo</button>
+              </div>
+              <div id="nuevo-equipo" style="display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--brd);">
+                <h4 style="margin-top:0; margin-bottom:12px; color:var(--blue);">Registrar Equipo</h4>
+                
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; align-items:end;">
+                    <!-- Info Básica -->
+                    <div class="full" style="grid-column: 1/-1; margin-bottom:8px; font-weight:600; color:var(--mut); border-bottom:1px solid var(--brd); padding-bottom:4px;">Información General</div>
+                    
+                    <div><label class="label-sm">Nombre</label><input id="eq-nombre" class="input full" placeholder="Ej: Ecógrafo Portátil" /></div>
+                    <div><label class="label-sm">Marca</label><input id="eq-marca" class="input full" placeholder="Ej: Samsung" /></div>
+                    <div><label class="label-sm">Modelo</label><input id="eq-modelo" class="input full" placeholder="Ej: HS40" /></div>
+                    <div><label class="label-sm">N° Serie</label><input id="eq-numero_serie" class="input full" /></div>
+                    <div><label class="label-sm">Ubicación</label><input id="eq-ubicacion" class="input full" placeholder="Ej: Bodega 1" /></div>
+                    <div><label class="label-sm">Aplicación</label><input id="eq-aplicacion" class="input full" placeholder="Ej: Cardiología" /></div>
+                    
+                    <div class="full" style="grid-column: 1/-1; margin:8px 0; font-weight:600; color:var(--mut); border-bottom:1px solid var(--brd); padding-bottom:4px;">Estado y Asignación</div>
+                    
+                    <div><label class="label-sm">Cliente</label><select id="eq-cliente-id" class="input full"><option value="">Seleccionar Cliente</option></select></div>
+                    <div><label class="label-sm">Año Venta</label><input id="eq-anio_venta" class="input full" type="number" /></div>
+                    <div><label class="label-sm">Estado</label>
+                      <select id="eq-estado" class="input select full">
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                      </select>
+                    </div>
+
+                    <div class="full" style="grid-column: 1/-1; margin:8px 0; font-weight:600; color:var(--mut); border-bottom:1px solid var(--brd); padding-bottom:4px;">Mantención Inicial (Opcional)</div>
+                    
+                    <div><label class="label-sm">Fecha</label><input id="eq-man-fecha" class="input full" type="date" /></div>
+                    <div><label class="label-sm">Trabajo Realizado</label><input id="eq-man-trabajo" class="input full" /></div>
+                    <div><label class="label-sm">Nota</label><input id="eq-man-nota" class="input full" /></div>
+                    
+                    <div style="grid-column: 1/-1; display:flex; justify-content:flex-end; margin-top:10px;">
+                        <button id="btnCrearEquipo" class="btn btn-success" style="min-width:150px;">Guardar Equipo</button>
+                    </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Listado -->
+            <div class="card">
+              <div class="card-header">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <h2>Inventario</h2>
+                  <span id="equipos-total" class="badge">0</span>
+                </div>
+              </div>
+              
+              <div id="filtros-equipos" class="filters" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:12px; margin-bottom:20px;">
+                  <input id="eq-filtro-q" class="input" placeholder="Búsqueda General" />
+                  <input id="eq-filtro-marca" class="input" placeholder="Marca" />
+                  <input id="eq-filtro-modelo" class="input" placeholder="Modelo" />
+                  <input id="eq-filtro-serie" class="input" placeholder="Serie" />
+                  <input id="eq-filtro-cliente" class="input" placeholder="Cliente" />
+                  <input id="eq-filtro-aplicacion" class="input" placeholder="Aplicación" />
+                  <input id="eq-filtro-anio" class="input" type="number" placeholder="Año" />
+                  <select id="eq-filtro-estado" class="input select">
+                    <option value="">Estado: Todos</option>
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                  </select>
+                  
+                  <div style="display:flex; gap:8px; grid-column: 1/-1; justify-content: flex-end;">
+                      <button id="eq-btnFiltrar" class="btn btn-secondary btn-small">Filtrar</button>
+                      <button id="eq-btnLimpiar" class="btn btn-ghost btn-small">Limpiar</button>
+                      <div style="border-left:1px solid var(--brd); padding-left:8px; margin-left:8px; display:flex; gap:8px;">
+                          <button id="eq-btnPrev" class="btn btn-secondary btn-small">Prev</button>
+                          <select id="eq-page-size" class="input select small"><option value="10">10</option><option value="20">20</option><option value="50">50</option></select>
+                          <button id="eq-btnNext" class="btn btn-primary btn-small">Next</button>
+                      </div>
+                  </div>
+              </div>
+              
+              <div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
+                  <!-- Lista (Tabla) -->
+                  <div class="table-container">
+                      <table class="data-table">
+                        <thead>
+                          <tr>
+                            <th>Nombre</th>
+                            <th>Marca/Modelo</th>
+                            <th>Serie</th>
+                            <th>Estado</th>
+                            <th style="text-align:right;">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody id="equipos-body"></tbody>
+                      </table>
+                  </div>
+                  
+                  <!-- Detalle Lateral -->
+                  <div id="equipo-detalle-view" style="display:none; position:sticky; top:20px; background:var(--bg2); border:1px solid var(--brd); border-radius:var(--r2); padding:20px; height:fit-content; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">
+                      <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--brd);">
+                          <h3 id="ed-title" style="margin:0; color:var(--blue);">Detalles del Equipo</h3>
+                          <button onclick="document.getElementById('equipo-detalle-view').style.display='none'" class="btn btn-ghost btn-small" title="Cerrar">✕</button>
+                      </div>
+                      <div id="ed-content" style="display:flex; flex-direction:column; gap:12px;"></div>
+                      <div id="ed-actions" style="margin-top:20px; padding-top:16px; border-top:1px solid var(--brd); display:flex; gap:10px; justify-content:flex-end;"></div>
+                  </div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div id="filtros-equipos" class="filters">
-          <select id="eq-filtro-estado" class="input select">
-            <option value="">Todos</option>
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
-          </select>
-          <input id="eq-filtro-q" class="input" placeholder="Buscar general" />
-          <input id="eq-filtro-marca" class="input" placeholder="Marca" />
-          <input id="eq-filtro-aplicacion" class="input" placeholder="Aplicación" />
-          <input id="eq-filtro-modelo" class="input" placeholder="Modelo" />
-          <input id="eq-filtro-anio" class="input" type="number" placeholder="Año venta" />
-          <input id="eq-filtro-serie" class="input" placeholder="Serie" />
-          <input id="eq-filtro-cliente" class="input" placeholder="Cliente" />
-          <select id="eq-page-size" class="input select small">
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
-          </select>
-          <button id="eq-btnFiltrar" class="btn btn-secondary btn-small">Filtrar</button>
-          <button id="eq-btnLimpiar" class="btn btn-ghost btn-small">Limpiar</button>
-          <button id="eq-btnPrev" class="btn btn-secondary btn-small">Prev</button>
-          <button id="eq-btnNext" class="btn btn-primary btn-small">Next</button>
-        </div>
-        <div id="nuevo-equipo" style="margin-bottom:10px; display:flex; gap:8px; flex-wrap:wrap;">
-          <input id="eq-nombre" class="input" placeholder="Nombre" />
-          <input id="eq-marca" class="input" placeholder="Marca" />
-          <input id="eq-modelo" class="input" placeholder="Modelo" />
-          <input id="eq-numero_serie" class="input" placeholder="N° serie" />
-          <input id="eq-ubicacion" class="input" placeholder="Ubicación" />
-          <input id="eq-aplicacion" class="input" placeholder="Aplicación" />
-          <select id="eq-cliente-id" class="input"><option value="">Cliente</option></select>
-          <input id="eq-anio_venta" class="input" type="number" placeholder="Año venta" />
-          <select id="eq-estado" class="input select">
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
-          </select>
-          <input id="eq-man-fecha" class="input" type="date" placeholder="Fecha mantención (opcional)" />
-          <input id="eq-man-trabajo" class="input" placeholder="Trabajo realizado (opcional)" />
-          <input id="eq-man-nota" class="input" placeholder="Nota (opcional)" />
-          <button id="btnCrearEquipo" class="btn btn-success">Crear Equipo</button>
-        </div>
-        <div id="equipos" class="tickets-grid"></div>
-      </div>
         </section>
       </main>
     </div>
   </div>
   
-  <section id="login" style="display:flex; align-items:center; justify-content:center; height: calc(100vh - 68px);">
+  <section id="login">
     <div class="login-card">
       <div class="login-avatar" id="login-avatar-slot"></div>
       <div class="login-field">
