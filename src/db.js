@@ -403,8 +403,16 @@ if (isOffline) {
     }
   };
 } else {
-  const useSSL = String(process.env.DATABASE_SSL).toLowerCase() === 'true';
-  pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: useSSL ? { rejectUnauthorized: false } : false });
+  const isProduction = process.env.NODE_ENV === 'production';
+  const connectionConfig = {
+    connectionString: process.env.DATABASE_URL,
+  };
+
+  if (isProduction || process.env.DATABASE_SSL === 'true') {
+    connectionConfig.ssl = { rejectUnauthorized: false };
+  }
+
+  pool = new Pool(connectionConfig);
 }
 
 export default pool;
