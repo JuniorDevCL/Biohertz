@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   
   // Inicializar Google Auth
-  initGoogle($);
+  // initGoogle($);
   
   // Eventos de Navegación y UI
   bindAppEvents($);
@@ -417,43 +417,6 @@ async function checkAutoLogin($) {
   } catch {}
 }
 
-async function initGoogle($) {
-  try {
-    const res = await fetch(`${API_URL}/auth/config`);
-    const conf = await res.json();
-    const cid = conf && conf.googleClientId ? conf.googleClientId : '';
-    const ready = () => window.google && google.accounts && google.accounts.id;
-    const start = () => {
-      if (!cid || !ready()) return;
-      google.accounts.id.initialize({
-        client_id: cid,
-        callback: async (resp) => {
-          try {
-            const r = await fetch(`${API_URL}/auth/google`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ id_token: resp.credential })
-            });
-            const data = await r.json();
-            if (r.ok) {
-              handleLoginSuccess(data.token, $);
-            } else {
-              if (loginResult) loginResult.textContent = data.mensaje || data.error || 'Error con Google';
-            }
-          } catch (e) {
-            if (loginResult) loginResult.textContent = 'Error de conexión';
-          }
-        }
-      });
-      const g1 = $('googleSignIn');
-      const g2 = $('googleRegister');
-      if (g1) google.accounts.id.renderButton(g1, { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill' });
-      if (g2) google.accounts.id.renderButton(g2, { theme: 'outline', size: 'large', text: 'signup_with', shape: 'pill' });
-    };
-    const wait = () => { if (ready()) { start(); } else { setTimeout(wait, 200); } };
-    wait();
-  } catch {}
-}
 
 async function updateApiStatus() {
   // Status indicator removed by user request
