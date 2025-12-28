@@ -1,0 +1,3 @@
+{
+  "ignore": ["store.json", "full_system_test.js", "*.test.js"]
+}

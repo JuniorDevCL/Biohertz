@@ -1,0 +1,8 @@
+node_modules
+.env
+dist
+dist8
+store.json
+api_port.txt
+.DS_Store
+Thumbs.db
