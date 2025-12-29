@@ -33,10 +33,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check for token in URL (Google Auth callback)
   const urlParams = new URLSearchParams(window.location.search);
   const tokenFromUrl = urlParams.get('token');
+  const errorFromUrl = urlParams.get('error');
+
   if (tokenFromUrl) {
     console.log('Token encontrado en URL, iniciando sesión...');
     handleLoginSuccess(tokenFromUrl, $);
     // Limpiar URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } else if (errorFromUrl) {
+    // Mostrar error si viene en la URL
+    if ($('loginResult')) $('loginResult').textContent = errorFromUrl;
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 
@@ -859,7 +865,7 @@ async function loadUsers() {
                     }
                 });
             }
-            sel.innerHTML = `<option value="">Asignar</option>` + uniqueUsers.map(u => `<option value="${u.id}">${u.nombre}</option>`).join('');
+            sel.innerHTML = `<option value="">Asignar responsable (opcional)</option>` + uniqueUsers.map(u => `<option value="${u.id}">${u.nombre}</option>`).join('');
         }
     } catch (e) { console.error('Error loading users', e); }
 }

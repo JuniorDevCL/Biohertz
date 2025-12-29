@@ -21,7 +21,7 @@ function isAllowed(email) {
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get('/google/callback',
-  passport.authenticate('google', { failureRedirect: '/', session: false }),
+  passport.authenticate('google', { failureRedirect: '/?error=Acceso denegado: Email no autorizado', session: false }),
   (req, res) => {
     // Generar JWT para el usuario autenticado
     const user = req.user;

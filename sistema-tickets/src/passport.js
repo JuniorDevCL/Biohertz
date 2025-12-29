@@ -2,6 +2,22 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import pool from './db.js';
 
+// --- CONFIGURACIÓN DE LISTA BLANCA (Correos Permitidos) ---
+// Puedes agregar correos aquí manualmente o usar la variable de entorno ALLOWED_EMAILS
+const HARDCODED_ALLOWED = [
+  // 'ejemplo@gmail.com',
+  // 'admin@bioherts.cl'
+];
+
+const envAllowed = (process.env.ALLOWED_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+const allowedEmails = [...new Set([...HARDCODED_ALLOWED.map(s => s.toLowerCase()), ...envAllowed])];
+
+function isAllowed(email) {
+  // Si la lista está vacía, permitimos el acceso a todos (o puedes cambiar a return false para bloquear todo por defecto)
+  if (allowedEmails.length === 0) return true; 
+  return allowedEmails.includes(String(email || '').toLowerCase());
+}
+
 passport.use(
   new GoogleStrategy(
     {
@@ -15,6 +31,11 @@ passport.use(
         const email = profile.emails[0].value;
         const googleId = profile.id;
         const nombre = profile.displayName;
+
+        // VERIFICACIÓN DE LISTA BLANCA
+        if (!isAllowed(email)) {
+          return done(null, false, { message: 'Email no permitido en el sistema.' });
+        }
 
         // 1. Buscar usuario por google_id
         let res = await pool.query('SELECT * FROM usuarios WHERE google_id = $1', [googleId]);
