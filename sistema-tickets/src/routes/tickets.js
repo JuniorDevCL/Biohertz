@@ -34,7 +34,9 @@ router.post('/', authRequired, async (req, res) => {
       const ures = await pool.query('SELECT nombre, email FROM usuarios WHERE id = $1', [asignado_a]);
       if (ures.rowCount > 0) {
         console.log('Ticket asignado a:', ures.rows[0].email);
-        await sendAssignmentEmail(ures.rows[0], result.rows[0]);
+        // Llamada asíncrona para no bloquear la respuesta ni fallar si hay error de correo
+        enviarNotificacionTicket(ures.rows[0].email, titulo)
+          .catch(e => console.error('Error enviando notificación en segundo plano:', e));
       }
     }
   } catch (err) {
