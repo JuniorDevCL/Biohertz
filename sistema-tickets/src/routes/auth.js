@@ -177,14 +177,68 @@ router.post('/google', async (req, res) => {
 });
 
 
-// Listar usuarios (id, nombre, email)
+// Listar usuarios (id, nombre, email, rol)
 router.get('/users', authRequired, async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, nombre, email FROM usuarios ORDER BY nombre ASC');
+    const result = await pool.query('SELECT id, nombre, email, rol FROM usuarios ORDER BY nombre ASC');
     res.json(result.rows);
   } catch (error) {
     console.error('Error en /auth/users:', error);
     return res.status(500).json({ mensaje: 'Error en el servidor', error });
+  }
+});
+
+// Editar usuario (email, rol, etc.)
+router.put('/users/:id', authRequired, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email } = req.body; // Por ahora solo editamos email según requerimiento
+
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es obligatorio' });
+    }
+
+    // Opcional: Validar formato de email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ mensaje: 'Formato de email inválido' });
+    }
+
+    const result = await pool.query(
+      'UPDATE usuarios SET email = $1 WHERE id = $2 RETURNING id, nombre, email, rol',
+      [email, id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+
+    res.json({ mensaje: 'Usuario actualizado', usuario: result.rows[0] });
+  } catch (error) {
+    console.error('Error en PUT /auth/users/:id:', error);
+    res.status(500).json({ mensaje: 'Error al actualizar usuario' });
+  }
+});
+
+// Eliminar usuario
+router.delete('/users/:id', authRequired, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Evitar que uno se borre a sí mismo (opcional pero recomendado)
+    if (parseInt(id) === req.user.id) {
+      return res.status(400).json({ mensaje: 'No puedes eliminar tu propia cuenta' });
+    }
+
+    const result = await pool.query('DELETE FROM usuarios WHERE id = $1', [id]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+
+    res.json({ mensaje: 'Usuario eliminado correctamente' });
+  } catch (error) {
+    console.error('Error en DELETE /auth/users/:id:', error);
+    res.status(500).json({ mensaje: 'Error al eliminar usuario' });
   }
 });
 

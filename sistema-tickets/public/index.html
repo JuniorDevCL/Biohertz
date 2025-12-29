@@ -270,9 +270,32 @@
           <button id="navEquipos" class="btn btn-ghost" style="width:100%;">Equipos</button>
           <button id="navClientes" class="btn btn-ghost" style="width:100%;">Clientes</button>
           <button id="navSettings" class="btn btn-ghost" style="width:100%;">Ajustes</button>
+          <button id="navUsers" class="btn btn-ghost" style="width:100%;">Usuarios</button>
         </nav>
       </aside>
       <main class="content">
+        <section id="admin-users" style="display:none;">
+          <div class="card">
+            <div class="card-header">
+              <h2>Administración de Usuarios</h2>
+              <button id="btnRefreshUsers" class="btn btn-ghost btn-small">↻</button>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th style="text-align:right;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-users-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <section id="dashboard" style="display:none;">
           <div class="card">
             <div class="card-header"><h2>Dashboard</h2></div>
