@@ -204,8 +204,7 @@ function handleLoginSuccess(newToken, $) {
   
   if (loginResult) loginResult.textContent = 'Login correcto';
   $('login').style.display = 'none';
-  $('main-app').style.display = 'block';
-  $('app-layout').style.display = 'grid';
+  $('main-app').style.display = 'flex';
   $('dashboard').style.display = 'block';
   $('menu').style.display = 'none';
   
@@ -399,8 +398,7 @@ async function checkAutoLogin($) {
         if (statusEl) statusEl.textContent = `Conectado: ${currentUser.nombre} (${currentUser.rol})`;
         $('btnLogout').style.display = 'inline-block';
         $('login').style.display = 'none';
-        $('main-app').style.display = 'block';
-        $('app-layout').style.display = 'grid';
+        $('main-app').style.display = 'flex';
         $('dashboard').style.display = 'block';
         
         const un = $('user-nombre');
