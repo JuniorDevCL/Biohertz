@@ -19,6 +19,7 @@ let offset = 0;
 let eqPageSize = 20;
 let eqOffset = 0;
 let equiposList = [];
+let usersList = []; // Lista global de usuarios para asignaciones
 let currentEquipo = null;
 
 // Referencias a elementos UI (se inicializan en DOMContentLoaded)
@@ -89,13 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if ($('btnRegister')) $('btnRegister').addEventListener('click', async () => {
     console.log('Intento de registro...');
     const nombre = String($('reg-nombre').value || '').trim();
-    // Use main email/password fields for registration data source if simplified, 
-    // or we should have added separate fields. 
-    // The previous code used reg-email, but in new HTML I didn't add reg-email/reg-password explicitly to keep it clean.
-    // Let's assume user fills the main form and clicks "Register" button which appears after toggle.
-    // Wait, the HTML has id="email" and id="password".
-    // I will use those for registration as well since it's a single form block usually.
-    // Or I should have added them. Let's use the main inputs for simplicity as the user toggles "Crear cuenta".
     const email = String($('email').value || '').trim().toLowerCase();
     const password = String($('password').value || '').trim();
     const rol = 'user'; // Default
@@ -144,9 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Check login guardado
   checkAutoLogin($);
-  
-  // Status check
-  updateApiStatus();
 });
 
 function handleLoginSuccess(newToken, $) {
@@ -158,42 +149,27 @@ function handleLoginSuccess(newToken, $) {
     const payload = JSON.parse(atob(token.split('.')[1]));
     currentUser = { id: payload.id, nombre: payload.nombre, rol: payload.rol };
     if (statusEl) statusEl.textContent = `Conectado: ${currentUser.nombre} (${currentUser.rol})`;
-    if ($('btnLogout')) $('btnLogout').style.display = 'flex'; // Flex for layout
+    if ($('btnLogout')) $('btnLogout').style.display = 'flex';
   } catch {}
   
   if (loginResult) loginResult.textContent = 'Login correcto';
   $('login').style.display = 'none';
-  $('app-layout').style.display = 'flex'; // Changed to flex for sidebar layout
+  $('app-layout').style.display = 'flex';
   $('dashboard').style.display = 'block';
-  $('menu').style.display = 'flex'; // Ensure sidebar is visible
+  $('menu').style.display = 'flex';
   
   const un = $('user-nombre');
   if (un && currentUser && currentUser.nombre) un.querySelector('h1').textContent = currentUser.nombre;
   
   connectSocket();
-  loadUsers();
+  loadUsers(); // Carga usuarios globales
   loadDashboard();
   refreshClienteSelect();
   lucide.createIcons();
 }
 
 function bindAppEvents($) {
-  // Crear ticket (Button in Tickets Section Header or Modal? 
-  // User asked for "Nuevo Ticket" button. In HTML I added id="btnNewTicket".
-  // I need to implement a modal or simple form toggle. 
-  // For now, I'll assume we show the form inside the section or a modal. 
-  // The old code had $('btnCrearTicket').
-  // Let's create a Modal or Toggle for New Ticket.
-  
-  // Actually, I'll add a simple form container in HTML via JS if it's missing, 
-  // or use the "Nuevo Ticket" button to toggle a form.
-  // The previous HTML had a specific form structure. I'll add a simple "Quick Create" form in the tickets section via JS or expect it to be there.
-  // In my new HTML, I didn't put the "New Ticket" form explicitly visible. 
-  // I'll inject a modal or form when clicking "New Ticket".
-  
   $('btnNewTicket')?.addEventListener('click', () => {
-      // Simple prompt for now or toggle a hidden form
-      // Let's implement a clean form toggle at the top of tickets list
       let form = $('new-ticket-form-container');
       if (!form) {
           form = document.createElement('div');
@@ -213,9 +189,8 @@ function bindAppEvents($) {
                 <button id="nt-save" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 shadow-lg shadow-blue-600/20">Crear Ticket</button>
             </div>
           `;
-          $('tickets-section').insertBefore(form, $('tickets-section').querySelector('.glass-card')); // Insert before filters
+          $('tickets-section').insertBefore(form, $('tickets-section').querySelector('.glass-card'));
           
-          // Bind save
           form.querySelector('#nt-save').addEventListener('click', async () => {
               const titulo = $('nt-titulo').value;
               const descripcion = $('nt-descripcion').value;
@@ -239,12 +214,10 @@ function bindAppEvents($) {
           
           form.querySelector('#nt-cancel').addEventListener('click', () => form.remove());
           
-          // Populate equipos
           loadEquiposForSelect('nt-equipo');
       }
   });
   
-  // Logout
   $('btnLogout')?.addEventListener('click', () => {
     token = null; currentUser = null;
     if (statusEl) statusEl.textContent = '';
@@ -253,7 +226,6 @@ function bindAppEvents($) {
     try { localStorage.removeItem('bioherts_token'); } catch {}
   });
 
-  // Navegación
   $('btnIrTickets')?.addEventListener('click', () => showSection('tickets-section', $));
   $('navTickets')?.addEventListener('click', () => showSection('tickets-section', $));
   $('btnIrEquipos')?.addEventListener('click', () => showSection('equipos-list', $));
@@ -265,7 +237,6 @@ function bindAppEvents($) {
   $('.logo')?.addEventListener('click', () => showSection('dashboard', $));
   $('btnRefreshUsers')?.addEventListener('click', () => loadAdminUsers());
 
-  // Clientes
   $('cli-filtro-q')?.addEventListener('input', () => loadClientes());
 
   $('btnCrearCliente')?.addEventListener('click', async () => {
@@ -281,23 +252,23 @@ function bindAppEvents($) {
         $('cli-nombre').value = '';
         $('cli-empresa').value = '';
         loadClientes();
+        refreshClienteSelect();
       } else {
         alert('Error al crear cliente');
       }
     } catch(e) { console.error(e); }
   });
   
-  // Avatar - Removed for now or needs simplified implementation
-  
-  // Equipos Crear
   $('btnCrearEquipo')?.addEventListener('click', () => {
       const f = $('form-equipo');
-      if (f) f.classList.toggle('hidden');
+      if (f) {
+          f.classList.toggle('hidden');
+          if(!f.classList.contains('hidden')) refreshClienteSelect();
+      }
   });
   
   $('btnSaveEquipo')?.addEventListener('click', createEquipo);
   
-  // Paginación y Filtros Equipos
   $('eqPrev')?.addEventListener('click', () => { eqOffset = Math.max(0, eqOffset - eqPageSize); loadEquipos(); });
   $('eqNext')?.addEventListener('click', () => { eqOffset += eqPageSize; loadEquipos(); });
   $('eq-page-size')?.addEventListener('change', (e) => { eqPageSize = Number(e.target.value) || 20; eqOffset = 0; loadEquipos(); });
@@ -307,10 +278,8 @@ function bindAppEvents($) {
       loadEquipos();
   });
   
-  // Enter key for filters
   $('eq-filtro-q')?.addEventListener('keydown', (e) => { if(e.key === 'Enter') { eqOffset = 0; loadEquipos(); } });
   
-  // Paginación Tickets
   $('prevPage')?.addEventListener('click', () => { offset = Math.max(0, offset - pageSize); loadTickets(); });
   $('nextPage')?.addEventListener('click', () => { offset += pageSize; loadTickets(); });
   $('page-size')?.addEventListener('change', (e) => { pageSize = Number(e.target.value) || 50; offset = 0; loadTickets(); });
@@ -341,12 +310,10 @@ function showSection(id, $) {
         if (id === 'admin-users') loadAdminUsers();
     }
     
-    // Mobile: Hide sidebar on selection
     if (window.innerWidth < 768) {
         $('menu')?.classList.add('-translate-x-full');
     }
 
-    // Update Sidebar Active State
     const navMap = {
         'dashboard': 'navDashboard',
         'tickets-section': 'navTickets',
@@ -356,7 +323,6 @@ function showSection(id, $) {
         'admin-users': 'navUsers'
     };
     
-    // Remove active styling
     Object.values(navMap).forEach(navId => {
         const btn = $(navId);
         if (btn) {
@@ -367,7 +333,6 @@ function showSection(id, $) {
         }
     });
 
-    // Add active styling
     const activeNavId = navMap[id];
     if (activeNavId) {
         const activeBtn = $(activeNavId);
@@ -437,20 +402,11 @@ async function initGoogle($) {
           }
         }
       });
-      // Removed renderButton as we use custom or data attributes in HTML
     };
     const wait = () => { if (ready()) { start(); } else { setTimeout(wait, 200); } };
     wait();
   } catch {}
 }
-
-async function updateApiStatus() {
-  // Status indicator removed by user request
-}
-
-// =========================================================
-// FUNCIONES DE LÓGICA (TICKETS, EQUIPOS, ETC)
-// =========================================================
 
 async function loadTickets() {
   try {
@@ -460,12 +416,23 @@ async function loadTickets() {
     const res = await fetch(url, { headers: { 'Authorization': token ? `Bearer ${token}` : '' } });
     const data = await res.json();
     if (ticketsEl) {
-        ticketsEl.innerHTML = '';
-        data.forEach(t => ticketsEl.appendChild(ticketCard(t)));
-        bindTicketActions();
+        if (data.length === 0) {
+            ticketsEl.innerHTML = `
+                <div class="col-span-full flex flex-col items-center justify-center py-12 text-slate-500 animate-fade-in">
+                    <div class="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mb-4 border border-white/5">
+                        <i data-lucide="inbox" class="w-8 h-8 opacity-50"></i>
+                    </div>
+                    <p class="text-lg font-medium text-slate-400">No hay tickets</p>
+                    <p class="text-sm text-slate-600">No se encontraron tickets con los filtros actuales</p>
+                </div>
+            `;
+        } else {
+            ticketsEl.innerHTML = '';
+            data.forEach(t => ticketsEl.appendChild(ticketCard(t)));
+            bindTicketActions();
+        }
     }
     
-    // Count logic...
     try {
       const resCount = await fetch(`${API_URL}/tickets/count${qs ? `?${qs}` : ''}`, { headers: { 'Authorization': token ? `Bearer ${token}` : '' } });
       const countData = await resCount.json();
@@ -483,8 +450,6 @@ async function loadTickets() {
 
 function ticketCard(t) {
   const div = document.createElement('div');
-  // Styling based on state and priority
-  // Since priority is not in the data explicitly in the previous file (I only saw state), I'll default to blue border
   const borderColor = t.estado === 'pendiente' ? 'border-l-blue-500' : 'border-l-green-500';
   const badgeClass = t.estado === 'pendiente' 
       ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
@@ -492,6 +457,11 @@ function ticketCard(t) {
       
   div.className = `glass-card p-5 rounded-xl border-l-4 ${borderColor} hover:-translate-y-1 transition-transform duration-300 group relative flex flex-col h-full`;
   
+  // Opciones de usuarios para el select de asignación
+  const userOptions = usersList.map(u => 
+      `<option value="${u.id}" ${t.asignado_a === u.id ? 'selected' : ''}>${u.nombre}</option>`
+  ).join('');
+
   div.innerHTML = `
     <div class="flex justify-between items-start mb-3">
         <span class="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${badgeClass}">${t.estado}</span>
@@ -501,12 +471,23 @@ function ticketCard(t) {
     <div class="mb-4 flex-1">
         <h3 class="text-lg font-bold text-white mb-2 line-clamp-2">${t.titulo}</h3>
         <p class="text-slate-400 text-sm line-clamp-3">${t.descripcion || 'Sin descripción'}</p>
+        <div class="mt-2 text-xs text-slate-500 flex items-center">
+            <i data-lucide="user" class="w-3 h-3 mr-1"></i> 
+            ${t.asignado_a_nombre ? `Asignado a: ${t.asignado_a_nombre}` : 'Sin asignar'}
+        </div>
     </div>
     
     <!-- Edit Form Container (Hidden) -->
     <div id="edit-ticket-${t.id}" class="hidden mb-4 p-3 bg-slate-900/50 rounded-lg border border-slate-700">
-       <input id="et-titulo-${t.id}" value="${t.titulo}" class="w-full mb-2 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white text-sm">
-       <textarea id="et-descripcion-${t.id}" class="w-full mb-2 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white text-sm">${t.descripcion || ''}</textarea>
+       <input id="et-titulo-${t.id}" value="${t.titulo}" class="w-full mb-2 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white text-sm" placeholder="Título">
+       <textarea id="et-descripcion-${t.id}" class="w-full mb-2 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white text-sm" placeholder="Descripción">${t.descripcion || ''}</textarea>
+       
+       <label class="block text-xs text-slate-500 mb-1">Asignar a:</label>
+       <select id="et-asignado-${t.id}" class="w-full mb-2 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white text-sm">
+          <option value="">Sin asignar</option>
+          ${userOptions}
+       </select>
+
        <div class="flex justify-end gap-2">
            <button class="text-xs text-slate-400" data-cancel-ticket="${t.id}">Cancelar</button>
            <button class="text-xs text-blue-400 font-bold" data-save-ticket="${t.id}">Guardar</button>
@@ -562,36 +543,34 @@ function bindTicketActions(container) {
         }
     }));
     
-    // Edit Toggle
     target.querySelectorAll('button[data-editar]').forEach(btn => btn.addEventListener('click', () => {
         const id = btn.dataset.editar;
         const form = document.getElementById(`edit-ticket-${id}`);
         if(form) form.classList.toggle('hidden');
     }));
     
-    // Save Edit
     target.querySelectorAll('button[data-save-ticket]').forEach(btn => btn.addEventListener('click', async () => {
         const id = btn.dataset.saveTicket;
         const titulo = document.getElementById(`et-titulo-${id}`).value;
         const descripcion = document.getElementById(`et-descripcion-${id}`).value;
+        const asignado_a = document.getElementById(`et-asignado-${id}`).value;
+        
         try {
             await fetch(`${API_URL}/tickets/${id}`, {
-                method: 'PUT',
+                method: 'PATCH', // Changed to PATCH
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ titulo, descripcion })
+                body: JSON.stringify({ titulo, descripcion, asignado_a: asignado_a || null })
             });
             loadTickets();
         } catch(e) { console.error(e); }
     }));
     
-    // Cancel Edit
     target.querySelectorAll('button[data-cancel-ticket]').forEach(btn => btn.addEventListener('click', () => {
         const id = btn.dataset.cancelTicket;
         const form = document.getElementById(`edit-ticket-${id}`);
         if(form) form.classList.add('hidden');
     }));
     
-    // Comments
     target.querySelectorAll('button[data-ver]').forEach(btn => btn.addEventListener('click', () => toggleComentarios(btn.dataset.ver)));
 }
 
@@ -613,7 +592,6 @@ async function toggleComentarios(id) {
         c.innerHTML = '';
         return;
     }
-    // Load comments
     try {
         const res = await fetch(`${API_URL}/tickets/${id}/comentarios`, { headers: { 'Authorization': `Bearer ${token}` } });
         const comments = await res.json();
@@ -660,8 +638,8 @@ window.postComment = async (id) => {
         });
         inp.value = '';
         const c = document.getElementById(`comentarios-${id}`);
-        c.innerHTML = ''; // Collapse to force reload or reload manually
-        toggleComentarios(id); // Reload
+        c.innerHTML = ''; 
+        toggleComentarios(id); 
     } catch(e) { console.error(e); }
 };
 
@@ -673,34 +651,42 @@ async function loadEquipos() {
         const data = await res.json();
         const tbody = document.getElementById('equipos');
         if(tbody) {
-            tbody.innerHTML = data.map(e => `
-                <tr class="hover:bg-white/5 transition-colors group border-b border-slate-800 last:border-0">
-                    <td class="px-6 py-4">
-                        <div class="flex items-center">
-                            <div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center mr-3 text-slate-400">
-                                <i data-lucide="${getDeviceIcon(e.tipo)}" class="w-5 h-5"></i>
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-500 italic">No se encontraron equipos</td></tr>`;
+            } else {
+                tbody.innerHTML = data.map(e => `
+                    <tr class="hover:bg-white/5 transition-colors group border-b border-slate-800 last:border-0">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-xl bg-slate-800/50 border border-white/5 flex items-center justify-center mr-4 text-slate-400 group-hover:text-blue-400 group-hover:border-blue-500/30 transition-all">
+                                    <i data-lucide="${getDeviceIcon(e.tipo)}" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-white">${e.tipo} ${e.marca}</div>
+                                    <div class="text-xs text-slate-500 font-mono mt-0.5">${e.modelo} • <span class="tracking-wider">SN:${e.serie}</span></div>
+                                </div>
                             </div>
-                            <div>
-                                <div class="font-medium text-white">${e.tipo} ${e.marca}</div>
-                                <div class="text-xs text-slate-500 font-mono">${e.modelo} • SN: ${e.serie}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center text-slate-300">
+                                <i data-lucide="user" class="w-3 h-3 mr-2 text-slate-500"></i>
+                                ${e.cliente_nombre || '<span class="text-slate-600 italic">Sin asignar</span>'}
                             </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <span class="text-sm text-slate-300">${e.cliente_nombre || '-'}</span>
-                    </td>
-                    <td class="px-6 py-4">
-                        <span class="px-2 py-1 rounded-full text-xs font-medium ${e.estado === 'activo' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700/50 text-slate-400'}">
-                            ${e.estado}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4">
-                        <button class="text-slate-400 hover:text-blue-400 transition-colors" title="Editar" onclick="alert('Editar equipo no implementado en este demo')">
-                            <i data-lucide="edit-2" class="w-4 h-4"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${e.estado === 'activo' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-700/50 text-slate-400 border-slate-600/30'}">
+                                <span class="w-1.5 h-1.5 rounded-full bg-current mr-1.5"></span>
+                                ${e.estado}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button class="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all" title="Editar" onclick="alert('Editar equipo no implementado en este demo')">
+                                <i data-lucide="edit-2" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
             lucide.createIcons();
         }
     } catch(e) { console.error(e); }
@@ -712,7 +698,8 @@ function getDeviceIcon(tipo) {
     if(t.includes('laptop') || t.includes('portatil')) return 'laptop';
     if(t.includes('impresora')) return 'printer';
     if(t.includes('servidor')) return 'server';
-    if(t.includes('movil') || t.includes('celular')) return 'smartphone';
+    if(t.includes('movil') || t.includes('celular') || t.includes('iphone')) return 'smartphone';
+    if(t.includes('tablet') || t.includes('ipad')) return 'tablet';
     return 'monitor';
 }
 
@@ -732,11 +719,14 @@ async function createEquipo() {
             body: JSON.stringify({ tipo, marca, modelo, serie, cliente_id, estado: 'activo' })
         });
         if(res.ok) {
-            alert('Equipo creado');
+            alert('Equipo creado correctamente');
             $('form-equipo').classList.add('hidden');
+            // Limpiar form
+            ['eq-tipo','eq-marca','eq-modelo','eq-serie'].forEach(id => $(id).value = '');
+            $('eq-cliente-id').value = '';
             loadEquipos();
         } else {
-            alert('Error al crear');
+            alert('Error al crear equipo');
         }
     } catch(e) { console.error(e); }
 }
@@ -749,15 +739,31 @@ async function loadClientes() {
         const data = await res.json();
         const tbody = document.getElementById('clientes-list');
         if(tbody) {
-            tbody.innerHTML = data.map(c => `
-                <tr class="hover:bg-white/5 transition-colors border-b border-slate-800 last:border-0">
-                    <td class="px-6 py-4 font-medium text-white">${c.nombre}</td>
-                    <td class="px-6 py-4 text-slate-400">${c.empresa || '-'}</td>
-                    <td class="px-6 py-4 text-right">
-                         <button class="text-slate-400 hover:text-blue-400 transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                    </td>
-                </tr>
-            `).join('');
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-500 italic">No se encontraron clientes</td></tr>`;
+            } else {
+                tbody.innerHTML = data.map(c => `
+                    <tr class="hover:bg-white/5 transition-colors border-b border-slate-800 last:border-0 group">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-xs font-bold text-white mr-3 shadow-lg shadow-emerald-500/20">
+                                    ${c.nombre ? c.nombre[0].toUpperCase() : 'C'}
+                                </div>
+                                <span class="font-medium text-white group-hover:text-emerald-400 transition-colors">${c.nombre}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center text-slate-400">
+                                <i data-lucide="building-2" class="w-3 h-3 mr-2 opacity-50"></i>
+                                ${c.empresa || '<span class="text-slate-600">-</span>'}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                             <button class="p-2 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-all"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
             lucide.createIcons();
         }
     } catch(e) { console.error(e); }
@@ -770,20 +776,24 @@ async function loadAdminUsers() {
         const tbody = document.getElementById('admin-users-body');
         if(tbody) {
             tbody.innerHTML = users.map(u => `
-            <tr class="hover:bg-white/5 transition-colors border-b border-slate-800 last:border-0">
+            <tr class="hover:bg-white/5 transition-colors border-b border-slate-800 last:border-0 group">
                 <td class="px-6 py-4">
                     <div class="flex items-center">
-                        <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-white mr-3">
+                        <div class="w-9 h-9 rounded-full bg-slate-800 border border-white/5 flex items-center justify-center text-xs font-bold text-white mr-3 ring-2 ring-transparent group-hover:ring-blue-500/20 transition-all">
                             ${u.nombre ? u.nombre[0].toUpperCase() : 'U'}
                         </div>
-                        <span class="text-white font-medium">${u.nombre}</span>
+                        <span class="text-white font-medium group-hover:text-blue-400 transition-colors">${u.nombre}</span>
                     </div>
                 </td>
-                <td class="px-6 py-4 text-slate-400">${u.email}</td>
-                <td class="px-6 py-4"><span class="px-2 py-1 rounded text-xs font-bold uppercase bg-slate-800 text-slate-300">${u.rol || 'user'}</span></td>
+                <td class="px-6 py-4 text-slate-400 font-mono text-xs">${u.email}</td>
+                <td class="px-6 py-4">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${u.rol === 'admin' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-slate-700/50 text-slate-400 border-slate-600/30'}">
+                        ${u.rol || 'user'}
+                    </span>
+                </td>
                 <td class="px-6 py-4 text-right">
-                    <button class="text-blue-400 hover:text-blue-300 mr-2" data-edit-user="${u.id}" data-email="${u.email}" title="Editar"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                    <button class="text-red-400 hover:text-red-300" data-delete-user="${u.id}" title="Borrar"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    <button class="p-2 text-blue-400 hover:text-white hover:bg-blue-600 rounded-lg mr-1 transition-all" data-edit-user="${u.id}" data-email="${u.email}" title="Editar"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                    <button class="p-2 text-red-400 hover:text-white hover:bg-red-600 rounded-lg transition-all" data-delete-user="${u.id}" title="Borrar"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 </td>
             </tr>
             `).join('');
@@ -794,7 +804,6 @@ async function loadAdminUsers() {
 }
 
 function bindUserActions(container) {
-  // Same as before
   container.querySelectorAll('button[data-edit-user]').forEach(btn => {
     btn.addEventListener('click', () => editUser(btn.dataset.editUser, btn.dataset.email));
   });
@@ -841,20 +850,45 @@ async function deleteUser(id) {
   }
 }
 
-// Helper functions for Query
 function buildQueryFromFilters() {
-    const q = $('q')?.value;
-    const estado = $('f-estado')?.value;
+    const q = document.getElementById('q')?.value;
+    const estado = document.getElementById('f-estado')?.value;
     const p = new URLSearchParams();
     if(q) p.append('q', q);
     if(estado) p.append('estado', estado);
     return p.toString();
 }
 
-// Helpers
-function loadUsers() { /* Needed for assignment select in new ticket */ }
-function loadEquiposForSelect(id) { /* Populate select */ }
-function renderAvatar() {} // Placeholder
+async function loadUsers() {
+    try {
+        const res = await fetch(`${API_URL}/auth/users`, { headers: { 'Authorization': token ? `Bearer ${token}` : '' } });
+        if(res.ok) {
+            usersList = await res.json();
+        }
+    } catch(e) { console.error(e); }
+}
+
+async function loadEquiposForSelect(id) {
+    try {
+        const select = document.getElementById(id);
+        if(!select) return;
+        const res = await fetch(`${API_URL}/equipos?limit=100`, { headers: { 'Authorization': token ? `Bearer ${token}` : '' } });
+        const data = await res.json();
+        // Keep first option
+        const first = select.options[0];
+        select.innerHTML = '';
+        select.appendChild(first);
+        data.forEach(e => {
+            const opt = document.createElement('option');
+            opt.value = e.id;
+            opt.textContent = `${e.tipo} ${e.marca} - ${e.modelo}`;
+            select.appendChild(opt);
+        });
+    } catch(e) { console.error(e); }
+}
+
+function renderAvatar() {} 
+
 function connectSocket() {
     if (socket) return;
     try {
@@ -875,7 +909,6 @@ async function loadDashboard() {
                 container.innerHTML = '<p class="text-slate-500 col-span-full text-center py-4">No tienes tickets pendientes.</p>';
             } else {
                 container.innerHTML = '';
-                // Simple cards for dashboard
                 data.forEach(t => {
                     const div = document.createElement('div');
                     div.className = 'glass-card p-4 rounded-xl border-l-4 border-l-blue-500 hover:bg-white/5 transition-colors cursor-pointer';
@@ -889,14 +922,12 @@ async function loadDashboard() {
                     `;
                     div.addEventListener('click', () => {
                         showSection('tickets-section', document.getElementById);
-                        // Optional: Highlight specific ticket
                     });
                     container.appendChild(div);
                 });
             }
         }
         
-        // Update counts
         const r1 = await fetch(`${API_URL}/tickets/count`, { headers: { 'Authorization': `Bearer ${token}` } });
         const d1 = await r1.json();
         if(document.getElementById('tickets-total')) document.getElementById('tickets-total').textContent = d1.total;
@@ -912,4 +943,20 @@ async function loadDashboard() {
     } catch(e) { console.error(e); }
 }
 
-function refreshClienteSelect() {} // Placeholder
+async function refreshClienteSelect() {
+    try {
+        const select = document.getElementById('eq-cliente-id');
+        if(!select) return;
+        const res = await fetch(`${API_URL}/clientes?limit=100`, { headers: { 'Authorization': token ? `Bearer ${token}` : '' } });
+        const data = await res.json();
+        const first = select.options[0];
+        select.innerHTML = '';
+        select.appendChild(first);
+        data.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.nombre;
+            select.appendChild(opt);
+        });
+    } catch(e) { console.error(e); }
+}
