@@ -8,7 +8,7 @@
 </head>
 <body class="bg-slate-950 text-white min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black font-sans antialiased selection:bg-blue-500/30 selection:text-blue-200">
   
-  <div class="app">
+  <div class="app" id="main-app" style="display: none;">
     <div class="app-header">
       <div class="app-header-left">
         <button id="themeToggle" class="theme-toggle" title="Cambiar tema">
@@ -43,23 +43,25 @@
       </aside>
       <main class="content">
         <section id="admin-users" class="hidden">
-          <div class="card">
-            <div class="card-header">
-              <h2>Administración de Usuarios</h2>
-              <button id="btnRefreshUsers" class="btn btn-ghost btn-small">↻</button>
-            </div>
-            <div class="table-container">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Email</th>
-                    <th>Rol</th>
-                    <th class="text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody id="admin-users-body"></tbody>
-              </table>
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="card">
+              <div class="card-header">
+                <h2>Administración de Usuarios</h2>
+                <button id="btnRefreshUsers" class="btn btn-ghost btn-small">↻</button>
+              </div>
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Email</th>
+                      <th>Rol</th>
+                      <th class="text-right">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-users-body"></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </section>
@@ -68,26 +70,26 @@
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="card">
               <div class="card-header"><h2>Dashboard</h2></div>
-              <div class="menu-grid">
-                <div class="card">
-                  <div class="card-header"><h2>Pendientes asignados</h2></div>
-                  <div class="text-3xl font-bold text-white" id="assigned-count">0</div>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
+                <div class="card p-4 flex flex-col items-center justify-center text-center">
+                  <div class="card-header mb-2"><h2 class="text-sm text-slate-400 font-medium uppercase tracking-wider">Pendientes</h2></div>
+                  <div class="text-4xl font-bold text-white" id="assigned-count">0</div>
                 </div>
-                <div class="card">
-                  <div class="card-header"><h2>Tickets totales</h2></div>
-                  <div class="text-3xl font-bold text-white" id="total-tickets-count">0</div>
+                <div class="card p-4 flex flex-col items-center justify-center text-center">
+                  <div class="card-header mb-2"><h2 class="text-sm text-slate-400 font-medium uppercase tracking-wider">Tickets</h2></div>
+                  <div class="text-4xl font-bold text-white" id="total-tickets-count">0</div>
                 </div>
-                <div class="card">
-                  <div class="card-header"><h2>Equipos</h2></div>
-                  <div class="text-3xl font-bold text-white" id="total-equipos-count">0</div>
+                <div class="card p-4 flex flex-col items-center justify-center text-center">
+                  <div class="card-header mb-2"><h2 class="text-sm text-slate-400 font-medium uppercase tracking-wider">Equipos</h2></div>
+                  <div class="text-4xl font-bold text-white" id="total-equipos-count">0</div>
                 </div>
-                <div class="card">
-                  <div class="card-header"><h2>Clientes</h2></div>
-                  <div class="text-3xl font-bold text-white" id="total-clientes-count">0</div>
+                <div class="card p-4 flex flex-col items-center justify-center text-center">
+                  <div class="card-header mb-2"><h2 class="text-sm text-slate-400 font-medium uppercase tracking-wider">Clientes</h2></div>
+                  <div class="text-4xl font-bold text-white" id="total-clientes-count">0</div>
                 </div>
               </div>
             </div>
-            <div class="card">
+            <div class="card mt-6">
               <div class="card-header"><h2>Mis pendientes</h2></div>
               <div id="assigned-list" class="tickets-grid"></div>
             </div>
@@ -95,32 +97,37 @@
         </section>
 
         <section id="menu" class="hidden">
-          <div class="card">
-            <div class="card-header"><h2>Menú</h2></div>
-            <div class="menu-grid">
-              <button id="btnIrTickets" class="btn btn-primary">Tickets</button>
-              <button id="btnIrEquipos" class="btn btn-success">Equipos</button>
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="card">
+              <div class="card-header"><h2>Menú</h2></div>
+              <div class="menu-grid">
+                <button id="btnIrTickets" class="btn btn-primary">Tickets</button>
+                <button id="btnIrEquipos" class="btn btn-success">Equipos</button>
+              </div>
             </div>
           </div>
         </section>
 
         <section id="settings" class="hidden">
-          <div class="card">
-            <div class="card-header"><h2>Ajustes</h2></div>
-            <div class="card-body flex items-center gap-4">
-              <div class="login-avatar w-[120px] h-[120px]" id="settings-avatar-slot"></div>
-              <div>
-                <input type="file" id="avatar-file" accept="image/*" class="hidden" />
-                <button id="btnChangeAvatar" class="btn btn-ghost">Cambiar foto</button>
-                <button id="btnLogout" class="btn btn-outline btn-small ml-2">Cerrar sesión</button>
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="card">
+              <div class="card-header"><h2>Ajustes</h2></div>
+              <div class="card-body flex items-center gap-4">
+                <div class="login-avatar w-[120px] h-[120px]" id="settings-avatar-slot"></div>
+                <div>
+                  <input type="file" id="avatar-file" accept="image/*" class="hidden" />
+                  <button id="btnChangeAvatar" class="btn btn-ghost">Cambiar foto</button>
+                  <button id="btnLogout" class="btn btn-outline btn-small ml-2">Cerrar sesión</button>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         <section id="clientes-section" class="hidden">
-          <div class="grid gap-5">
-            <!-- Card Creación -->
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid gap-5">
+              <!-- Card Creación -->
             <div class="card">
               <div class="card-header justify-between">
                  <h2>Gestión de Clientes</h2>
@@ -254,8 +261,9 @@
         </section>
 
         <section id="equipos-list" class="hidden">
-          <div class="grid gap-5">
-            <!-- Card Creación -->
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid gap-5">
+              <!-- Card Creación -->
             <div class="card">
               <div class="card-header justify-between">
                 <h2>Gestión de Equipos</h2>

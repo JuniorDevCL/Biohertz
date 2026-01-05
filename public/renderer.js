@@ -204,6 +204,7 @@ function handleLoginSuccess(newToken, $) {
   
   if (loginResult) loginResult.textContent = 'Login correcto';
   $('login').style.display = 'none';
+  $('main-app').style.display = 'block';
   $('app-layout').style.display = 'grid';
   $('dashboard').style.display = 'block';
   $('menu').style.display = 'none';
@@ -252,7 +253,7 @@ function bindAppEvents($) {
     token = null; currentUser = null;
     if (statusEl) statusEl.textContent = '';
     $('btnLogout').style.display = 'none';
-    $('app-layout').style.display = 'none';
+    $('main-app').style.display = 'none';
     $('login').style.display = 'flex';
     try { localStorage.removeItem('bioherts_token'); } catch {}
   });
@@ -396,6 +397,7 @@ async function checkAutoLogin($) {
         if (statusEl) statusEl.textContent = `Conectado: ${currentUser.nombre} (${currentUser.rol})`;
         $('btnLogout').style.display = 'inline-block';
         $('login').style.display = 'none';
+        $('main-app').style.display = 'block';
         $('app-layout').style.display = 'grid';
         $('dashboard').style.display = 'block';
         
