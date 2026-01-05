@@ -1,3 +1,96 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  /* Layout */
+  .app {
+    @apply min-h-screen bg-slate-950 text-white font-sans;
+  }
+  .app-header {
+    @apply h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-50;
+  }
+  .layout {
+    @apply grid grid-cols-1 md:grid-cols-[240px_1fr] min-h-[calc(100vh-64px)];
+  }
+  .sidebar {
+    @apply hidden md:flex flex-col border-r border-slate-800 bg-slate-900/30 backdrop-blur-sm p-4 gap-4;
+  }
+  .content {
+    @apply p-6 overflow-y-auto;
+  }
+  
+  /* Components */
+  .card {
+    @apply bg-slate-900/50 border border-slate-800 backdrop-blur-sm rounded-xl p-6 shadow-xl mb-6;
+  }
+  .card-header {
+    @apply flex items-center justify-between mb-4;
+  }
+  .card-header h2 {
+    @apply text-xl font-semibold text-white;
+  }
+  
+  .input {
+    @apply flex h-10 w-full rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none cursor-pointer;
+  }
+  .btn-small {
+    @apply px-2 py-1 text-xs;
+  }
+  .btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+  }
+  .btn-secondary {
+    @apply bg-slate-700 text-white hover:bg-slate-600;
+  }
+  .btn-success {
+    @apply bg-emerald-600 text-white hover:bg-emerald-700;
+  }
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+  .btn-warning {
+    @apply bg-amber-500 text-white hover:bg-amber-600;
+  }
+  .btn-ghost {
+    @apply text-slate-300 hover:bg-slate-800 hover:text-white;
+  }
+  
+  /* Badges & Status */
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors;
+  }
+  .badge-pendiente {
+    @apply bg-amber-500/10 text-amber-500 border border-amber-500/20;
+  }
+  .badge-hecho {
+    @apply bg-emerald-500/10 text-emerald-500 border border-emerald-500/20;
+  }
+  
+  /* Ticket Cards */
+  .ticket-card {
+    @apply p-4 rounded-lg border border-slate-800 bg-slate-900/50 hover:bg-slate-900 transition-colors mb-3;
+  }
+  .ticket-header {
+    @apply flex justify-between items-start mb-2;
+  }
+  .ticket-header h3 {
+    @apply font-medium text-lg;
+  }
+  .ticket-meta {
+    @apply text-xs text-slate-400 mt-2 mb-3 flex gap-3;
+  }
+  .ticket-actions {
+    @apply flex flex-wrap gap-2;
+  }
+  
+  /* Navigation */
+  .sidebar-nav .btn.active {
+    @apply bg-blue-600/10 text-blue-400 border border-blue-600/20;
+  }
+}

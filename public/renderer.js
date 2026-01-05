@@ -60,11 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (toggleBtn) {
     toggleBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      const p = $('registerPanel');
-      if (p) {
-        p.style.display = p.style.display === 'none' ? 'block' : 'none';
-        console.log('Toggle registro clickeado, display:', p.style.display);
-      }
+      toggleElement($('registerPanel'));
     });
   }
 
@@ -138,9 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-  // Inicializar Google Auth
-  // initGoogle($);
-  
   // Eventos de Navegación y UI
   bindAppEvents($);
   
@@ -191,9 +184,6 @@ function initTheme($) {
 
 function updateThemeIcon(isDark, btn) {
     if (isDark) {
-        // Show Moon (meaning current is dark, or Show Sun to switch to light? Usually icon represents target state or current state. Let's make it show the CURRENT state icon)
-        // Wait, usually a sun icon implies "Click to switch to light" or "It is sunny".
-        // Let's use standard convention: Show Moon when in Light mode (to go to dark), Show Sun when in Dark mode (to go to light).
         btn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
     } else {
         btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
@@ -301,10 +291,7 @@ function bindAppEvents($) {
     } catch(e) { console.error(e); }
   });
   
-  $('toggleClienteForm')?.addEventListener('click', () => {
-     const f = $('cliente-form');
-     if (f) f.style.display = f.style.display === 'none' ? 'flex' : 'none';
-  });
+  $('toggleClienteForm')?.addEventListener('click', () => toggleElement($('cliente-form'), 'flex'));
 
   // Avatar
   $('btnChangeAvatar')?.addEventListener('click', () => $('avatar-file')?.click());
@@ -321,10 +308,7 @@ function bindAppEvents($) {
   
   // Equipos Crear
   $('btnCrearEquipo')?.addEventListener('click', createEquipo);
-  $('toggleEquipoForm')?.addEventListener('click', () => {
-     const f = $('nuevo-equipo');
-     if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
-  });
+  $('toggleEquipoForm')?.addEventListener('click', () => toggleElement($('nuevo-equipo')));
   
   // Paginación y Filtros Equipos
   $('eq-btnPrev')?.addEventListener('click', () => { eqOffset = Math.max(0, eqOffset - eqPageSize); loadEquipos(); });
@@ -478,7 +462,7 @@ function ticketCard(t) {
       <button class="btn btn-primary btn-small" data-editar="${t.id}">Editar</button>
       ${currentUser && currentUser.rol === 'admin' ? `<button class="btn btn-danger btn-small" data-eliminar="${t.id}">Eliminar</button>` : ''}
     </div>
-    <div id="edit-ticket-${t.id}" style="display:none; margin-top:8px;">
+    <div id="edit-ticket-${t.id}" class="hidden mt-2">
       <input class="input" id="et-titulo-${t.id}" placeholder="Título" value="${t.titulo}" />
       <input class="input" id="et-descripcion-${t.id}" placeholder="Descripción" value="${t.descripcion || ''}" />
       <input class="input" id="et-asignado-${t.id}" placeholder="Asignado (ID)" value="${t.asignado_a ?? ''}" />
@@ -506,14 +490,13 @@ function bindTicketActions(container) {
           body: JSON.stringify({ asignado_a: asignado_a ? Number(asignado_a) : null })
         });
         loadTickets();
-        loadDashboard(); // Refresh dashboard too just in case
       } catch (e) { console.error(e); }
     }));
     target.querySelectorAll('button[data-ver]').forEach(btn => btn.addEventListener('click', () => loadComentarios(btn.dataset.ver)));
-    target.querySelectorAll('button[data-editar]').forEach(btn => btn.addEventListener('click', () => { const el = document.getElementById(`edit-ticket-${btn.dataset.editar}`); if(el) el.style.display='block'; }));
+    target.querySelectorAll('button[data-editar]').forEach(btn => btn.addEventListener('click', () => toggleElement(document.getElementById(`edit-ticket-${btn.dataset.editar}`))));
     target.querySelectorAll('button[data-eliminar]').forEach(btn => btn.addEventListener('click', () => deleteTicket(btn.dataset.eliminar)));
     target.querySelectorAll('button[data-save-ticket]').forEach(btn => btn.addEventListener('click', () => saveEditTicket(btn.dataset.saveTicket)));
-    target.querySelectorAll('button[data-cancel-ticket]').forEach(btn => btn.addEventListener('click', () => { const el = document.getElementById(`edit-ticket-${btn.dataset.cancelTicket}`); if(el) el.style.display='none'; }));
+    target.querySelectorAll('button[data-cancel-ticket]').forEach(btn => btn.addEventListener('click', () => toggleElement(document.getElementById(`edit-ticket-${btn.dataset.cancelTicket}`), 'none')));
 }
 
 async function updateEstado(id, estado) {
@@ -528,7 +511,6 @@ async function updateEstado(id, estado) {
 }
 
 async function loadComentarios(ticketId) {
-    // ... Implementación simplificada ...
     try {
         const res = await fetch(`${API_URL}/tickets/${ticketId}/comentarios`, { headers: { 'Authorization': token ? `Bearer ${token}` : '' } });
         const data = await res.json();
@@ -611,12 +593,12 @@ async function loadEquipos() {
         const tbody = document.getElementById('equipos-body');
         if(tbody) {
             tbody.innerHTML = data.map(e => `
-              <tr style="cursor:pointer; transition:background .2s;" onclick="selectEquipo(${e.id})" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">
-                <td style="font-weight:500;">${e.nombre}</td>
+              <tr class="cursor-pointer transition-colors hover:bg-slate-800/50" onclick="selectEquipo(${e.id})">
+                <td class="font-medium">${e.nombre}</td>
                 <td>${e.marca || ''} ${e.modelo || ''}</td>
-                <td><span style="font-family:monospace; font-size:12px; background:var(--bg); padding:2px 6px; border-radius:4px;">${e.numero_serie || 'N/A'}</span></td>
+                <td><span class="font-mono text-xs bg-slate-800 px-1.5 py-0.5 rounded">${e.numero_serie || 'N/A'}</span></td>
                 <td><span class="badge ${e.estado === 'activo' ? 'badge-hecho' : 'badge-pendiente'}">${e.estado}</span></td>
-                <td style="text-align:right;">
+                <td class="text-right">
                    <button class="btn btn-ghost btn-small">Ver</button>
                 </td>
               </tr>
@@ -655,17 +637,17 @@ function renderEquipoReadMode() {
     const content = document.getElementById('ed-content');
     if(content) {
         content.innerHTML = `
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <div><label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700;">MARCA</label><div class="val" style="font-weight:500;">${e.marca || '-'}</div></div>
-                <div><label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700;">MODELO</label><div class="val" style="font-weight:500;">${e.modelo || '-'}</div></div>
-                <div style="grid-column:1/-1"><label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700;">N° SERIE</label><div class="val" style="font-weight:500;">${e.numero_serie || '-'}</div></div>
-                <div style="grid-column:1/-1"><label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700;">UBICACIÓN</label><div class="val" style="font-weight:500;">${e.ubicacion || '-'}</div></div>
-                <div style="grid-column:1/-1"><label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700;">CLIENTE</label><div class="val" style="font-weight:500;">${e.cliente_nombre || (e.cliente_id ? 'ID: '+e.cliente_id : 'STOCK')}</div></div>
-                <div><label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700;">APLICACIÓN</label><div class="val" style="font-weight:500;">${e.aplicacion || '-'}</div></div>
-                <div><label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700;">AÑO</label><div class="val" style="font-weight:500;">${e.anio_venta || '-'}</div></div>
-                <div><label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700;">ESTADO</label><div class="val"><span class="badge ${e.estado === 'activo' ? 'badge-hecho' : 'badge-pendiente'}">${e.estado}</span></div></div>
+            <div class="grid grid-cols-2 gap-3">
+                <div><label class="text-[11px] font-bold text-slate-400">MARCA</label><div class="font-medium">${e.marca || '-'}</div></div>
+                <div><label class="text-[11px] font-bold text-slate-400">MODELO</label><div class="font-medium">${e.modelo || '-'}</div></div>
+                <div class="col-span-full"><label class="text-[11px] font-bold text-slate-400">N° SERIE</label><div class="font-medium">${e.numero_serie || '-'}</div></div>
+                <div class="col-span-full"><label class="text-[11px] font-bold text-slate-400">UBICACIÓN</label><div class="font-medium">${e.ubicacion || '-'}</div></div>
+                <div class="col-span-full"><label class="text-[11px] font-bold text-slate-400">CLIENTE</label><div class="font-medium">${e.cliente_nombre || (e.cliente_id ? 'ID: '+e.cliente_id : 'STOCK')}</div></div>
+                <div><label class="text-[11px] font-bold text-slate-400">APLICACIÓN</label><div class="font-medium">${e.aplicacion || '-'}</div></div>
+                <div><label class="text-[11px] font-bold text-slate-400">AÑO</label><div class="font-medium">${e.anio_venta || '-'}</div></div>
+                <div><label class="text-[11px] font-bold text-slate-400">ESTADO</label><div><span class="badge ${e.estado === 'activo' ? 'badge-hecho' : 'badge-pendiente'}">${e.estado}</span></div></div>
             </div>
-            ${e.mantenciones ? `<div style="margin-top:10px; border-top:1px solid var(--brd); padding-top:10px;"><b>Mantenciones:</b><br/>${e.mantenciones}</div>` : ''}
+            ${e.mantenciones ? `<div class="mt-2.5 pt-2.5 border-t border-slate-700"><b>Mantenciones:</b><br/>${e.mantenciones}</div>` : ''}
         `;
     }
     
@@ -688,41 +670,41 @@ function enableEditEquipo() {
     
     if(content) {
         content.innerHTML = `
-            <label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700;">NOMBRE</label>
-            <input id="ed-nombre" class="input full" value="${e.nombre}" placeholder="Nombre" style="margin-bottom:8px;" />
+            <label class="text-[11px] font-bold text-slate-400">NOMBRE</label>
+            <input id="ed-nombre" class="input full mb-2" value="${e.nombre}" placeholder="Nombre" />
             
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div class="grid grid-cols-2 gap-2">
                 <div>
-                    <label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700;">MARCA</label>
+                    <label class="text-[11px] font-bold text-slate-400">MARCA</label>
                     <input id="ed-marca" class="input full" value="${e.marca||''}" placeholder="Marca" />
                 </div>
                 <div>
-                    <label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700;">MODELO</label>
+                    <label class="text-[11px] font-bold text-slate-400">MODELO</label>
                     <input id="ed-modelo" class="input full" value="${e.modelo||''}" placeholder="Modelo" />
                 </div>
             </div>
             
-            <label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700; margin-top:8px; display:block;">N° SERIE</label>
+            <label class="text-[11px] font-bold text-slate-400 mt-2 block">N° SERIE</label>
             <input id="ed-serie" class="input full" value="${e.numero_serie||''}" placeholder="Serie" />
             
-            <label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700; margin-top:8px; display:block;">UBICACIÓN</label>
+            <label class="text-[11px] font-bold text-slate-400 mt-2 block">UBICACIÓN</label>
             <input id="ed-ubicacion" class="input full" value="${e.ubicacion||''}" placeholder="Ubicación" />
             
-            <label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700; margin-top:8px; display:block;">CLIENTE</label>
+            <label class="text-[11px] font-bold text-slate-400 mt-2 block">CLIENTE</label>
             <select id="ed-cliente" class="input select full">${clientOptions}</select>
             
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
+            <div class="grid grid-cols-2 gap-2 mt-2">
                  <div>
-                    <label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700;">APLICACIÓN</label>
+                    <label class="text-[11px] font-bold text-slate-400">APLICACIÓN</label>
                     <input id="ed-app" class="input full" value="${e.aplicacion||''}" placeholder="App" />
                  </div>
                  <div>
-                    <label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700;">AÑO</label>
+                    <label class="text-[11px] font-bold text-slate-400">AÑO</label>
                     <input id="ed-anio" class="input full" type="number" value="${e.anio_venta||''}" placeholder="Año" />
                  </div>
             </div>
             
-            <label class="label-sm" style="color:var(--mut);font-size:11px;font-weight:700; margin-top:8px; display:block;">ESTADO</label>
+            <label class="text-[11px] font-bold text-slate-400 mt-2 block">ESTADO</label>
             <select id="ed-estado" class="input select full">
                 <option value="activo" ${e.estado==='activo'?'selected':''}>Activo</option>
                 <option value="inactivo" ${e.estado==='inactivo'?'selected':''}>Inactivo</option>
@@ -904,7 +886,7 @@ async function loadDashboard() {
                     dList.forEach(t => al.appendChild(ticketCard(t)));
                     bindTicketActions(al);
                 } else {
-                    al.innerHTML = '<p class="muted" style="grid-column:1/-1;text-align:center;">No tienes tickets pendientes.</p>';
+                    al.innerHTML = '<p class="text-slate-400 text-center col-span-full">No tienes tickets pendientes.</p>';
                 }
             }
         } else {
@@ -950,15 +932,15 @@ async function loadClientes() {
         if(tbody && Array.isArray(list)) {
             tbody.innerHTML = list.map(c => `
               <tr id="row-${c.id}">
-                <td style="font-weight:500;">
-                    <div style="display:flex; flex-direction:column;">
+                <td class="font-medium">
+                    <div class="flex flex-col">
                         <span>${c.nombre || 'Sin nombre'}</span>
-                        <span style="font-size:11px; color:var(--mut);">ID: ${c.id}</span>
+                        <span class="text-[11px] text-slate-400">ID: ${c.id}</span>
                     </div>
                 </td>
                 <td>${c.empresa || ''}</td>
-                <td style="text-align:right;">
-                  <div style="display:flex; gap:6px; justify-content:flex-end;">
+                <td class="text-right">
+                  <div class="flex gap-1.5 justify-end">
                     <button class="btn btn-outline btn-small" onclick="showClienteEquipos(${c.id}, '${c.nombre || c.empresa}')" title="Ver Equipos">
                         Equipos
                     </button>
@@ -971,18 +953,18 @@ async function loadClientes() {
                   </div>
                 </td>
               </tr>
-              <tr id="edit-row-${c.id}" style="display:none; background:var(--bg2);">
-                 <td colspan="3" style="padding:16px;">
-                    <div style="display:flex; gap:12px; align-items:center;">
-                       <div style="flex:1;">
-                           <label style="font-size:11px; font-weight:700; color:var(--mut);">NOMBRE</label>
+              <tr id="edit-row-${c.id}" class="hidden bg-slate-900">
+                 <td colspan="3" class="p-4">
+                    <div class="flex gap-3 items-center">
+                       <div class="flex-1">
+                           <label class="text-[11px] font-bold text-slate-400">NOMBRE</label>
                            <input class="input full" id="ec-nombre-${c.id}" value="${c.nombre || ''}" placeholder="Nombre" />
                        </div>
-                       <div style="flex:1;">
-                           <label style="font-size:11px; font-weight:700; color:var(--mut);">EMPRESA</label>
+                       <div class="flex-1">
+                           <label class="text-[11px] font-bold text-slate-400">EMPRESA</label>
                            <input class="input full" id="ec-empresa-${c.id}" value="${c.empresa || ''}" placeholder="Empresa" />
                        </div>
-                       <div style="display:flex; gap:8px; align-items:flex-end;">
+                       <div class="flex gap-2 items-end">
                            <button class="btn btn-success btn-small" onclick="saveEditCliente('${c.id}')">Guardar</button>
                            <button class="btn btn-ghost btn-small" onclick="cancelEditCliente('${c.id}')">Cancelar</button>
                        </div>
@@ -1070,17 +1052,17 @@ async function showClienteEquipos(id, nombre) {
         const equipos = await res.json();
         if (Array.isArray(equipos) && equipos.length > 0) {
             listEl.innerHTML = equipos.map(e => `
-                <div class="card" style="padding:10px; margin-bottom:8px; background:var(--bg2);">
+                <div class="card p-2.5 mb-2 bg-slate-900">
                     <h4>${e.nombre}</h4>
                     <small>${e.marca || ''} ${e.modelo || ''}</small>
                     <div><span class="badge ${e.estado === 'activo' ? 'badge-hecho' : 'badge-pendiente'}">${e.estado}</span></div>
                 </div>
             `).join('');
         } else {
-            listEl.innerHTML = '<p class="muted">No hay equipos asignados.</p>';
+            listEl.innerHTML = '<p class="text-slate-400">No hay equipos asignados.</p>';
         }
     } catch {
-        listEl.innerHTML = '<p class="muted">Error al cargar equipos.</p>';
+        listEl.innerHTML = '<p class="text-slate-400">Error al cargar equipos.</p>';
     }
 }
 
@@ -1114,9 +1096,9 @@ function renderAvatar() {
   const loginSlot = document.getElementById('login-avatar-slot');
   const sideSlot = document.getElementById('sidebar-avatar-slot');
   const settingsSlot = document.getElementById('settings-avatar-slot');
-  const imgHtml = av ? `<img src="${av}" alt="avatar" style="width:120px;height:120px;border-radius:50%;object-fit:cover;background:#fff;"/>` : defaultAvatarSVG();
+  const imgHtml = av ? `<img src="${av}" alt="avatar" class="w-[120px] h-[120px] rounded-full object-cover bg-white"/>` : defaultAvatarSVG();
   if (loginSlot) loginSlot.innerHTML = imgHtml;
-  if (sideSlot) sideSlot.innerHTML = av ? `<img src="${av}" alt="avatar" style="width:80px;height:80px;border-radius:50%;object-fit:cover;background:#fff;"/>` : defaultAvatarSVG();
+  if (sideSlot) sideSlot.innerHTML = av ? `<img src="${av}" alt="avatar" class="w-20 h-20 rounded-full object-cover bg-white"/>` : defaultAvatarSVG();
   if (settingsSlot) settingsSlot.innerHTML = imgHtml;
 }
 
@@ -1131,7 +1113,7 @@ async function loadAdminUsers() {
           <td>${u.nombre}</td>
           <td>${u.email}</td>
           <td><span class="badge badge-hecho">${u.rol || 'user'}</span></td>
-          <td style="text-align:right;">
+          <td class="text-right">
              <button class="btn btn-primary btn-small" data-edit-user="${u.id}" data-email="${u.email}">Editar</button>
              <button class="btn btn-danger btn-small" data-delete-user="${u.id}">Borrar</button>
           </td>
@@ -1201,4 +1183,10 @@ async function deleteUser(id) {
       }
     } catch (e) { console.error(e); alert('Error de conexión'); }
   }
+}
+
+function toggleElement(el, displayType = 'block') {
+    if (!el) return;
+    const isHidden = window.getComputedStyle(el).display === 'none';
+    el.style.display = isHidden ? displayType : 'none';
 }
