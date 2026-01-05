@@ -449,20 +449,27 @@ async function loadTickets() {
 
 function ticketCard(t) {
   const div = document.createElement('div');
-  div.className = `ticket-card ${t.estado}`;
+  div.className = `border-b border-slate-800 hover:bg-slate-900/40 transition-colors`;
   div.innerHTML = `
-    <div class="ticket-header"><h3>${t.titulo}</h3><span class="badge badge-${t.estado}">${t.estado === 'hecho' ? 'terminado' : t.estado}</span></div>
-    <p class="ticket-desc">${t.descripcion || ''}</p>
-    <div class="ticket-meta">Creado por: ${t.creado_por_nombre || t.creado_por || ''} • Asignado a: ${t.asignado_a_nombre || t.asignado_a || '—'}</div>
-    <div class="ticket-actions">
-      <button class="btn btn-success btn-small" data-done="${t.id}">Marcar terminado</button>
-      <button class="btn btn-warning btn-small" data-pendiente="${t.id}">Marcar pendiente</button>
-      <button class="btn btn-secondary btn-small" data-asignar="${t.id}">Asignar</button>
-      <button class="btn btn-secondary btn-small" data-ver="${t.id}">Comentarios</button>
-      <button class="btn btn-primary btn-small" data-editar="${t.id}">Editar</button>
-      ${currentUser && currentUser.rol === 'admin' ? `<button class="btn btn-danger btn-small" data-eliminar="${t.id}">Eliminar</button>` : ''}
+    <div class="flex items-center gap-4 p-3">
+      <div class="flex-1 min-w-0">
+        <div class="text-white font-medium truncate">${t.titulo}</div>
+        <div class="text-slate-400 text-xs mt-1 truncate">${t.descripcion || ''}</div>
+        <div class="text-[11px] text-slate-500 mt-1">Creado por: ${t.creado_por_nombre || t.creado_por || ''} • Asignado a: ${t.asignado_a_nombre || t.asignado_a || '—'}</div>
+      </div>
+      <div class="shrink-0">
+        <span class="badge badge-${t.estado}">${t.estado === 'hecho' ? 'terminado' : t.estado}</span>
+      </div>
+      <div class="shrink-0 flex items-center gap-2">
+        <button class="btn btn-ghost btn-small" data-done="${t.id}">Terminar</button>
+        <button class="btn btn-ghost btn-small" data-pendiente="${t.id}">Pendiente</button>
+        <button class="btn btn-ghost btn-small" data-asignar="${t.id}">Asignar</button>
+        <button class="btn btn-ghost btn-small" data-ver="${t.id}">Comentarios</button>
+        <button class="btn btn-ghost btn-small" data-editar="${t.id}">Editar</button>
+        ${currentUser && currentUser.rol === 'admin' ? `<button class="btn btn-ghost btn-small hover:bg-red-500/10 hover:text-red-400" data-eliminar="${t.id}">Eliminar</button>` : ''}
+      </div>
     </div>
-    <div id="edit-ticket-${t.id}" class="hidden mt-2">
+    <div id="edit-ticket-${t.id}" class="hidden mt-2 px-3 pb-3">
       <input class="input" id="et-titulo-${t.id}" placeholder="Título" value="${t.titulo}" />
       <input class="input" id="et-descripcion-${t.id}" placeholder="Descripción" value="${t.descripcion || ''}" />
       <input class="input" id="et-asignado-${t.id}" placeholder="Asignado (ID)" value="${t.asignado_a ?? ''}" />
