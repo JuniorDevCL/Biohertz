@@ -1,34 +1,27 @@
-import nodemailer from 'nodemailer';
+import SibApiV3Sdk from 'sib-api-v3-sdk';
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.googlemail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    ciphers: 'SSLv3',
-    rejectUnauthorized: false
-  },
-  family: 4
-});
+const defaultClient = SibApiV3Sdk.ApiClient.instance;
 
-export async function enviarNotificacionTicket(emailDestino, tituloTicket) {
+// Configurar la API Key
+const apiKey = defaultClient.authentications['api-key'];
+apiKey.apiKey = process.env.BREVO_API_KEY;
+
+const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+
+export const enviarNotificacionTicket = async (emailDestino, tituloTicket) => {
+  const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+
+  sendSmtpEmail.subject = "¡Nuevo Ticket Asignado! - Biohertz";
+  sendSmtpEmail.htmlContent = `<html><body><p>Hola,</p><p>Se te ha asignado un nuevo trabajo: "<strong>${tituloTicket}</strong>".</p><p>Por favor revisa el sistema de tickets para más detalles.</p><p>Saludos,<br>Equipo BIOHERTS</p></body></html>`;
+  sendSmtpEmail.sender = { "name": "Biohertz Sistema", "email": process.env.EMAIL_SENDER }; // Tu correo Gmail o verificado en Brevo
+  sendSmtpEmail.to = [{ "email": emailDestino }];
+
   try {
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: emailDestino,
-      subject: 'Nuevo Ticket Asignado',
-      text: `Hola,\n\nSe te ha asignado un nuevo trabajo: "${tituloTicket}".\n\nPor favor revisa el sistema de tickets para más detalles.\n\nSaludos,\nEquipo BIOHERTS`
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Correo enviado:', info.messageId);
-    return info;
+    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    console.log('Correo enviado con éxito. ID:', data.messageId);
+    return data;
   } catch (error) {
-    console.error('Error enviando correo:', error);
+    console.error('Error enviando correo con Brevo:', error);
     throw error;
   }
-}
+};
