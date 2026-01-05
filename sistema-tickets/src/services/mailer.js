@@ -12,7 +12,7 @@ export const enviarNotificacionTicket = async (emailDestino, tituloTicket) => {
   const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
   sendSmtpEmail.subject = "¡Nuevo Ticket Asignado! - Biohertz";
-  sendSmtpEmail.htmlContent = `<html><body><p>Hola,</p><p>Se te ha asignado un nuevo trabajo: "<strong>${tituloTicket}</strong>".</p><p>Por favor revisa el sistema de tickets para más detalles.</p><p>Saludos,<br>Equipo BIOHERTS</p></body></html>`;
+  sendSmtpEmail.htmlContent = `<html><body><p>Hola,</p><p>Se te ha asignado un nuevo trabajo: "<strong>${tituloTicket}</strong>".</p><p>Por favor revisa el sistema de tickets para más detalles.</p><p>Saludos,<br>Equipo BIOHERTZ</p></body></html>`;
   sendSmtpEmail.sender = { "name": "Biohertz Sistema", "email": process.env.EMAIL_SENDER }; // Tu correo Gmail o verificado en Brevo
   sendSmtpEmail.to = [{ "email": emailDestino }];
 
