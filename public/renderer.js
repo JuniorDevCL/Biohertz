@@ -273,6 +273,7 @@ function bindAppEvents($) {
 
   // Clientes
   $('cli-filtro-q')?.addEventListener('input', () => loadClientes());
+  $('btnRefreshClientes')?.addEventListener('click', () => loadClientes());
 
   $('btnCrearCliente')?.addEventListener('click', async () => {
     const nombre = $('cli-nombre').value;
@@ -950,12 +951,18 @@ async function loadClientes() {
         if (countBadge) countBadge.textContent = Array.isArray(list) ? list.length : 0;
 
         if(tbody && Array.isArray(list)) {
-            tbody.innerHTML = list.map(c => `
+            tbody.innerHTML = list.map(c => {
+              const name = c.nombre || 'Sin nombre';
+              const initial = String(name).trim().charAt(0).toUpperCase() || 'C';
+              return `
               <tr id="row-${c.id}">
                 <td class="font-medium">
-                    <div class="flex flex-col">
-                        <span>${c.nombre || 'Sin nombre'}</span>
-                        <span class="text-[11px] text-slate-400">ID: ${c.id}</span>
+                    <div class="flex items-center gap-3">
+                        <span class="avatar-pill">${initial}</span>
+                        <div class="flex flex-col">
+                            <span>${name}</span>
+                            <span class="text-[11px] text-slate-400">ID: ${c.id}</span>
+                        </div>
                     </div>
                 </td>
                 <td>${c.empresa || ''}</td>
@@ -990,8 +997,8 @@ async function loadClientes() {
                        </div>
                     </div>
                  </td>
-              </tr>
-            `).join('');
+              </tr>`;
+            }).join('');
         }
         refreshClienteSelect(list);
     } catch {}
@@ -1128,17 +1135,25 @@ async function loadAdminUsers() {
     const users = await res.json();
     const tbody = document.getElementById('admin-users-body');
     if(tbody) {
-      tbody.innerHTML = users.map(u => `
+      tbody.innerHTML = users.map(u => {
+        const name = u.nombre || u.email || 'Usuario';
+        const initial = String(name).trim().charAt(0).toUpperCase() || 'U';
+        return `
         <tr>
-          <td>${u.nombre}</td>
+          <td>
+            <div class="flex items-center gap-3">
+              <span class="avatar-pill">${initial}</span>
+              <span class="font-medium">${name}</span>
+            </div>
+          </td>
           <td>${u.email}</td>
           <td><span class="badge badge-hecho">${u.rol || 'user'}</span></td>
           <td class="text-right">
              <button class="btn btn-primary btn-small" data-edit-user="${u.id}" data-email="${u.email}">Editar</button>
              <button class="btn btn-danger btn-small" data-delete-user="${u.id}">Borrar</button>
           </td>
-        </tr>
-      `).join('');
+        </tr>`;
+      }).join('');
       bindUserActions(tbody);
     }
   } catch (e) { console.error('Error loading users', e); }

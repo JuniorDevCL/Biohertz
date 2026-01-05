@@ -45,7 +45,7 @@
       </aside>
       <main class="content">
         <section id="admin-users" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="card">
               <div class="card-header">
                 <h2>Administración de Usuarios</h2>
@@ -69,7 +69,7 @@
         </section>
 
         <section id="dashboard" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="card">
               <div class="card-header"><h2>Dashboard</h2></div>
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
@@ -113,7 +113,7 @@
         </section>
 
         <section id="menu" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="card">
               <div class="card-header"><h2>Menú</h2></div>
               <div class="menu-grid">
@@ -125,7 +125,7 @@
         </section>
 
         <section id="settings" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="card">
               <div class="card-header"><h2>Ajustes</h2></div>
               <div class="card-body flex items-center gap-4">
@@ -141,7 +141,7 @@
         </section>
 
         <section id="clientes-section" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="grid gap-5">
               <!-- Card Creación -->
             <div class="card">
@@ -174,8 +174,11 @@
                 </div>
               </div>
               
-              <div class="filters mb-5 grid-cols-1">
-                  <input id="cli-filtro-q" class="input full" placeholder="Buscar por nombre, empresa o ID..." />
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-5 mb-8">
+                  <input id="cli-filtro-q" class="input col-span-12 md:col-span-5" placeholder="Buscar por nombre, empresa o ID..." />
+                  <div class="col-span-12 md:col-span-7 flex items-center justify-end gap-2">
+                    <button id="btnRefreshClientes" class="btn btn-secondary btn-small">Refrescar</button>
+                  </div>
               </div>
 
               <div class="grid grid-cols-[2fr_1fr] gap-6">
@@ -208,7 +211,7 @@
         </section>
 
         <section id="nuevo-ticket" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="card">
               <div class="card-header">
                 <h2>Nuevo Ticket</h2>
@@ -243,7 +246,7 @@
         </section>
 
         <section id="tickets-section" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="card">
               <div class="card-header">
                 <h2>Tickets</h2>
@@ -251,25 +254,31 @@
                   <span id="tickets-total" class="muted"></span>
                 </div>
               </div>
-              <div id="filtros" class="filters">
-                <select id="filtro-estado" class="input select">
+              <div id="filtros" class="grid grid-cols-1 md:grid-cols-12 gap-5 mb-8">
+                <input id="filtro-q" class="input col-span-12 md:col-span-5" placeholder="Buscar" />
+                <select id="filtro-estado" class="input select col-span-6 md:col-span-3">
                   <option value="">Todos</option>
                   <option value="pendiente">Pendiente</option>
                   <option value="hecho">Terminado</option>
                 </select>
-                <select id="filtro-asignado-select" class="input select">
+                <select id="filtro-asignado-select" class="input select col-span-6 md:col-span-3">
                   <option value="">Asignado: Todos</option>
                 </select>
-                <input id="filtro-q" class="input" placeholder="Buscar" />
-                <button id="btnFiltrar" class="btn btn-ghost">Filtrar</button>
-                <button id="btnLimpiar" class="btn btn-ghost">Limpiar</button>
-                <select id="page-size" class="input select small">
-                  <option value="10">10</option>
-                  <option value="20">20</option>
-                  <option value="50" selected>50</option>
-                </select>
-                <button id="btnPrev" class="btn btn-ghost btn-small">Prev</button>
-                <button id="btnNext" class="btn btn-primary btn-small">Next</button>
+                <div class="col-span-12 md:col-span-1 flex items-center gap-2">
+                  <button id="btnFiltrar" class="btn btn-secondary btn-small w-full">Filtrar</button>
+                </div>
+                <div class="col-span-6 md:col-span-1 flex items-center">
+                  <button id="btnLimpiar" class="btn btn-ghost btn-small w-full">Limpiar</button>
+                </div>
+                <div class="col-span-12 md:col-span-12 flex items-center justify-end gap-2">
+                  <select id="page-size" class="input select small w-24">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50" selected>50</option>
+                  </select>
+                  <button id="btnPrev" class="btn btn-ghost btn-small">Prev</button>
+                  <button id="btnNext" class="btn btn-primary btn-small">Next</button>
+                </div>
               </div>
               <div id="tickets" class="tickets-grid"></div>
             </div>
@@ -277,7 +286,7 @@
         </section>
 
         <section id="equipos-list" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="grid gap-5">
               <!-- Card Creación -->
             <div class="card">
@@ -332,21 +341,21 @@
                 </div>
               </div>
               
-              <div id="filtros-equipos" class="filters grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3 mb-5">
-                  <input id="eq-filtro-q" class="input" placeholder="Búsqueda General" />
-                  <input id="eq-filtro-marca" class="input" placeholder="Marca" />
-                  <input id="eq-filtro-modelo" class="input" placeholder="Modelo" />
-                  <input id="eq-filtro-serie" class="input" placeholder="Serie" />
-                  <input id="eq-filtro-cliente" class="input" placeholder="Cliente" />
-                  <input id="eq-filtro-aplicacion" class="input" placeholder="Aplicación" />
-                  <input id="eq-filtro-anio" class="input" type="number" placeholder="Año" />
-                  <select id="eq-filtro-estado" class="input select">
+              <div id="filtros-equipos" class="grid grid-cols-1 md:grid-cols-12 gap-5 mb-8">
+                  <input id="eq-filtro-q" class="input col-span-12 md:col-span-5" placeholder="Búsqueda General" />
+                  <input id="eq-filtro-marca" class="input col-span-6 md:col-span-3" placeholder="Marca" />
+                  <input id="eq-filtro-modelo" class="input col-span-6 md:col-span-3" placeholder="Modelo" />
+                  <input id="eq-filtro-serie" class="input col-span-6 md:col-span-3" placeholder="Serie" />
+                  <input id="eq-filtro-cliente" class="input col-span-6 md:col-span-3" placeholder="Cliente" />
+                  <input id="eq-filtro-aplicacion" class="input col-span-6 md:col-span-3" placeholder="Aplicación" />
+                  <input id="eq-filtro-anio" class="input col-span-6 md:col-span-3" type="number" placeholder="Año" />
+                  <select id="eq-filtro-estado" class="input select col-span-6 md:col-span-3">
                     <option value="">Estado: Todos</option>
                     <option value="activo">Activo</option>
                     <option value="inactivo">Inactivo</option>
                   </select>
                   
-                  <div class="flex gap-2 col-span-full justify-end">
+                  <div class="flex gap-2 col-span-12 justify-end">
                       <button id="eq-btnFiltrar" class="btn btn-secondary btn-small">Filtrar</button>
                       <button id="eq-btnLimpiar" class="btn btn-ghost btn-small">Limpiar</button>
                       <div class="border-l border-slate-700 pl-2 ml-2 flex gap-2">
