@@ -469,9 +469,6 @@ function ticketCard(t) {
         <button class="btn btn-ghost btn-small ${isFinished ? 'text-green-500' : 'text-slate-400 hover:text-green-400'}" title="Finalizar" data-done="${t.id}">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         </button>
-        <button class="btn btn-ghost btn-small" title="Editar" data-editar="${t.id}">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-        </button>
         <button class="btn btn-ghost btn-small hover:text-red-400" title="Eliminar" data-eliminar="${t.id}">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
         </button>

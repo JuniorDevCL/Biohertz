@@ -6,44 +6,45 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://*.gstatic.com https://cdn.socket.io; img-src 'self' data: https:; connect-src *; frame-src 'self' https://accounts.google.com https://*.gstatic.com; style-src 'self' 'unsafe-inline';">
   <link href="/styles.css" rel="stylesheet">
 </head>
-<body class="bg-slate-950 text-white min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black font-sans antialiased selection:bg-blue-500/30 selection:text-blue-200">
+<body class="bg-slate-950 text-white h-screen overflow-hidden font-sans antialiased selection:bg-blue-500/30 selection:text-blue-200">
   
-  <div class="app" id="main-app" style="display: none;">
-    <div class="app-header">
-      <div class="app-header-left">
-        <button id="themeToggle" class="theme-toggle" title="Cambiar tema">
-          <!-- Sun Icon -->
-          <svg class="sun-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-          <!-- Moon Icon (hidden by default logic, swapped via JS) -->
-        </button>
-        <div class="logo">BIOHERTZ</div>
-      </div>
-      <div class="flex items-center gap-2.5">
-        <span class="filters-total" id="status"></span>
-      </div>
-    </div>
-
-    <div class="layout hidden" id="app-layout">
-      <aside class="sidebar">
-        <div class="flex items-center gap-3 px-2 py-4 mb-6 border-b border-white/[0.05] pb-6">
+  <div class="app h-full flex flex-col" id="main-app" style="display: none;">
+    <!-- Header removed for new layout structure -->
+    
+    <div class="flex h-screen overflow-hidden bg-slate-950" id="app-layout">
+      <aside class="w-64 flex-shrink-0 h-full overflow-y-auto border-r border-white/[0.05] bg-[#0f172a]/80 backdrop-blur-xl flex flex-col">
+        <div class="flex items-center gap-3 px-6 py-6 border-b border-white/[0.05]">
           <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a10 10 0 0 1 14.88-3.36L23 4"/><path d="M1 20l4.62-1.54A10 10 0 0 0 20.49 15"/></svg>
           </div>
           <div class="text-lg font-bold tracking-tight text-white">BIOHERTZ</div>
         </div>
-        <nav class="sidebar-nav">
-          <button id="navDashboard" class="btn btn-ghost w-full">Dashboard</button>
-          <button id="navTickets" class="btn btn-ghost w-full">Tickets</button>
-          <button id="navClientes" class="btn btn-ghost w-full">Clientes</button>
-          <button id="navSettings" class="btn btn-ghost w-full">Ajustes</button>
-          <button id="navUsers" class="btn btn-ghost w-full">Usuarios</button>
+        
+        <nav class="flex-1 px-4 py-6 space-y-2">
+          <button id="navDashboard" class="btn btn-ghost w-full justify-start">Dashboard</button>
+          <button id="navTickets" class="btn btn-ghost w-full justify-start">Tickets</button>
+          <button id="navClientes" class="btn btn-ghost w-full justify-start">Clientes</button>
+          <button id="navSettings" class="btn btn-ghost w-full justify-start">Ajustes</button>
+          <button id="navUsers" class="btn btn-ghost w-full justify-start">Usuarios</button>
         </nav>
-        <div class="mt-auto flex items-center gap-3 p-3 border-t border-white/10">
-          <div class="login-avatar w-10 h-10 rounded-full overflow-hidden" id="sidebar-avatar-slot"></div>
-          <div id="user-nombre" class="text-sm text-white"><h1 class="text-sm">Invitado</h1></div>
+
+        <div class="p-4 border-t border-white/10">
+            <div class="flex items-center gap-3 mb-4">
+                <button id="themeToggle" class="btn btn-ghost btn-small w-full justify-center text-slate-400 hover:text-white" title="Cambiar tema">
+                    <svg class="w-5 h-5 sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                </button>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="login-avatar w-10 h-10 rounded-full overflow-hidden flex-shrink-0" id="sidebar-avatar-slot"></div>
+                <div id="user-nombre" class="text-sm text-white truncate"><h1 class="text-sm truncate">Invitado</h1></div>
+            </div>
         </div>
       </aside>
-      <main class="content">
+
+      <main class="flex-1 h-full overflow-y-auto relative bg-slate-950">
+        <!-- Status Indicator hidden/moved -->
+        <span class="hidden" id="status"></span>
+
         <section id="admin-users" class="hidden">
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="card">
