@@ -16,10 +16,7 @@
           <svg class="sun-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
           <!-- Moon Icon (hidden by default logic, swapped via JS) -->
         </button>
-        <div class="logo-stack">
-          <div class="logo">BIOHERTZ</div>
-          <div class="app-subtitle">Tickets y equipos</div>
-        </div>
+        <div class="logo">BIOHERTZ</div>
       </div>
       <div class="flex items-center gap-2.5">
         <span class="filters-total" id="status"></span>
@@ -28,10 +25,15 @@
 
     <div class="layout hidden" id="app-layout">
       <aside class="sidebar">
+        <div class="flex items-center gap-3 px-2 py-4 mb-6 border-b border-white/[0.05] pb-6">
+          <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a10 10 0 0 1 14.88-3.36L23 4"/><path d="M1 20l4.62-1.54A10 10 0 0 0 20.49 15"/></svg>
+          </div>
+          <div class="text-lg font-bold tracking-tight text-white">BIOHERTZ</div>
+        </div>
         <nav class="sidebar-nav">
           <button id="navDashboard" class="btn btn-ghost w-full">Dashboard</button>
           <button id="navTickets" class="btn btn-ghost w-full">Tickets</button>
-          <button id="navEquipos" class="btn btn-ghost w-full">Equipos</button>
           <button id="navClientes" class="btn btn-ghost w-full">Clientes</button>
           <button id="navSettings" class="btn btn-ghost w-full">Ajustes</button>
           <button id="navUsers" class="btn btn-ghost w-full">Usuarios</button>
@@ -70,41 +72,32 @@
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="card">
               <div class="card-header"><h2>Dashboard</h2></div>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <div class="card flex items-center p-5">
-                  <div class="rounded-xl h-12 w-12 flex items-center justify-center bg-blue-500/20 text-blue-400 border border-white/10 mr-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                <div class="card flex items-center p-5 bg-gradient-to-br from-blue-600/20 via-transparent to-transparent">
+                  <div class="rounded-xl h-12 w-12 flex items-center justify-center text-blue-400 border border-white/10 mr-4">
                     <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                   </div>
                   <div class="flex-1">
-                    <div class="text-sm font-medium text-slate-400">Total Tickets</div>
-                    <div class="text-3xl font-bold text-white mt-1" id="total-tickets-count">0</div>
+                    <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Tickets</div>
+                    <div class="text-4xl font-bold text-white mt-1" id="total-tickets-count">0</div>
                   </div>
                 </div>
-                <div class="card flex items-center p-5">
-                  <div class="rounded-xl h-12 w-12 flex items-center justify-center bg-orange-500/20 text-orange-400 border border-white/10 mr-4">
+                <div class="card flex items-center p-5 bg-gradient-to-br from-orange-500/20 via-transparent to-transparent">
+                  <div class="rounded-xl h-12 w-12 flex items-center justify-center text-orange-400 border border-white/10 mr-4">
                     <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                   </div>
                   <div class="flex-1">
-                    <div class="text-sm font-medium text-slate-400">Pending</div>
-                    <div class="text-3xl font-bold text-white mt-1" id="assigned-count">0</div>
+                    <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Pending</div>
+                    <div class="text-4xl font-bold text-white mt-1" id="assigned-count">0</div>
                   </div>
                 </div>
-                <div class="card flex items-center p-5">
-                  <div class="rounded-xl h-12 w-12 flex items-center justify-center bg-purple-500/20 text-purple-400 border border-white/10 mr-4">
-                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                  </div>
-                  <div class="flex-1">
-                    <div class="text-sm font-medium text-slate-400">Teams</div>
-                    <div class="text-3xl font-bold text-white mt-1" id="total-equipos-count">0</div>
-                  </div>
-                </div>
-                <div class="card flex items-center p-5">
-                  <div class="rounded-xl h-12 w-12 flex items-center justify-center bg-cyan-500/20 text-cyan-400 border border-white/10 mr-4">
+                <div class="card flex items-center p-5 bg-gradient-to-br from-cyan-500/20 via-transparent to-transparent">
+                  <div class="rounded-xl h-12 w-12 flex items-center justify-center text-cyan-400 border border-white/10 mr-4">
                     <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21v-2a6.5 6.5 0 0 1 13 0v2"/></svg>
                   </div>
                   <div class="flex-1">
-                    <div class="text-sm font-medium text-slate-400">Clients</div>
-                    <div class="text-3xl font-bold text-white mt-1" id="total-clientes-count">0</div>
+                    <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Clients</div>
+                    <div class="text-4xl font-bold text-white mt-1" id="total-clientes-count">0</div>
                   </div>
                 </div>
               </div>
