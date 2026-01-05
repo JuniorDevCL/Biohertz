@@ -6,401 +6,389 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://*.gstatic.com https://cdn.socket.io; img-src 'self' data: https:; connect-src *; frame-src 'self' https://accounts.google.com https://*.gstatic.com; style-src 'self' 'unsafe-inline';">
   <link href="/styles.css" rel="stylesheet">
 </head>
-<body class="bg-slate-950 text-white h-screen overflow-hidden font-sans antialiased selection:bg-blue-500/30 selection:text-blue-200">
+<body class="bg-slate-950 text-white h-screen w-screen overflow-hidden">
   
-  <div class="app h-full flex flex-col" id="main-app" style="display: none;">
-    <!-- Header removed for new layout structure -->
-    
-    <div class="flex h-screen overflow-hidden bg-slate-950" id="app-layout">
-      <aside class="w-64 flex-shrink-0 h-full overflow-hidden border-r border-white/[0.05] bg-[#0f172a]/80 backdrop-blur-xl flex flex-col justify-between">
-        <div class="flex flex-col">
-          <div class="flex items-center gap-3 px-6 py-6 border-b border-white/[0.05]">
-            <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a10 10 0 0 1 14.88-3.36L23 4"/><path d="M1 20l4.62-1.54A10 10 0 0 0 20.49 15"/></svg>
-            </div>
-            <div class="text-lg font-bold tracking-tight text-white">BIOHERTZ</div>
+  <!-- Main App Layout -->
+  <div id="main-app" class="bg-slate-950 text-white h-full w-full overflow-hidden flex" style="display: none;">
+      
+      <!-- Sidebar -->
+      <aside class="w-64 h-full flex-shrink-0 flex flex-col justify-between border-r border-white/5 bg-[#0f172a]/80 backdrop-blur-xl">
+          <div>
+              <div class="p-6 border-b border-white/5 flex items-center gap-3">
+                  <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a10 10 0 0 1 14.88-3.36L23 4"/><path d="M1 20l4.62-1.54A10 10 0 0 0 20.49 15"/></svg>
+                  </div>
+                  <h1 class="text-xl font-bold text-white tracking-tight">BIOHERTZ</h1>
+              </div>
+              <nav class="px-4 py-6 space-y-2">
+                  <button id="navDashboard" class="btn btn-ghost w-full justify-start">Dashboard</button>
+                  <button id="navTickets" class="btn btn-ghost w-full justify-start">Tickets</button>
+                  <button id="navClientes" class="btn btn-ghost w-full justify-start">Clientes</button>
+                  <button id="navSettings" class="btn btn-ghost w-full justify-start">Ajustes</button>
+                  <button id="navUsers" class="btn btn-ghost w-full justify-start">Usuarios</button>
+              </nav>
           </div>
           
-          <nav class="px-4 py-6 space-y-2">
-            <button id="navDashboard" class="btn btn-ghost w-full justify-start">Dashboard</button>
-            <button id="navTickets" class="btn btn-ghost w-full justify-start">Tickets</button>
-            <button id="navClientes" class="btn btn-ghost w-full justify-start">Clientes</button>
-            <button id="navSettings" class="btn btn-ghost w-full justify-start">Ajustes</button>
-            <button id="navUsers" class="btn btn-ghost w-full justify-start">Usuarios</button>
-          </nav>
-        </div>
-
-        <div class="p-4 border-t border-white/10">
-            <div class="flex items-center gap-3 mb-4">
-                <button id="themeToggle" class="btn btn-ghost btn-small w-full justify-center text-slate-400 hover:text-white" title="Cambiar tema">
-                    <svg class="w-5 h-5 sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                </button>
-            </div>
-            <div class="flex items-center gap-3">
-                <div class="login-avatar w-10 h-10 rounded-full overflow-hidden flex-shrink-0" id="sidebar-avatar-slot"></div>
-                <div id="user-nombre" class="text-sm text-white truncate"><h1 class="text-sm truncate">Invitado</h1></div>
-            </div>
-        </div>
+          <div class="p-4 border-t border-white/5">
+              <div class="flex items-center gap-3 mb-4">
+                  <button id="themeToggle" class="btn btn-ghost btn-small w-full justify-center text-slate-400 hover:text-white" title="Cambiar tema">
+                      <svg class="w-5 h-5 sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                  </button>
+              </div>
+              <div class="flex items-center gap-3">
+                  <div class="login-avatar w-10 h-10 rounded-full overflow-hidden flex-shrink-0" id="sidebar-avatar-slot"></div>
+                  <div id="user-nombre" class="text-sm text-white truncate"><h1 class="text-sm truncate">Invitado</h1></div>
+              </div>
+          </div>
       </aside>
 
+      <!-- Main Content -->
       <main class="flex-1 h-full overflow-y-auto relative bg-slate-950">
-        <!-- Status Indicator hidden/moved -->
-        <span class="hidden" id="status"></span>
-
-        <section id="admin-users" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="card">
-              <div class="card-header">
-                <h2>Administración de Usuarios</h2>
-                <button id="btnRefreshUsers" class="btn btn-ghost btn-small">↻</button>
-              </div>
-              <div class="table-container">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Nombre</th>
-                      <th>Email</th>
-                      <th>Rol</th>
-                      <th class="text-right">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody id="admin-users-body"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="dashboard" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="card">
-              <div class="card-header"><h2>Dashboard</h2></div>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <div class="card flex items-center p-5 bg-gradient-to-br from-blue-600/20 via-transparent to-transparent">
-                  <div class="rounded-xl h-12 w-12 flex items-center justify-center text-blue-400 border border-white/10 mr-4">
-                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                  </div>
-                  <div class="flex-1">
-                    <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Tickets</div>
-                    <div class="text-4xl font-bold text-white mt-1" id="total-tickets-count">0</div>
-                  </div>
-                </div>
-                <div class="card flex items-center p-5 bg-gradient-to-br from-orange-500/20 via-transparent to-transparent">
-                  <div class="rounded-xl h-12 w-12 flex items-center justify-center text-orange-400 border border-white/10 mr-4">
-                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                  </div>
-                  <div class="flex-1">
-                    <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Pending</div>
-                    <div class="text-4xl font-bold text-white mt-1" id="assigned-count">0</div>
-                  </div>
-                </div>
-                <div class="card flex items-center p-5 bg-gradient-to-br from-cyan-500/20 via-transparent to-transparent">
-                  <div class="rounded-xl h-12 w-12 flex items-center justify-center text-cyan-400 border border-white/10 mr-4">
-                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21v-2a6.5 6.5 0 0 1 13 0v2"/></svg>
-                  </div>
-                  <div class="flex-1">
-                    <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Clients</div>
-                    <div class="text-4xl font-bold text-white mt-1" id="total-clientes-count">0</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="card mt-6 p-6">
-              <div class="card-header">
-                <h2 class="text-xl font-semibold text-white">Recent Tickets</h2>
-                <button id="btnGoCreateTicket" class="btn btn-primary text-sm px-4 py-2 rounded-lg">Create Ticket</button>
-              </div>
-              <div id="assigned-list" class="tickets-grid"></div>
-            </div>
-          </div>
-        </section>
-
-        <section id="menu" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="card">
-              <div class="card-header"><h2>Menú</h2></div>
-              <div class="menu-grid">
-                <button id="btnIrTickets" class="btn btn-primary">Tickets</button>
-                <button id="btnIrEquipos" class="btn btn-success">Equipos</button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="settings" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="card">
-              <div class="card-header"><h2>Ajustes</h2></div>
-              <div class="card-body flex items-center gap-4">
-                <div class="login-avatar w-[120px] h-[120px]" id="settings-avatar-slot"></div>
-                <div>
-                  <input type="file" id="avatar-file" accept="image/*" class="hidden" />
-                  <button id="btnChangeAvatar" class="btn btn-ghost">Cambiar foto</button>
-                  <button id="btnLogout" class="btn btn-outline btn-small ml-2">Cerrar sesión</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="clientes-section" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="grid gap-5">
-              <!-- Card Creación -->
-            <div class="card">
-              <div class="card-header justify-between">
-                 <h2>Gestión de Clientes</h2>
-                 <button id="toggleClienteForm" class="btn btn-primary">Nuevo Cliente</button>
-              </div>
-              <div id="cliente-form" class="hidden mt-4 pt-4 border-t border-slate-700">
-                <h4 class="mt-0 mb-3 text-blue-500">Registrar Cliente</h4>
-                <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 items-end">
-                  <div>
-                    <label class="block mb-1.5 text-[13px] font-semibold text-slate-400">Nombre del Cliente</label>
-                    <input id="cli-nombre" class="input full" placeholder="Ej: Juan Pérez" />
-                  </div>
-                  <div>
-                    <label class="block mb-1.5 text-[13px] font-semibold text-slate-400">Empresa</label>
-                    <input id="cli-empresa" class="input full" placeholder="Ej: Biohertz S.A." />
-                  </div>
-                  <button id="btnCrearCliente" class="btn btn-success h-[42px]">Guardar Cliente</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Card Listado -->
-            <div class="card">
-              <div class="card-header">
-                <div class="flex items-center gap-3">
-                  <h2>Directorio</h2>
-                  <span id="clientes-total" class="badge">0</span>
-                </div>
-              </div>
+          <div class="max-w-7xl mx-auto px-6 py-8">
               
-              <div class="grid grid-cols-1 md:grid-cols-12 gap-5 mb-8">
-                  <input id="cli-filtro-q" class="input col-span-12 md:col-span-5" placeholder="Buscar por nombre, empresa o ID..." />
-                  <div class="col-span-12 md:col-span-7 flex items-center justify-end gap-2">
-                    <button id="btnRefreshClientes" class="btn btn-secondary btn-small">Refrescar</button>
-                  </div>
-              </div>
+              <span class="hidden" id="status"></span>
 
-              <div class="grid grid-cols-[2fr_1fr] gap-6">
-                  <!-- Lista (Tabla) -->
-                  <div class="table-container">
-                      <table class="data-table">
-                        <thead>
-                          <tr>
-                            <th>Nombre</th>
-                            <th>Empresa</th>
-                            <th class="text-right">Acciones</th>
-                          </tr>
-                        </thead>
-                        <tbody id="clientes-body"></tbody>
-                      </table>
-                  </div>
-                  
-                  <!-- Detalle Lateral -->
-                  <div id="cliente-detalle-view" class="hidden sticky top-5 bg-slate-900 border border-slate-700 rounded-lg p-5 h-fit shadow-md">
-                      <div class="flex justify-between items-start mb-4 pb-3 border-b border-slate-700">
-                          <h3 id="cd-nombre" class="m-0 text-blue-500">Detalles</h3>
-                          <button onclick="document.getElementById('cliente-detalle-view').style.display='none'" class="btn btn-ghost btn-small" title="Cerrar">✕</button>
+              <section id="admin-users" class="hidden">
+                  <div class="card">
+                      <div class="card-header">
+                          <h2>Administración de Usuarios</h2>
+                          <button id="btnRefreshUsers" class="btn btn-ghost btn-small">↻</button>
                       </div>
-                      <p class="font-semibold mb-3">Equipos Asignados</p>
-                      <div id="cd-equipos-list" class="flex flex-col gap-2.5 max-h-[calc(100vh-200px)] overflow-y-auto pr-1"></div>
-                  </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="nuevo-ticket" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="card">
-              <div class="card-header">
-                <h2>Nuevo Ticket</h2>
-              </div>
-              <div class="max-w-4xl mx-auto">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-slate-400 mb-1.5">Título</label>
-                    <input id="titulo" class="input" placeholder="Título del ticket" />
-                  </div>
-                  <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-slate-400 mb-1.5">Descripción</label>
-                    <input id="descripcion" class="input" placeholder="Descripción breve" />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-1.5">Responsable</label>
-                    <select id="asignado-select" class="input">
-                      <option value="">Asignar responsable (opcional)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-1.5">Equipo</label>
-                    <input id="equipo" class="input" type="number" placeholder="ID equipo (opcional)" />
-                  </div>
-                  <div class="md:col-span-2 flex justify-end">
-                    <button id="btnCrearTicket" class="btn btn-primary">Crear Ticket</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="tickets-section" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="card">
-              <div class="card-header">
-                <h2>Tickets</h2>
-                <div>
-                  <span id="tickets-total" class="muted"></span>
-                </div>
-              </div>
-              <div id="filtros" class="grid grid-cols-1 md:grid-cols-12 gap-5 mb-8">
-                <input id="filtro-q" class="input col-span-12 md:col-span-5" placeholder="Buscar" />
-                <select id="filtro-estado" class="input select col-span-6 md:col-span-3">
-                  <option value="">Todos</option>
-                  <option value="pendiente">Pendiente</option>
-                  <option value="hecho">Terminado</option>
-                </select>
-                <select id="filtro-asignado-select" class="input select col-span-6 md:col-span-3">
-                  <option value="">Asignado: Todos</option>
-                </select>
-                <div class="col-span-12 md:col-span-1 flex items-center gap-2">
-                  <button id="btnFiltrar" class="btn btn-secondary btn-small w-full">Filtrar</button>
-                </div>
-                <div class="col-span-6 md:col-span-1 flex items-center">
-                  <button id="btnLimpiar" class="btn btn-ghost btn-small w-full">Limpiar</button>
-                </div>
-                <div class="col-span-12 md:col-span-12 flex items-center justify-end gap-2">
-                  <select id="page-size" class="input select small w-24">
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                    <option value="50" selected>50</option>
-                  </select>
-                  <button id="btnPrev" class="btn btn-ghost btn-small">Prev</button>
-                  <button id="btnNext" class="btn btn-primary btn-small">Next</button>
-                </div>
-              </div>
-              <div id="tickets" class="tickets-grid"></div>
-            </div>
-          </div>
-        </section>
-
-        <section id="equipos-list" class="hidden">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="grid gap-5">
-              <!-- Card Creación -->
-            <div class="card">
-              <div class="card-header justify-between">
-                <h2>Gestión de Equipos</h2>
-                <button id="toggleEquipoForm" class="btn btn-primary">Nuevo Equipo</button>
-              </div>
-              <div id="nuevo-equipo" class="hidden mt-4 pt-4 border-t border-slate-700">
-                <h4 class="mt-0 mb-3 text-blue-500">Registrar Equipo</h4>
-                
-                <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 items-end">
-                    <!-- Info Básica -->
-                    <div class="full col-span-full mb-2 font-semibold text-slate-400 border-b border-slate-700 pb-1">Información General</div>
-                    
-                    <div><label class="label-sm">Nombre</label><input id="eq-nombre" class="input full" placeholder="Ej: Ecógrafo Portátil" /></div>
-                    <div><label class="label-sm">Marca</label><input id="eq-marca" class="input full" placeholder="Ej: Samsung" /></div>
-                    <div><label class="label-sm">Modelo</label><input id="eq-modelo" class="input full" placeholder="Ej: HS40" /></div>
-                    <div><label class="label-sm">N° Serie</label><input id="eq-numero_serie" class="input full" /></div>
-                    <div><label class="label-sm">Ubicación</label><input id="eq-ubicacion" class="input full" placeholder="Ej: Bodega 1" /></div>
-                    <div><label class="label-sm">Aplicación</label><input id="eq-aplicacion" class="input full" placeholder="Ej: Cardiología" /></div>
-                    
-                    <div class="full col-span-full my-2 font-semibold text-slate-400 border-b border-slate-700 pb-1">Estado y Asignación</div>
-                    
-                    <div><label class="label-sm">Cliente</label><select id="eq-cliente-id" class="input full"><option value="">Seleccionar Cliente</option></select></div>
-                    <div><label class="label-sm">Año Venta</label><input id="eq-anio_venta" class="input full" type="number" /></div>
-                    <div><label class="label-sm">Estado</label>
-                      <select id="eq-estado" class="input select full">
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
-                      </select>
-                    </div>
-
-                    <div class="full col-span-full my-2 font-semibold text-slate-400 border-b border-slate-700 pb-1">Mantención Inicial (Opcional)</div>
-                    
-                    <div><label class="label-sm">Fecha</label><input id="eq-man-fecha" class="input full" type="date" /></div>
-                    <div><label class="label-sm">Trabajo Realizado</label><input id="eq-man-trabajo" class="input full" /></div>
-                    <div><label class="label-sm">Nota</label><input id="eq-man-nota" class="input full" /></div>
-                    
-                    <div class="col-span-full flex justify-end mt-2.5">
-                        <button id="btnCrearEquipo" class="btn btn-success min-w-[150px]">Guardar Equipo</button>
-                    </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Card Listado -->
-            <div class="card">
-              <div class="card-header">
-                <div class="flex items-center gap-3">
-                  <h2>Inventario</h2>
-                  <span id="equipos-total" class="badge">0</span>
-                </div>
-              </div>
-              
-              <div id="filtros-equipos" class="grid grid-cols-1 md:grid-cols-12 gap-5 mb-8">
-                  <input id="eq-filtro-q" class="input col-span-12 md:col-span-5" placeholder="Búsqueda General" />
-                  <input id="eq-filtro-marca" class="input col-span-6 md:col-span-3" placeholder="Marca" />
-                  <input id="eq-filtro-modelo" class="input col-span-6 md:col-span-3" placeholder="Modelo" />
-                  <input id="eq-filtro-serie" class="input col-span-6 md:col-span-3" placeholder="Serie" />
-                  <input id="eq-filtro-cliente" class="input col-span-6 md:col-span-3" placeholder="Cliente" />
-                  <input id="eq-filtro-aplicacion" class="input col-span-6 md:col-span-3" placeholder="Aplicación" />
-                  <input id="eq-filtro-anio" class="input col-span-6 md:col-span-3" type="number" placeholder="Año" />
-                  <select id="eq-filtro-estado" class="input select col-span-6 md:col-span-3">
-                    <option value="">Estado: Todos</option>
-                    <option value="activo">Activo</option>
-                    <option value="inactivo">Inactivo</option>
-                  </select>
-                  
-                  <div class="flex gap-2 col-span-12 justify-end">
-                      <button id="eq-btnFiltrar" class="btn btn-secondary btn-small">Filtrar</button>
-                      <button id="eq-btnLimpiar" class="btn btn-ghost btn-small">Limpiar</button>
-                      <div class="border-l border-slate-700 pl-2 ml-2 flex gap-2">
-                          <button id="eq-btnPrev" class="btn btn-secondary btn-small">Prev</button>
-                          <select id="eq-page-size" class="input select small"><option value="10">10</option><option value="20">20</option><option value="50">50</option></select>
-                          <button id="eq-btnNext" class="btn btn-primary btn-small">Next</button>
+                      <div class="table-container">
+                          <table class="data-table">
+                              <thead>
+                                  <tr>
+                                      <th>Nombre</th>
+                                      <th>Email</th>
+                                      <th>Rol</th>
+                                      <th class="text-right">Acciones</th>
+                                  </tr>
+                              </thead>
+                              <tbody id="admin-users-body"></tbody>
+                          </table>
                       </div>
                   </div>
-              </div>
-              
-              <div class="grid grid-cols-[2fr_1fr] gap-6">
-                  <!-- Lista (Tabla) -->
-                  <div class="table-container">
-                      <table class="data-table">
-                        <thead>
-                          <tr>
-                            <th>Nombre</th>
-                            <th>Marca/Modelo</th>
-                            <th>Serie</th>
-                            <th>Estado</th>
-                            <th class="text-right">Acciones</th>
-                          </tr>
-                        </thead>
-                        <tbody id="equipos-body"></tbody>
-                      </table>
-                  </div>
-                  
-                  <!-- Detalle Lateral -->
-                  <div id="equipo-detalle-view" class="hidden sticky top-5 bg-slate-900 border border-slate-700 rounded-lg p-5 h-fit shadow-md">
-                      <div class="flex justify-between items-start mb-4 pb-3 border-b border-slate-700">
-                          <h3 id="ed-title" class="m-0 text-blue-500">Detalles del Equipo</h3>
-                          <button onclick="document.getElementById('equipo-detalle-view').style.display='none'" class="btn btn-ghost btn-small" title="Cerrar">✕</button>
+              </section>
+
+              <section id="dashboard" class="hidden">
+                  <div class="card">
+                      <div class="card-header"><h2>Dashboard</h2></div>
+                      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                          <div class="card flex items-center p-5 bg-gradient-to-br from-blue-600/20 via-transparent to-transparent">
+                              <div class="rounded-xl h-12 w-12 flex items-center justify-center text-blue-400 border border-white/10 mr-4">
+                                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                              </div>
+                              <div class="flex-1">
+                                  <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Tickets</div>
+                                  <div class="text-4xl font-bold text-white mt-1" id="total-tickets-count">0</div>
+                              </div>
+                          </div>
+                          <div class="card flex items-center p-5 bg-gradient-to-br from-orange-500/20 via-transparent to-transparent">
+                              <div class="rounded-xl h-12 w-12 flex items-center justify-center text-orange-400 border border-white/10 mr-4">
+                                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                              </div>
+                              <div class="flex-1">
+                                  <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Pending</div>
+                                  <div class="text-4xl font-bold text-white mt-1" id="assigned-count">0</div>
+                              </div>
+                          </div>
+                          <div class="card flex items-center p-5 bg-gradient-to-br from-cyan-500/20 via-transparent to-transparent">
+                              <div class="rounded-xl h-12 w-12 flex items-center justify-center text-cyan-400 border border-white/10 mr-4">
+                                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21v-2a6.5 6.5 0 0 1 13 0v2"/></svg>
+                              </div>
+                              <div class="flex-1">
+                                  <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Clients</div>
+                                  <div class="text-4xl font-bold text-white mt-1" id="total-clientes-count">0</div>
+                              </div>
+                          </div>
                       </div>
-                      <div id="ed-content" class="flex flex-col gap-3"></div>
-                      <div id="ed-actions" class="mt-5 pt-4 border-t border-slate-700 flex gap-2.5 justify-end"></div>
                   </div>
-              </div>
-            </div>
+                  <div class="card mt-6 p-6">
+                      <div class="card-header">
+                          <h2 class="text-xl font-semibold text-white">Recent Tickets</h2>
+                          <button id="btnGoCreateTicket" class="btn btn-primary text-sm px-4 py-2 rounded-lg">Create Ticket</button>
+                      </div>
+                      <div id="assigned-list" class="tickets-grid"></div>
+                  </div>
+              </section>
+
+              <section id="menu" class="hidden">
+                  <div class="card">
+                      <div class="card-header"><h2>Menú</h2></div>
+                      <div class="menu-grid">
+                          <button id="btnIrTickets" class="btn btn-primary">Tickets</button>
+                          <button id="btnIrEquipos" class="btn btn-success">Equipos</button>
+                      </div>
+                  </div>
+              </section>
+
+              <section id="settings" class="hidden">
+                  <div class="card">
+                      <div class="card-header"><h2>Ajustes</h2></div>
+                      <div class="card-body flex items-center gap-4">
+                          <div class="login-avatar w-[120px] h-[120px]" id="settings-avatar-slot"></div>
+                          <div>
+                              <input type="file" id="avatar-file" accept="image/*" class="hidden" />
+                              <button id="btnChangeAvatar" class="btn btn-ghost">Cambiar foto</button>
+                              <button id="btnLogout" class="btn btn-outline btn-small ml-2">Cerrar sesión</button>
+                          </div>
+                      </div>
+                  </div>
+              </section>
+
+              <section id="clientes-section" class="hidden">
+                  <div class="grid gap-5">
+                      <!-- Card Creación -->
+                      <div class="card">
+                          <div class="card-header justify-between">
+                              <h2>Gestión de Clientes</h2>
+                              <button id="toggleClienteForm" class="btn btn-primary">Nuevo Cliente</button>
+                          </div>
+                          <div id="cliente-form" class="hidden mt-4 pt-4 border-t border-slate-700">
+                              <h4 class="mt-0 mb-3 text-blue-500">Registrar Cliente</h4>
+                              <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 items-end">
+                                  <div>
+                                      <label class="block mb-1.5 text-[13px] font-semibold text-slate-400">Nombre del Cliente</label>
+                                      <input id="cli-nombre" class="input full" placeholder="Ej: Juan Pérez" />
+                                  </div>
+                                  <div>
+                                      <label class="block mb-1.5 text-[13px] font-semibold text-slate-400">Empresa</label>
+                                      <input id="cli-empresa" class="input full" placeholder="Ej: Biohertz S.A." />
+                                  </div>
+                                  <button id="btnCrearCliente" class="btn btn-success h-[42px]">Guardar Cliente</button>
+                              </div>
+                          </div>
+                      </div>
+
+                      <!-- Card Listado -->
+                      <div class="card">
+                          <div class="card-header">
+                              <div class="flex items-center gap-3">
+                                  <h2>Directorio</h2>
+                                  <span id="clientes-total" class="badge">0</span>
+                              </div>
+                          </div>
+                          
+                          <div class="grid grid-cols-1 md:grid-cols-12 gap-5 mb-8">
+                              <input id="cli-filtro-q" class="input col-span-12 md:col-span-5" placeholder="Buscar por nombre, empresa o ID..." />
+                              <div class="col-span-12 md:col-span-7 flex items-center justify-end gap-2">
+                                  <button id="btnRefreshClientes" class="btn btn-secondary btn-small">Refrescar</button>
+                              </div>
+                          </div>
+
+                          <div class="grid grid-cols-[2fr_1fr] gap-6">
+                              <!-- Lista (Tabla) -->
+                              <div class="table-container">
+                                  <table class="data-table">
+                                      <thead>
+                                          <tr>
+                                              <th>Nombre</th>
+                                              <th>Empresa</th>
+                                              <th class="text-right">Acciones</th>
+                                          </tr>
+                                      </thead>
+                                      <tbody id="clientes-body"></tbody>
+                                  </table>
+                              </div>
+                              
+                              <!-- Detalle Lateral -->
+                              <div id="cliente-detalle-view" class="hidden sticky top-5 bg-slate-900 border border-slate-700 rounded-lg p-5 h-fit shadow-md">
+                                  <div class="flex justify-between items-start mb-4 pb-3 border-b border-slate-700">
+                                      <h3 id="cd-nombre" class="m-0 text-blue-500">Detalles</h3>
+                                      <button onclick="document.getElementById('cliente-detalle-view').style.display='none'" class="btn btn-ghost btn-small" title="Cerrar">✕</button>
+                                  </div>
+                                  <p class="font-semibold mb-3">Equipos Asignados</p>
+                                  <div id="cd-equipos-list" class="flex flex-col gap-2.5 max-h-[calc(100vh-200px)] overflow-y-auto pr-1"></div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </section>
+
+              <section id="nuevo-ticket" class="hidden">
+                  <div class="card">
+                      <div class="card-header">
+                          <h2>Nuevo Ticket</h2>
+                      </div>
+                      <div class="max-w-4xl mx-auto">
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div class="md:col-span-2">
+                                  <label class="block text-sm font-medium text-slate-400 mb-1.5">Título</label>
+                                  <input id="titulo" class="input" placeholder="Título del ticket" />
+                              </div>
+                              <div class="md:col-span-2">
+                                  <label class="block text-sm font-medium text-slate-400 mb-1.5">Descripción</label>
+                                  <input id="descripcion" class="input" placeholder="Descripción breve" />
+                              </div>
+                              <div>
+                                  <label class="block text-sm font-medium text-slate-400 mb-1.5">Responsable</label>
+                                  <select id="asignado-select" class="input">
+                                      <option value="">Asignar responsable (opcional)</option>
+                                  </select>
+                              </div>
+                              <div>
+                                  <label class="block text-sm font-medium text-slate-400 mb-1.5">Equipo</label>
+                                  <input id="equipo" class="input" type="number" placeholder="ID equipo (opcional)" />
+                              </div>
+                              <div class="md:col-span-2 flex justify-end">
+                                  <button id="btnCrearTicket" class="btn btn-primary">Crear Ticket</button>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </section>
+
+              <section id="tickets-section" class="hidden">
+                  <div class="card">
+                      <div class="card-header">
+                          <h2>Tickets</h2>
+                          <div>
+                              <span id="tickets-total" class="muted"></span>
+                          </div>
+                      </div>
+                      <div id="filtros" class="grid grid-cols-1 md:grid-cols-12 gap-5 mb-8">
+                          <input id="filtro-q" class="input col-span-12 md:col-span-5" placeholder="Buscar" />
+                          <select id="filtro-estado" class="input select col-span-6 md:col-span-3">
+                              <option value="">Todos</option>
+                              <option value="pendiente">Pendiente</option>
+                              <option value="hecho">Terminado</option>
+                          </select>
+                          <select id="filtro-asignado-select" class="input select col-span-6 md:col-span-3">
+                              <option value="">Asignado: Todos</option>
+                          </select>
+                          <div class="col-span-12 md:col-span-1 flex items-center gap-2">
+                              <button id="btnFiltrar" class="btn btn-secondary btn-small w-full">Filtrar</button>
+                          </div>
+                          <div class="col-span-6 md:col-span-1 flex items-center">
+                              <button id="btnLimpiar" class="btn btn-ghost btn-small w-full">Limpiar</button>
+                          </div>
+                          <div class="col-span-12 md:col-span-12 flex items-center justify-end gap-2">
+                              <select id="page-size" class="input select small w-24">
+                                  <option value="10">10</option>
+                                  <option value="20">20</option>
+                                  <option value="50" selected>50</option>
+                              </select>
+                              <button id="btnPrev" class="btn btn-ghost btn-small">Prev</button>
+                              <button id="btnNext" class="btn btn-primary btn-small">Next</button>
+                          </div>
+                      </div>
+                      <div id="tickets" class="tickets-grid"></div>
+                  </div>
+              </section>
+
+              <section id="equipos-list" class="hidden">
+                  <div class="grid gap-5">
+                      <!-- Card Creación -->
+                      <div class="card">
+                          <div class="card-header justify-between">
+                              <h2>Gestión de Equipos</h2>
+                              <button id="toggleEquipoForm" class="btn btn-primary">Nuevo Equipo</button>
+                          </div>
+                          <div id="nuevo-equipo" class="hidden mt-4 pt-4 border-t border-slate-700">
+                              <h4 class="mt-0 mb-3 text-blue-500">Registrar Equipo</h4>
+                              
+                              <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 items-end">
+                                  <!-- Info Básica -->
+                                  <div class="full col-span-full mb-2 font-semibold text-slate-400 border-b border-slate-700 pb-1">Información General</div>
+                                  
+                                  <div><label class="label-sm">Nombre</label><input id="eq-nombre" class="input full" placeholder="Ej: Ecógrafo Portátil" /></div>
+                                  <div><label class="label-sm">Marca</label><input id="eq-marca" class="input full" placeholder="Ej: Samsung" /></div>
+                                  <div><label class="label-sm">Modelo</label><input id="eq-modelo" class="input full" placeholder="Ej: HS40" /></div>
+                                  <div><label class="label-sm">N° Serie</label><input id="eq-numero_serie" class="input full" /></div>
+                                  <div><label class="label-sm">Ubicación</label><input id="eq-ubicacion" class="input full" placeholder="Ej: Bodega 1" /></div>
+                                  <div><label class="label-sm">Aplicación</label><input id="eq-aplicacion" class="input full" placeholder="Ej: Cardiología" /></div>
+                                  
+                                  <div class="full col-span-full my-2 font-semibold text-slate-400 border-b border-slate-700 pb-1">Estado y Asignación</div>
+                                  
+                                  <div><label class="label-sm">Cliente</label><select id="eq-cliente-id" class="input full"><option value="">Seleccionar Cliente</option></select></div>
+                                  <div><label class="label-sm">Año Venta</label><input id="eq-anio_venta" class="input full" type="number" /></div>
+                                  <div><label class="label-sm">Estado</label>
+                                    <select id="eq-estado" class="input select full">
+                                      <option value="activo">Activo</option>
+                                      <option value="inactivo">Inactivo</option>
+                                    </select>
+                                  </div>
+
+                                  <div class="full col-span-full my-2 font-semibold text-slate-400 border-b border-slate-700 pb-1">Mantención Inicial (Opcional)</div>
+                                  
+                                  <div><label class="label-sm">Fecha</label><input id="eq-man-fecha" class="input full" type="date" /></div>
+                                  <div><label class="label-sm">Trabajo Realizado</label><input id="eq-man-trabajo" class="input full" /></div>
+                                  <div><label class="label-sm">Nota</label><input id="eq-man-nota" class="input full" /></div>
+                                  
+                                  <div class="col-span-full flex justify-end mt-2.5">
+                                      <button id="btnCrearEquipo" class="btn btn-success min-w-[150px]">Guardar Equipo</button>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+
+                      <!-- Card Listado -->
+                      <div class="card">
+                          <div class="card-header">
+                              <div class="flex items-center gap-3">
+                                  <h2>Inventario</h2>
+                                  <span id="equipos-total" class="badge">0</span>
+                              </div>
+                          </div>
+                          
+                          <div id="filtros-equipos" class="grid grid-cols-1 md:grid-cols-12 gap-5 mb-8">
+                              <input id="eq-filtro-q" class="input col-span-12 md:col-span-5" placeholder="Búsqueda General" />
+                              <input id="eq-filtro-marca" class="input col-span-6 md:col-span-3" placeholder="Marca" />
+                              <input id="eq-filtro-modelo" class="input col-span-6 md:col-span-3" placeholder="Modelo" />
+                              <input id="eq-filtro-serie" class="input col-span-6 md:col-span-3" placeholder="Serie" />
+                              <input id="eq-filtro-cliente" class="input col-span-6 md:col-span-3" placeholder="Cliente" />
+                              <input id="eq-filtro-aplicacion" class="input col-span-6 md:col-span-3" placeholder="Aplicación" />
+                              <input id="eq-filtro-anio" class="input col-span-6 md:col-span-3" type="number" placeholder="Año" />
+                              <select id="eq-filtro-estado" class="input select col-span-6 md:col-span-3">
+                                  <option value="">Estado: Todos</option>
+                                  <option value="activo">Activo</option>
+                                  <option value="inactivo">Inactivo</option>
+                              </select>
+                              
+                              <div class="flex gap-2 col-span-12 justify-end">
+                                  <button id="eq-btnFiltrar" class="btn btn-secondary btn-small">Filtrar</button>
+                                  <button id="eq-btnLimpiar" class="btn btn-ghost btn-small">Limpiar</button>
+                                  <div class="border-l border-slate-700 pl-2 ml-2 flex gap-2">
+                                      <button id="eq-btnPrev" class="btn btn-secondary btn-small">Prev</button>
+                                      <select id="eq-page-size" class="input select small"><option value="10">10</option><option value="20">20</option><option value="50">50</option></select>
+                                      <button id="eq-btnNext" class="btn btn-primary btn-small">Next</button>
+                                  </div>
+                              </div>
+                          </div>
+                          
+                          <div class="grid grid-cols-[2fr_1fr] gap-6">
+                              <!-- Lista (Tabla) -->
+                              <div class="table-container">
+                                  <table class="data-table">
+                                      <thead>
+                                          <tr>
+                                              <th>Nombre</th>
+                                              <th>Marca/Modelo</th>
+                                              <th>Serie</th>
+                                              <th>Estado</th>
+                                              <th class="text-right">Acciones</th>
+                                          </tr>
+                                      </thead>
+                                      <tbody id="equipos-body"></tbody>
+                                  </table>
+                              </div>
+                              
+                              <!-- Detalle Lateral -->
+                              <div id="equipo-detalle-view" class="hidden sticky top-5 bg-slate-900 border border-slate-700 rounded-lg p-5 h-fit shadow-md">
+                                  <div class="flex justify-between items-start mb-4 pb-3 border-b border-slate-700">
+                                      <h3 id="ed-title" class="m-0 text-blue-500">Detalles del Equipo</h3>
+                                      <button onclick="document.getElementById('equipo-detalle-view').style.display='none'" class="btn btn-ghost btn-small" title="Cerrar">✕</button>
+                                  </div>
+                                  <div id="ed-content" class="flex flex-col gap-3"></div>
+                                  <div id="ed-actions" class="mt-5 pt-4 border-t border-slate-700 flex gap-2.5 justify-end"></div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </section>
+
           </div>
-        </section>
       </main>
-    </div>
   </div>
   
   <div class="login-wrapper w-full max-w-md mx-auto p-4 flex flex-col items-center justify-center min-h-screen" id="login">
