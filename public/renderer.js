@@ -452,12 +452,43 @@ async function loadTickets() {
 }
 
 function ticketCard(t) {
+  const isFinished = t.estado === 'hecho' || t.estado === 'terminado';
+  const isOwner = currentUser && (Number(t.asignado_a) === Number(currentUser.id));
+  
   const div = document.createElement('div');
-  div.className = `border-b border-white/5 hover:bg-white/5 transition-colors`;
+  div.className = `border-b border-white/5 hover:bg-white/5 transition-colors ${isFinished ? 'opacity-60' : ''}`;
+  
   const pColor =
     t.prioridad === 'alta' ? 'bg-red-500' :
     t.prioridad === 'media' ? 'bg-amber-500' :
     t.prioridad === 'baja' ? 'bg-green-500' : 'bg-slate-500';
+
+  let actionsHtml = '';
+  if (isOwner) {
+     actionsHtml = `
+        <button class="btn btn-ghost btn-small ${isFinished ? 'text-green-500' : 'text-slate-400 hover:text-green-400'}" title="Finalizar" data-done="${t.id}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </button>
+        <button class="btn btn-ghost btn-small" title="Editar" data-editar="${t.id}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+        <button class="btn btn-ghost btn-small hover:text-red-400" title="Eliminar" data-eliminar="${t.id}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+     `;
+  } else {
+     actionsHtml = `
+        <div class="group relative">
+            <button class="btn btn-ghost btn-small text-slate-600 cursor-not-allowed">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </button>
+            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                Solo lectura
+            </div>
+        </div>
+     `;
+  }
+
   div.innerHTML = `
     <div class="grid grid-cols-[1fr_140px_90px_auto] items-center gap-4 py-4 px-3">
       <div class="min-w-0">
@@ -474,13 +505,7 @@ function ticketCard(t) {
         <button class="btn btn-ghost btn-small" title="Comentarios" data-ver="${t.id}">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
         </button>
-        <button class="btn btn-ghost btn-small" title="Editar" data-editar="${t.id}">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-        </button>
-        ${currentUser && currentUser.rol === 'admin' ? `
-        <button class="btn btn-ghost btn-small hover:text-white" title="Eliminar" data-eliminar="${t.id}">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
-        </button>` : ''}
+        ${actionsHtml}
       </div>
     </div>
     <div id="edit-ticket-${t.id}" class="hidden mt-2 px-3 pb-3">
@@ -528,6 +553,7 @@ async function updateEstado(id, estado) {
       body: JSON.stringify({ estado })
     });
     loadTickets();
+    loadDashboard();
   } catch (err) { console.error(err); }
 }
 
