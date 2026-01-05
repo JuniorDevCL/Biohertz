@@ -345,44 +345,93 @@
     </div>
   </div>
   
-  <section id="login" class="flex items-center justify-center min-h-screen">
-    <div class="login-card">
-      <div class="login-avatar" id="login-avatar-slot"></div>
-      <div class="login-field">
-        <input id="email" class="input" type="email" placeholder="Correo electrónico" />
+  <div class="login-wrapper w-full max-w-md mx-auto p-4 flex flex-col items-center justify-center min-h-screen" id="login">
+    <div class="login-header text-center mb-8">
+      <div class="login-icon mb-4">
+        <svg class="w-16 h-16 text-slate-200 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
       </div>
-      <div class="login-field">
-        <input id="password" class="input" type="password" placeholder="Contraseña" />
-      </div>
-      <div class="login-actions">
-        <label><input id="rememberMe" type="checkbox" /> Recordarme</label>
-        <a href="#" id="toggleRegister">Crear cuenta</a>
-      </div>
-      <button id="btnLogin" class="login-btn">Iniciar sesión</button>
-      
-      <div class="google-auth">
-        <a href="/auth/google" class="google-btn">
-           <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G" />
-           Continuar con Google
-        </a>
-      </div>
-      <div id="loginResult" class="error-msg text-center mt-4"></div>
+      <h1 class="text-3xl font-bold text-white mb-2">Bienvenido</h1>
+      <p class="text-slate-400">Ingresa a tu cuenta para continuar</p>
     </div>
-  </section>
+    
+    <div class="card w-full p-8">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-400 mb-1.5">Correo electrónico</label>
+          <input id="email" type="email" class="input" placeholder="nombre@empresa.com" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-400 mb-1.5">Contraseña</label>
+          <input id="password" type="password" class="input" placeholder="••••••••" />
+        </div>
+        
+        <div class="flex items-center justify-between text-sm">
+          <label class="flex items-center gap-2 text-slate-400 cursor-pointer">
+            <input type="checkbox" id="rememberMe" class="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500" />
+            Recordarme
+          </label>
+          <a href="#" id="toggleRegister" class="text-blue-500 hover:text-blue-400 font-medium">Crear cuenta</a>
+        </div>
 
-  <div id="registerPanel" class="register-panel">
-    <div class="register-card">
-      <h2>Crear Cuenta</h2>
-      <input id="reg-nombre" class="input" placeholder="Nombre completo" />
-      <input id="reg-email" class="input" placeholder="Correo electrónico" />
-      <input id="reg-password" class="input" type="password" placeholder="Contraseña" />
-      <select id="reg-rol" class="input select">
-        <option value="user">Usuario</option>
-        <option value="admin">Administrador</option>
-      </select>
-      <button id="btnRegister" class="btn btn-primary w-full mt-4">Registrarse</button>
-      <button onclick="document.getElementById('registerPanel').style.display='none'" class="btn btn-ghost w-full mt-2">Cancelar</button>
-      <div id="registerResult" class="error-msg text-center mt-4"></div>
+        <button id="btnLogin" class="btn btn-primary w-full py-2.5 text-base shadow-lg shadow-blue-500/20">Iniciar sesión</button>
+        
+        <div class="relative my-6">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-slate-700"></div>
+          </div>
+          <div class="relative flex justify-center text-xs uppercase">
+            <span class="bg-slate-900 px-2 text-slate-500">O continúa con</span>
+          </div>
+        </div>
+
+        <div class="google-auth">
+          <a href="/auth/google" class="btn bg-white hover:bg-gray-100 text-gray-900 w-full flex items-center justify-center gap-3 font-medium border border-transparent transition-all">
+             <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5" />
+             Continuar con Google
+          </a>
+        </div>
+      </div>
+      <div id="loginResult" class="error-msg text-center mt-4 text-red-500 text-sm"></div>
+    </div>
+  </div>
+
+  <div id="registerPanel" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="card w-full max-w-md p-8 m-0 shadow-2xl border-slate-700">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl font-bold text-white mb-2">Crear Cuenta</h2>
+        <p class="text-slate-400 text-sm">Regístrate para gestionar tus tickets</p>
+      </div>
+      
+      <div class="space-y-4">
+        <div>
+           <label class="block text-sm font-medium text-slate-400 mb-1.5">Nombre completo</label>
+           <input id="reg-nombre" class="input" placeholder="Tu nombre" />
+        </div>
+        <div>
+           <label class="block text-sm font-medium text-slate-400 mb-1.5">Correo electrónico</label>
+           <input id="reg-email" class="input" placeholder="correo@ejemplo.com" />
+        </div>
+        <div>
+           <label class="block text-sm font-medium text-slate-400 mb-1.5">Contraseña</label>
+           <input id="reg-password" class="input" type="password" placeholder="••••••••" />
+        </div>
+        <div>
+           <label class="block text-sm font-medium text-slate-400 mb-1.5">Rol</label>
+           <select id="reg-rol" class="input">
+            <option value="user">Usuario</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        
+        <div class="pt-2 flex flex-col gap-3">
+          <button id="btnRegister" class="btn btn-primary w-full py-2.5">Registrarse</button>
+          <button onclick="document.getElementById('registerPanel').style.display='none'" class="btn btn-ghost w-full">Cancelar</button>
+        </div>
+      </div>
+      <div id="registerResult" class="error-msg text-center mt-4 text-sm font-medium text-amber-500"></div>
     </div>
   </div>
 
