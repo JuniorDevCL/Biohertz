@@ -269,6 +269,7 @@ function bindAppEvents($) {
   $('navUsers')?.addEventListener('click', () => showSection('admin-users', $));
   $('btnRefreshUsers')?.addEventListener('click', () => loadAdminUsers());
   $('.logo')?.addEventListener('click', () => showSection('dashboard', $));
+  $('btnGoCreateTicket')?.addEventListener('click', () => showSection('tickets-section', $));
 
   // Clientes
   $('cli-filtro-q')?.addEventListener('input', () => loadClientes());
@@ -451,24 +452,34 @@ async function loadTickets() {
 
 function ticketCard(t) {
   const div = document.createElement('div');
-  div.className = `border-b border-slate-800 hover:bg-slate-900/40 transition-colors`;
+  div.className = `border-b border-white/5 hover:bg-white/5 transition-colors`;
+  const pColor =
+    t.prioridad === 'alta' ? 'bg-red-500' :
+    t.prioridad === 'media' ? 'bg-amber-500' :
+    t.prioridad === 'baja' ? 'bg-green-500' : 'bg-slate-500';
   div.innerHTML = `
-    <div class="flex items-center gap-4 p-3">
-      <div class="flex-1 min-w-0">
-        <div class="text-white font-medium truncate">${t.titulo}</div>
+    <div class="grid grid-cols-[1fr_140px_90px_auto] items-center gap-4 py-4 px-3">
+      <div class="min-w-0">
+        <div class="text-sm font-medium text-white truncate">${t.titulo}</div>
         <div class="text-slate-400 text-xs mt-1 truncate">${t.descripcion || ''}</div>
-        <div class="text-[11px] text-slate-500 mt-1">Creado por: ${t.creado_por_nombre || t.creado_por || ''} • Asignado a: ${t.asignado_a_nombre || t.asignado_a || '—'}</div>
       </div>
-      <div class="shrink-0">
-        <span class="badge badge-${t.estado}">${t.estado === 'hecho' ? 'terminado' : t.estado}</span>
+      <div class="justify-self-start">
+        <span class="badge badge-${t.estado}">${t.estado === 'hecho' ? 'Terminado' : 'Pendiente'}</span>
       </div>
-      <div class="shrink-0 flex items-center gap-2">
-        <button class="btn btn-ghost btn-small" data-done="${t.id}">Terminar</button>
-        <button class="btn btn-ghost btn-small" data-pendiente="${t.id}">Pendiente</button>
-        <button class="btn btn-ghost btn-small" data-asignar="${t.id}">Asignar</button>
-        <button class="btn btn-ghost btn-small" data-ver="${t.id}">Comentarios</button>
-        <button class="btn btn-ghost btn-small" data-editar="${t.id}">Editar</button>
-        ${currentUser && currentUser.rol === 'admin' ? `<button class="btn btn-ghost btn-small hover:bg-red-500/10 hover:text-red-400" data-eliminar="${t.id}">Eliminar</button>` : ''}
+      <div class="justify-self-start">
+        <span class="priority-dot ${pColor}"></span>
+      </div>
+      <div class="justify-self-end flex items-center gap-2 text-slate-400">
+        <button class="btn btn-ghost btn-small" title="Comentarios" data-ver="${t.id}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+        </button>
+        <button class="btn btn-ghost btn-small" title="Editar" data-editar="${t.id}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+        ${currentUser && currentUser.rol === 'admin' ? `
+        <button class="btn btn-ghost btn-small hover:text-white" title="Eliminar" data-eliminar="${t.id}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+        </button>` : ''}
       </div>
     </div>
     <div id="edit-ticket-${t.id}" class="hidden mt-2 px-3 pb-3">
