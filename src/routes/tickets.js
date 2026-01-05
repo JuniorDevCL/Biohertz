@@ -2,29 +2,7 @@
 import express from 'express';
 import pool from '../db.js';
 import authRequired from '../middleware/authRequired.js'; // <-- aquí usamos el mismo nombre del archivo
-import nodemailer from 'nodemailer';
-
-const transporter = (process.env.SMTP_HOST ? nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT || 587),
-  secure: String(process.env.SMTP_PORT || '587') === '465',
-  auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined
-}) : null);
-
-async function sendAssignmentEmail(user, ticket) {
-  try {
-    if (!transporter || !user?.email) return;
-    const from = process.env.SMTP_FROM || process.env.SMTP_USER;
-    await transporter.sendMail({
-      from,
-      to: user.email,
-      subject: `Ticket asignado: ${ticket.titulo}`,
-      text: `Hola ${user.nombre},\n\nSe te asignó el ticket #${ticket.id}: "${ticket.titulo}".\nEstado: ${ticket.estado}.\nDescripción: ${ticket.descripcion || ''}.\n\nSaludos, BIOHERTS Tickets`,
-    });
-  } catch (e) {
-    console.warn('No se pudo enviar correo:', e && e.message ? e.message : e);
-  }
-}
+import { enviarNotificacionTicket } from '../services/mailer.js';
 
 const router = express.Router();
 
@@ -54,7 +32,12 @@ router.post('/', authRequired, async (req, res) => {
 
     if (asignado_a) {
       const ures = await pool.query('SELECT nombre, email FROM usuarios WHERE id = $1', [asignado_a]);
-      if (ures.rowCount) await sendAssignmentEmail(ures.rows[0], result.rows[0]);
+      if (ures.rowCount > 0) {
+        console.log('Ticket asignado a:', ures.rows[0].email);
+        // Llamada asíncrona para no bloquear la respuesta ni fallar si hay error de correo
+        enviarNotificacionTicket(ures.rows[0].email, titulo)
+          .catch(e => console.error('Error enviando notificación en segundo plano:', e));
+      }
     }
   } catch (err) {
     console.error('Error al crear ticket:', err);

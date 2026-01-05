@@ -4,6 +4,9 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
+import passport from 'passport';
+import session from 'express-session';
+import './passport.js';
 dotenv.config();
 
 import authRoutes from './routes/auth.js';
@@ -16,9 +19,22 @@ import pool from './db.js';
 
 const app = express();
 
+app.enable('trust proxy');
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(process.cwd(), 'public')));
+
+app.use(session({
+  secret: process.env.JWT_SECRET || 'secret_session_key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000
+  }
+}));
+app.use(passport.initialize());
 
 app.get('/api/health', (req, res) => {
   res.json({ mensaje: 'API OK' });
@@ -86,6 +102,16 @@ async function ensureBaseSchema() {
       CREATE INDEX IF NOT EXISTS idx_tickets_asignado ON tickets(asignado_a);
       CREATE INDEX IF NOT EXISTS idx_equipos_estado ON equipos(estado);
     `);
+
+    // Actualizaciones de esquema para Google Auth
+    try {
+      await pool.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;`);
+    } catch (e) { console.log('Columna google_id ya existe o error:', e.message); }
+
+    try {
+      await pool.query(`ALTER TABLE usuarios ALTER COLUMN password DROP NOT NULL;`);
+    } catch (e) { console.log('Error al hacer password nullable:', e.message); }
+
   } catch (e) {
     console.warn('ensureBaseSchema error:', e && e.message ? e.message : e);
   }
