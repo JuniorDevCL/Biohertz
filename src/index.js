@@ -20,6 +20,8 @@ import pool from './db.js';
 
 const app = express();
 
+console.log(`Server Build ID: ${new Date().getTime()} - Definite Fix`);
+
 // Force update timestamp: <%= new Date().getTime() %> 
 app.use((req, res, next) => { 
     // Permite cargar scripts externos (Tailwind CDN) 
