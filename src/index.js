@@ -46,7 +46,7 @@ app.get('/', (req, res) => {
   if (req.isAuthenticated && req.isAuthenticated()) {
     return res.redirect('/dashboard');
   }
-  res.render('login', { error: req.query.error });
+  res.render('login', { error: req.query.error, layout: false });
 });
 
 import authRequired from './middleware/authRequired.js';
