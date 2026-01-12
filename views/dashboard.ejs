@@ -8,8 +8,8 @@
   <link href="/styles.css" rel="stylesheet">
   <script>
     // Inject server-side user/token data into client-side
-    const CURRENT_USER = <%- JSON.stringify(user || {}) %>;
-    const API_TOKEN = "<%= token %>";
+    const CURRENT_USER = <%- JSON.stringify(typeof user !== 'undefined' ? user : {}) %>;
+    const API_TOKEN = "<%= typeof token !== 'undefined' ? token : '' %>";
     
     // Polyfill for localStorage if needed by renderer.js
     if (API_TOKEN) {
@@ -110,7 +110,7 @@
                           <button id="btnGoCreateTicket" class="btn btn-primary text-sm px-4 py-2 rounded-lg opacity-50 cursor-not-allowed">Create Ticket (Pronto)</button>
                       </div>
                       <div id="assigned-list" class="tickets-grid">
-                        <% if (tickets && tickets.length > 0) { %>
+                        <% if (typeof tickets !== 'undefined' && tickets && tickets.length > 0) { %>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-left border-collapse">
                                     <thead>
