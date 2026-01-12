@@ -51,6 +51,7 @@ app.get('/', (req, res) => {
 
 import authRequired from './middleware/authRequired.js';
 app.get('/dashboard', authRequired, (req, res) => {
+  console.log('Accessing dashboard. Session:', req.session);
   res.render('dashboard', { user: req.user });
 });
 

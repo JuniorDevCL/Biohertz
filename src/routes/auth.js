@@ -80,6 +80,8 @@ router.post('/login', async (req, res) => {
     email = String(email || '').trim().toLowerCase();
     password = String(password || '').trim();
 
+    console.log('Login attempt:', email);
+    
     const result = await pool.query(
       'SELECT * FROM usuarios WHERE email = $1',
       [email]
