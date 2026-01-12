@@ -6,6 +6,14 @@
     <title>BIOHERTZ - ERP</title> 
     <script src="https://cdn.tailwindcss.com"></script> 
     <style> 
+        /* CSS CRÍTICO DE EMERGENCIA */ 
+        body { background-color: #0f172a; color: white; font-family: sans-serif; } 
+        svg, img { max-width: 100%; } 
+        /* Fuerza a los iconos a ser pequeños si Tailwind falla */ 
+        svg { width: 24px; height: 24px; } 
+        .sidebar-icon { width: 20px; height: 20px; } 
+    </style> 
+    <style> 
         /* Previene imágenes gigantes */ 
         img, svg { max-width: 100%; } 
         .glass-sidebar { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); } 

@@ -20,6 +20,13 @@ import pool from './db.js';
 
 const app = express();
 
+// Force update timestamp: <%= new Date().getTime() %> 
+app.use((req, res, next) => { 
+    // Permite cargar scripts externos (Tailwind CDN) 
+    res.setHeader("Content-Security-Policy", "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com"); 
+    next(); 
+});
+
 app.enable('trust proxy');
 
 app.use(cors());
