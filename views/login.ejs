@@ -1,140 +1,41 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <title>BIOHERTS Tickets - Login</title>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://*.gstatic.com https://cdn.socket.io; img-src 'self' data: https:; connect-src *; frame-src 'self' https://accounts.google.com https://*.gstatic.com; style-src 'self' 'unsafe-inline';">
-  <link href="/styles.css" rel="stylesheet">
-</head>
-<body class="bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black text-white h-screen w-screen overflow-hidden flex items-center justify-center">
-
-  <div class="login-wrapper w-full max-w-md mx-auto p-4 flex flex-col items-center justify-center" id="login-section">
-    <div class="login-header text-center mb-8">
-      <div class="login-icon mb-4">
-        <svg class="w-16 h-16 text-slate-200 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
-        </svg>
-      </div>
-      <h1 class="text-3xl font-bold text-white mb-2">Bienvenido</h1>
-      <p class="text-slate-400">Ingresa a tu cuenta para continuar</p>
-    </div>
-    
-    <div class="card w-full p-8">
-      <!-- SSR Form Login -->
-      <form action="/auth/login" method="POST" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-slate-400 mb-1.5">Correo electrónico</label>
-          <input name="email" type="email" class="input w-full" placeholder="nombre@empresa.com" required />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-400 mb-1.5">Contraseña</label>
-          <input name="password" type="password" class="input w-full" placeholder="••••••••" required />
-        </div>
-        
-        <div class="flex items-center justify-between text-sm">
-          <label class="flex items-center gap-2 text-slate-400 cursor-pointer">
-            <input type="checkbox" name="remember" class="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500" />
-            Recordarme
-          </label>
-          <button type="button" id="toggleRegister" class="text-blue-500 hover:text-blue-400 font-medium">Crear cuenta</button>
-        </div>
-
-        <button type="submit" class="btn btn-primary w-full py-2.5 text-base shadow-lg shadow-blue-500/20">Iniciar sesión</button>
-      </form>
-        
-      <div class="relative my-6">
-        <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-slate-700"></div>
-        </div>
-        <div class="relative flex justify-center text-xs uppercase">
-          <span class="bg-slate-900 px-2 text-slate-500">O continúa con</span>
-        </div>
-      </div>
-
-      <div class="google-auth">
-        <a href="/auth/google" class="btn bg-white hover:bg-gray-100 text-gray-900 w-full flex items-center justify-center gap-3 font-medium border border-transparent transition-all">
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5" />
-            Continuar con Google
-        </a>
-      </div>
-
-      <% if (locals.error) { %>
-        <div class="error-msg text-center mt-4 text-red-500 text-sm"><%= error %></div>
-      <% } %>
-    </div>
-  </div>
-
-  <!-- Register Panel (Hidden by default, toggled via JS) -->
-  <div id="registerPanel" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="card w-full max-w-md p-8 m-0 shadow-2xl border-slate-700">
-      <div class="text-center mb-6">
-        <h2 class="text-2xl font-bold text-white mb-2">Crear Cuenta</h2>
-        <p class="text-slate-400 text-sm">Regístrate para gestionar tus tickets</p>
-      </div>
-      
-      <div class="space-y-4">
-        <div>
-           <label class="block text-sm font-medium text-slate-400 mb-1.5">Nombre completo</label>
-           <input id="reg-nombre" class="input w-full" placeholder="Tu nombre" />
-        </div>
-        <div>
-           <label class="block text-sm font-medium text-slate-400 mb-1.5">Correo electrónico</label>
-           <input id="reg-email" class="input w-full" placeholder="correo@ejemplo.com" />
-        </div>
-        <div>
-           <label class="block text-sm font-medium text-slate-400 mb-1.5">Contraseña</label>
-           <input id="reg-password" class="input w-full" type="password" placeholder="••••••••" />
-        </div>
-        <div>
-           <label class="block text-sm font-medium text-slate-400 mb-1.5">Rol</label>
-           <select id="reg-rol" class="input w-full">
-            <option value="user">Usuario</option>
-            <option value="admin">Administrador</option>
-          </select>
-        </div>
-        
-        <div class="pt-2 flex flex-col gap-3">
-          <button id="btnRegister" class="btn btn-primary w-full py-2.5">Registrarse</button>
-          <button onclick="document.getElementById('registerPanel').style.display='none'" class="btn btn-ghost w-full">Cancelar</button>
-        </div>
-      </div>
-      <div id="registerResult" class="error-msg text-center mt-4 text-sm font-medium text-amber-500"></div>
-    </div>
-  </div>
-
-  <script>
-    // Simple logic for Register toggle
-    document.getElementById('toggleRegister').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.getElementById('registerPanel').style.display = 'flex';
-    });
-
-    // Register logic (keeping fetch for registration as it's separate)
-    document.getElementById('btnRegister').addEventListener('click', async () => {
-        const nombre = document.getElementById('reg-nombre').value;
-        const email = document.getElementById('reg-email').value;
-        const password = document.getElementById('reg-password').value;
-        const rol = document.getElementById('reg-rol').value;
-
-        try {
-            const res = await fetch('/auth/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre, email, password, rol })
-            });
-            const data = await res.json();
-            const resultDiv = document.getElementById('registerResult');
-            resultDiv.textContent = data.mensaje;
-            if (res.ok) {
-                resultDiv.classList.remove('text-amber-500');
-                resultDiv.classList.add('text-green-500');
-                setTimeout(() => document.getElementById('registerPanel').style.display='none', 2000);
-            }
-        } catch (e) {
-            document.getElementById('registerResult').textContent = 'Error de conexión';
-        }
-    });
-  </script>
+<!DOCTYPE html> 
+<html lang="es"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Login - BIOHERTZ</title> 
+    <link href="/styles.css" rel="stylesheet"> 
+</head> 
+<body class="bg-slate-950 h-screen w-full flex items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1e3a8a]/20 via-[#0f172a] to-[#020617]"> 
+<div class="w-full max-w-md bg-[#1e293b]/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8"> 
+    <div class="text-center mb-8"> 
+        <div class="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg mx-auto mb-4"> 
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> 
+        </div> 
+        <h2 class="text-2xl font-bold text-white">Bienvenido</h2> 
+        <p class="text-slate-400 text-sm mt-1">Ingresa a tu cuenta para continuar</p> 
+    </div> 
+    <form action="/auth/login" method="POST" class="space-y-5"> 
+        <div> 
+            <label class="block text-xs font-medium text-slate-400 mb-1 uppercase">Correo electrónico</label> 
+            <input type="email" name="email" required class="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" placeholder="nombre@empresa.com"> 
+        </div> 
+        <div> 
+            <label class="block text-xs font-medium text-slate-400 mb-1 uppercase">Contraseña</label> 
+            <input type="password" name="password" required class="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" placeholder="••••••••"> 
+        </div> 
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-xl transition-colors shadow-lg shadow-blue-500/20"> 
+            Iniciar Sesión 
+        </button> 
+    </form> 
+    <div class="relative my-6"> 
+        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-white/10"></div></div> 
+        <div class="relative flex justify-center text-xs uppercase"><span class="bg-[#0f172a] px-2 text-slate-500">O continúa con</span></div> 
+    </div> 
+    <a href="/auth/google" class="flex items-center justify-center gap-3 w-full bg-white text-slate-900 font-medium py-3 rounded-xl hover:bg-slate-100 transition-colors"> 
+        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5"> 
+        <span>Google</span> 
+    </a> 
+</div> 
 </body>
 </html>
