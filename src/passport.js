@@ -75,9 +75,16 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id, done) => {
   try {
+    console.log('Passport deserializing user ID:', id);
     const res = await pool.query('SELECT * FROM usuarios WHERE id = $1', [id]);
+    if (res.rows.length === 0) {
+        console.log('Deserialization failed: User not found');
+        return done(null, false);
+    }
+    console.log('Passport deserialized user:', res.rows[0].email);
     done(null, res.rows[0]);
   } catch (err) {
+    console.error('Passport deserialization error:', err);
     done(err, null);
   }
 });
