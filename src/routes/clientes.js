@@ -20,11 +20,6 @@ async function ensureSchema() {
     await pool.query(`
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS cliente_id INTEGER;
     `);
-    await pool.query(`
-      ALTER TABLE clientes 
-      ADD COLUMN IF NOT EXISTS email VARCHAR(150),
-      ADD COLUMN IF NOT EXISTS telefono VARCHAR(50);
-    `);
   } catch {}
   ready = true;
 }
@@ -50,12 +45,12 @@ router.get('/', authRequired, async (req, res) => {
 router.post('/', authRequired, async (req, res) => {
   try {
     await ensureSchema();
-    const { nombre, empresa, email, telefono } = req.body;
-    console.log('Crear cliente request:', { nombre, empresa, email, telefono });
+    const { nombre, empresa } = req.body;
+    console.log('Crear cliente request:', { nombre, empresa });
     const ins = await pool.query(`
-      INSERT INTO clientes (nombre, empresa, email, telefono, creado_en, actualizado_en)
-      VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING *
-    `, [nombre || null, empresa || null, email || null, telefono || null]);
+      INSERT INTO clientes (nombre, empresa, creado_en, actualizado_en)
+      VALUES ($1, $2, NOW(), NOW()) RETURNING *
+    `, [nombre || null, empresa || null]);
     console.log('Cliente creado:', ins.rows[0]);
     res.status(201).json(ins.rows[0]);
   } catch (err) {

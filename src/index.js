@@ -12,10 +12,8 @@ dotenv.config();
 import authRoutes from './routes/auth.js';
 import ticketsRoutes from './routes/tickets.js';
 import { createServer } from 'http';
-import { Server } from 'socket.io';
 import equiposRoutes from './routes/equipos.js';
 import clientesRoutes from './routes/clientes.js';
-import eventosRoutes from './routes/eventos.js';
 import pool from './db.js';
 
 const app = express();
@@ -123,22 +121,12 @@ app.use('/auth', authRoutes);
 app.use('/tickets', ticketsRoutes);
 app.use('/equipos', equiposRoutes);
 app.use('/clientes', clientesRoutes);
-app.use('/eventos', eventosRoutes);
-app.use('/agenda', eventosRoutes); // Alias para agenda
 
-// Inicializar servidor HTTP y Socket.IO
+// Inicializar servidor HTTP
 const server = createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
 
-// Disponibilizar io para las rutas
-app.set('io', io);
-
-io.on('connection', (socket) => {
-  console.log('Cliente conectado:', socket.id);
-  socket.on('disconnect', () => {
-    console.log('Cliente desconectado:', socket.id);
-  });
-});
+// Disponibilizar io para las rutas (mock o null si se elimina socket)
+app.set('io', null);
 
 async function ensureBaseSchema() {
   try {
@@ -182,17 +170,6 @@ async function ensureBaseSchema() {
       CREATE INDEX IF NOT EXISTS idx_tickets_estado ON tickets(estado);
       CREATE INDEX IF NOT EXISTS idx_tickets_asignado ON tickets(asignado_a);
       CREATE INDEX IF NOT EXISTS idx_equipos_estado ON equipos(estado);
-
-      CREATE TABLE IF NOT EXISTS eventos (
-        id SERIAL PRIMARY KEY,
-        titulo VARCHAR(200) NOT NULL,
-        descripcion TEXT,
-        fecha_inicio TIMESTAMP WITH TIME ZONE NOT NULL,
-        fecha_fin TIMESTAMP WITH TIME ZONE NOT NULL,
-        color VARCHAR(50) DEFAULT '#3b82f6',
-        creado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
-        creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-      );
     `);
 
     // Actualizaciones de esquema para Google Auth
