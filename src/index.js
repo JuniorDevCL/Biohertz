@@ -20,16 +20,9 @@ const app = express();
 
 console.log(`Server Build ID: ${new Date().getTime()} - Definite Fix`);
 
-// Force update timestamp: <%= new Date().getTime() %> 
-app.use((req, res, next) => {
-    next();
-});
+console.log('Force CSS Restore: ' + Date.now());
 
-app.enable('trust proxy');
-
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Middleware para servir archivos estáticos
 app.use(express.static(path.join(process.cwd(), 'public')));
 
 app.set('view engine', 'ejs');
