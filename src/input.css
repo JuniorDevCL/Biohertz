@@ -5,7 +5,7 @@
 @layer components {
   /* Layout */
   .app {
-    @apply min-h-screen bg-slate-950 text-white font-sans;
+    @apply min-h-screen font-sans bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black text-white;
   }
   .app-header {
     @apply h-16 border-b border-white/10 bg-[#1e293b]/40 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-50 shadow-xl shadow-black/20;
@@ -14,7 +14,7 @@
     @apply grid grid-cols-1 md:grid-cols-[240px_1fr] min-h-[calc(100vh-64px)];
   }
   .sidebar {
-    @apply hidden md:flex flex-col border-r border-white/[0.08] bg-[#0f172a]/80 backdrop-blur-xl p-6 gap-4 rounded-2xl shadow-2xl shadow-black/40;
+    @apply hidden md:flex flex-col border-r border-white/[0.05] bg-[#0f172a]/60 backdrop-blur-2xl p-6 gap-4 rounded-r-2xl shadow-2xl shadow-black/50;
   }
   .content {
     @apply p-6 overflow-y-auto;
@@ -22,7 +22,11 @@
   
   /* Components */
   .card {
-    @apply bg-[#0f172a]/80 border border-white/[0.08] backdrop-blur-xl rounded-2xl p-6 shadow-2xl shadow-black/40 mb-6;
+    @apply bg-[#1e293b]/40 border border-white/[0.05] backdrop-blur-xl rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.4)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.6)] transition-all duration-300 hover:border-white/[0.1] relative overflow-hidden;
+  }
+  .card::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none;
   }
   .card-header {
     @apply flex items-center justify-between mb-4;

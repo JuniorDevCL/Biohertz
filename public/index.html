@@ -6,13 +6,13 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://*.gstatic.com https://cdn.socket.io; img-src 'self' data: https:; connect-src *; frame-src 'self' https://accounts.google.com https://*.gstatic.com; style-src 'self' 'unsafe-inline';">
   <link href="/styles.css" rel="stylesheet">
 </head>
-<body class="bg-slate-950 text-white h-screen w-screen overflow-hidden">
+<body class="bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black text-white h-screen w-screen overflow-hidden">
   
   <!-- Main App Layout -->
-  <div id="main-app" class="bg-slate-950 text-white h-full w-full overflow-hidden flex" style="display: none;">
+  <div id="main-app" class="bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black text-white h-full w-full overflow-hidden flex" style="display: none;">
       
       <!-- Sidebar -->
-      <aside class="w-64 h-full flex-shrink-0 flex flex-col justify-between border-r border-white/5 bg-[#0f172a]/80 backdrop-blur-xl">
+      <aside class="w-64 h-full flex-shrink-0 flex flex-col justify-between border-r border-white/[0.05] bg-[#0f172a]/60 backdrop-blur-2xl shadow-2xl shadow-black/50">
           <div>
               <div class="p-6 border-b border-white/5 flex items-center gap-3">
                   <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
@@ -23,6 +23,7 @@
               <nav class="px-4 py-6 space-y-2">
                   <button id="navDashboard" class="btn btn-ghost w-full justify-start">Dashboard</button>
                   <button id="navTickets" class="btn btn-ghost w-full justify-start">Tickets</button>
+                  <button id="navEquipos" class="btn btn-ghost w-full justify-start">Equipos</button>
                   <button id="navClientes" class="btn btn-ghost w-full justify-start">Clientes</button>
                   <button id="navSettings" class="btn btn-ghost w-full justify-start">Ajustes</button>
                   <button id="navUsers" class="btn btn-ghost w-full justify-start">Usuarios</button>
