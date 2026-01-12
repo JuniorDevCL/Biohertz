@@ -24,7 +24,11 @@ app.enable('trust proxy');
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(process.cwd(), 'public')));
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(process.cwd(), 'views'));
 
 app.use(session({
   secret: process.env.JWT_SECRET || 'secret_session_key',
@@ -36,6 +40,19 @@ app.use(session({
   }
 }));
 app.use(passport.initialize());
+app.use(passport.session());
+
+app.get('/', (req, res) => {
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    return res.redirect('/dashboard');
+  }
+  res.render('login', { error: req.query.error });
+});
+
+import authRequired from './middleware/authRequired.js';
+app.get('/dashboard', authRequired, (req, res) => {
+  res.render('dashboard', { user: req.user });
+});
 
 app.get('/api/health', (req, res) => {
   res.json({ mensaje: 'API OK' });

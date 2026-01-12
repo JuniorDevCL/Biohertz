@@ -2,9 +2,19 @@ import jwt from 'jsonwebtoken';
 const SECRET = process.env.JWT_SECRET || 'offline_secret';
 
 export default function authRequired(req, res, next) {
+  // 1. Support Passport Session (SSR)
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    return next();
+  }
+
+  // 2. Support JWT Bearer Token (API)
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
+    // If request expects HTML, redirect to login
+    if (req.accepts('html')) {
+      return res.redirect('/');
+    }
     return res.status(401).json({ error: 'Token requerido' });
   }
 
@@ -16,6 +26,9 @@ export default function authRequired(req, res, next) {
     next();
   } catch (err) {
     console.error('Error en authRequired:', err);
+    if (req.accepts('html')) {
+      return res.redirect('/');
+    }
     return res.status(401).json({ error: 'Token inválido' });
   }
 }

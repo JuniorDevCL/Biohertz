@@ -11,52 +11,67 @@ let currentCalendarDate = new Date();
 // =========================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Check for token in URL (Google Auth)
-    const urlParams = new URLSearchParams(window.location.search);
-    const tokenParam = urlParams.get('token');
-    if (tokenParam) {
-        token = tokenParam;
-        localStorage.setItem('token', token);
-        window.history.replaceState({}, document.title, "/");
-    }
-
+    // In SSR, we are already authenticated if we are on this page.
+    // However, we might need the token for API calls if we use Bearer auth.
+    // dashboard.ejs injects API_TOKEN into localStorage, so 'token' should be set.
+    
     if (token) {
-        await checkAuth();
-    } else {
-        showLogin();
+        // Optional: verify token or just connect socket
+        connectSocket();
+        
+        // Load initial data
+        loadTickets(); // Load tickets by default
     }
 
     setupEventListeners();
 });
 
 function setupEventListeners() {
-    // Auth
-    document.getElementById('btnLogin').onclick = login;
-    document.getElementById('btnLogout').onclick = logout;
-    document.getElementById('btnRegister').onclick = register;
-    document.getElementById('btnOpenRegister').onclick = () => document.getElementById('registerPanel').style.display = 'flex';
-    
     // Navigation
-    document.getElementById('navDashboard').onclick = () => showSection('dashboard-section');
-    document.getElementById('navTickets').onclick = () => { showSection('tickets-section'); loadTickets(); };
-    document.getElementById('navClientes').onclick = () => { showSection('clientes-section'); loadClientes(); };
-    document.getElementById('navAgenda').onclick = () => { showSection('agenda-section'); loadAgenda(); setTimeout(loadAgenda, 100); };
+    const navDashboard = document.getElementById('navDashboard');
+    if(navDashboard) navDashboard.onclick = () => showSection('dashboard-section');
+    
+    const navTickets = document.getElementById('navTickets');
+    if(navTickets) navTickets.onclick = () => { showSection('tickets-section'); loadTickets(); };
+    
+    const navClientes = document.getElementById('navClientes');
+    if(navClientes) navClientes.onclick = () => { showSection('clientes-section'); loadClientes(); };
+    
+    const navAgenda = document.getElementById('navAgenda');
+    if(navAgenda) navAgenda.onclick = () => { showSection('agenda-section'); loadAgenda(); setTimeout(loadAgenda, 100); };
 
     // Tickets
-    document.getElementById('btnCrearTicket').onclick = createTicket;
+    const btnCrearTicket = document.getElementById('btnCrearTicket');
+    if(btnCrearTicket) btnCrearTicket.onclick = createTicket;
     
     // Clients
-    document.getElementById('btnCrearCliente').onclick = createCliente;
-    document.getElementById('btnRefreshClientes').onclick = loadClientes;
-    document.getElementById('cli-filtro-q').oninput = debounce(loadClientes, 500);
+    const btnCrearCliente = document.getElementById('btnCrearCliente');
+    if(btnCrearCliente) btnCrearCliente.onclick = createCliente;
+    
+    const btnRefreshClientes = document.getElementById('btnRefreshClientes');
+    if(btnRefreshClientes) btnRefreshClientes.onclick = loadClientes;
+    
+    const cliFiltro = document.getElementById('cli-filtro-q');
+    if(cliFiltro) cliFiltro.oninput = debounce(loadClientes, 500);
 
     // Agenda
-    document.getElementById('cal-prev').onclick = () => changeMonth(-1);
-    document.getElementById('cal-next').onclick = () => changeMonth(1);
-    document.getElementById('cal-today').onclick = () => { currentCalendarDate = new Date(); loadAgenda(); };
-    document.getElementById('btnSaveEvent').onclick = saveEvent;
-    document.getElementById('btnCancelEvent').onclick = () => document.getElementById('event-modal').style.display = 'none';
-    document.getElementById('btnCancelEventX').onclick = () => document.getElementById('event-modal').style.display = 'none';
+    const calPrev = document.getElementById('cal-prev');
+    if(calPrev) calPrev.onclick = () => changeMonth(-1);
+    
+    const calNext = document.getElementById('cal-next');
+    if(calNext) calNext.onclick = () => changeMonth(1);
+    
+    const calToday = document.getElementById('cal-today');
+    if(calToday) calToday.onclick = () => { currentCalendarDate = new Date(); loadAgenda(); };
+    
+    const btnSaveEvent = document.getElementById('btnSaveEvent');
+    if(btnSaveEvent) btnSaveEvent.onclick = saveEvent;
+    
+    const btnCancelEvent = document.getElementById('btnCancelEvent');
+    if(btnCancelEvent) btnCancelEvent.onclick = () => document.getElementById('event-modal').style.display = 'none';
+    
+    const btnCancelEventX = document.getElementById('btnCancelEventX');
+    if(btnCancelEventX) btnCancelEventX.onclick = () => document.getElementById('event-modal').style.display = 'none';
 }
 
 function debounce(func, wait) {
@@ -68,108 +83,11 @@ function debounce(func, wait) {
 }
 
 // =========================================================
-// AUTH & NAVIGATION
+// NAVIGATION
 // =========================================================
-
-async function checkAuth() {
-    console.log('checkAuth running...');
-    try {
-        if (!token) throw new Error('No token found');
-        
-        // Decode token payload
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        currentUser = payload;
-        console.log('User authenticated:', currentUser);
-        
-        // Update UI
-        const userInfo = document.getElementById('userInfo');
-        const userAvatar = document.getElementById('userAvatar');
-        if(userInfo) userInfo.textContent = currentUser.nombre;
-        if(userAvatar) userAvatar.textContent = currentUser.nombre.charAt(0).toUpperCase();
-        
-        connectSocket();
-        showSection('dashboard-section');
-    } catch (e) {
-        console.error('Invalid token or checkAuth failed', e);
-        logout();
-    }
-}
-
-async function login() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    
-    console.log('Attempting login for:', email);
-
-    try {
-        const res = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-        
-        if (res.ok) {
-            console.log('Login successful');
-            token = data.token;
-            localStorage.setItem('token', token);
-            checkAuth();
-        } else {
-            console.error('Login failed:', data.mensaje);
-            document.getElementById('loginResult').textContent = data.mensaje;
-        }
-    } catch (e) {
-        console.error('Login error:', e);
-        document.getElementById('loginResult').textContent = 'Error de conexión';
-    }
-}
-
-function logout() {
-    token = null;
-    localStorage.removeItem('token');
-    currentUser = null;
-    if (socket) socket.disconnect();
-    showLogin();
-}
-
-async function register() {
-    const nombre = document.getElementById('reg-nombre').value;
-    const email = document.getElementById('reg-email').value;
-    const password = document.getElementById('reg-password').value;
-    const rol = document.getElementById('reg-rol').value;
-    
-    try {
-        const res = await fetch(`${API_URL}/auth/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nombre, email, password, rol })
-        });
-        const data = await res.json();
-        
-        if (res.ok) {
-            document.getElementById('registerPanel').style.display = 'none';
-            alert('Registro exitoso. Por favor inicia sesión.');
-        } else {
-            document.getElementById('registerResult').textContent = data.mensaje;
-        }
-    } catch (e) {
-        document.getElementById('registerResult').textContent = 'Error al registrar';
-    }
-}
-
-function showLogin() {
-    document.getElementById('login-section').classList.remove('hidden');
-    document.getElementById('dashboard-section').classList.add('hidden');
-    document.getElementById('tickets-section').classList.add('hidden');
-    document.getElementById('clientes-section').classList.add('hidden');
-    document.getElementById('agenda-section').classList.add('hidden');
-    document.getElementById('main-nav').classList.add('hidden');
-}
 
 function showSection(id) {
     console.log('Switching to section:', id);
-    document.getElementById('login-section').classList.add('hidden');
-    document.getElementById('main-nav').classList.remove('hidden');
     
     const sections = ['dashboard-section', 'tickets-section', 'clientes-section', 'agenda-section', 'admin-users', 'settings', 'nuevo-ticket', 'equipos-list'];
     
@@ -195,6 +113,7 @@ function connectSocket() {
     socket.on('evento:creado', () => loadAgenda());
     socket.on('evento:eliminado', () => loadAgenda());
 }
+
 
 // =========================================================
 // TICKETS LOGIC

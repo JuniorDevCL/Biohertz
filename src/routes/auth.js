@@ -93,8 +93,22 @@ router.post('/login', async (req, res) => {
         await pool.query('INSERT INTO usuarios (nombre, email, password, rol) VALUES ($1, $2, $3, $4)', [nombreAuto, email, hashed, 'user']);
         const created = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
         const userCreated = created.rows[0];
-        const token = jwt.sign({ id: userCreated.id, email: userCreated.email, nombre: userCreated.nombre, rol: userCreated.rol }, SECRET, { expiresIn: '7d' });
-        return res.json({ mensaje: 'Login correcto', token });
+        
+        // Auto-login for offline mode
+        return req.login(userCreated, (err) => {
+            if (err) {
+                if (req.accepts('html')) return res.render('login', { error: 'Error de sesión offline' });
+                return res.status(500).json({ error: 'Error de sesión offline' });
+            }
+            if (req.accepts('html')) return res.redirect('/dashboard');
+            
+            const token = jwt.sign({ id: userCreated.id, email: userCreated.email, nombre: userCreated.nombre, rol: userCreated.rol }, SECRET, { expiresIn: '7d' });
+            return res.json({ mensaje: 'Login correcto', token });
+        });
+      }
+      
+      if (req.accepts('html')) {
+        return res.render('login', { error: 'Usuario no encontrado' });
       }
       return res.status(400).json({ mensaje: 'Usuario no encontrado' });
     }
@@ -104,26 +118,52 @@ router.post('/login', async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) {
       console.log('Login attempt: Wrong password', email);
+      if (req.accepts('html')) {
+        return res.render('login', { error: 'Contraseña incorrecta' });
+      }
       return res.status(400).json({ mensaje: 'Contraseña incorrecta' });
     }
 
     console.log('Login success:', email);
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        nombre: user.nombre,
-        rol: user.rol
-      },
-      SECRET,
-      { expiresIn: '7d' }
-    );
+    
+    return req.login(user, (err) => {
+        if (err) {
+            console.error('Login session error:', err);
+            if (req.accepts('html')) return res.render('login', { error: 'Error de sesión' });
+            return res.status(500).json({ error: 'Error de sesión' });
+        }
+        
+        if (req.accepts('html')) {
+            return res.redirect('/dashboard');
+        }
 
-    return res.json({ mensaje: 'Login correcto', token });
+        const token = jwt.sign(
+        {
+            id: user.id,
+            email: user.email,
+            nombre: user.nombre,
+            rol: user.rol
+        },
+        SECRET,
+        { expiresIn: '7d' }
+        );
+
+        return res.json({ mensaje: 'Login correcto', token });
+    });
   } catch (error) {
     console.error('Error en /auth/login:', error);
+    if (req.accepts('html')) {
+        return res.render('login', { error: 'Error en el servidor' });
+    }
     return res.status(500).json({ mensaje: 'Error en el servidor', error });
   }
+});
+
+router.get('/logout', (req, res, next) => {
+  req.logout((err) => {
+    if (err) { return next(err); }
+    res.redirect('/');
+  });
 });
 
 router.get('/config', async (req, res) => {
