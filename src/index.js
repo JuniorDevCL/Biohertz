@@ -22,10 +22,6 @@ console.log(`Server Build ID: ${new Date().getTime()} - Definite Fix`);
 
 // Force update timestamp: <%= new Date().getTime() %> 
 app.use((req, res, next) => {
-    res.setHeader(
-        "Content-Security-Policy",
-        "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: *; connect-src 'self' https://biohertz.onrender.com ws: wss:;"
-    );
     next();
 });
 
