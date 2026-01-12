@@ -50,9 +50,58 @@ app.get('/', (req, res) => {
 });
 
 import authRequired from './middleware/authRequired.js';
-app.get('/dashboard', authRequired, (req, res) => {
-  console.log('Accessing dashboard. Session:', req.session);
-  res.render('dashboard', { user: req.user });
+app.get('/dashboard', authRequired, async (req, res) => {
+  try {
+    // 1. Obtener Usuario (Seguro)
+    const user = req.user || req.session.user || { nombre: 'Usuario', rol: 'invitado', email: 'invitado@biohertz.com' };
+    
+    // 2. Obtener Datos Reales (o Defaults si falla la DB)
+    // Inicializamos contadores en 0
+    let stats = { 
+        totalTickets: 0, 
+        pendingTickets: 0, 
+        teams: 0, 
+        clients: 0 
+    };
+    let recentTickets = [];
+
+    // Intentamos cargar datos reales si la DB está disponible
+    try {
+        const [ticketsCount, pendingCount, teamsCount, clientsCount, recents] = await Promise.all([
+            pool.query('SELECT COUNT(*) FROM tickets'),
+            pool.query("SELECT COUNT(*) FROM tickets WHERE estado = 'pendiente'"),
+            pool.query('SELECT COUNT(*) FROM equipos'),
+            pool.query('SELECT COUNT(*) FROM clientes'),
+            pool.query(`
+                SELECT t.*, u.nombre as asignado_nombre 
+                FROM tickets t 
+                LEFT JOIN usuarios u ON t.asignado_a = u.id 
+                ORDER BY t.creado_en DESC LIMIT 5
+            `)
+        ]);
+
+        stats.totalTickets = parseInt(ticketsCount.rows[0].count) || 0;
+        stats.pendingTickets = parseInt(pendingCount.rows[0].count) || 0;
+        stats.teams = parseInt(teamsCount.rows[0].count) || 0;
+        stats.clients = parseInt(clientsCount.rows[0].count) || 0;
+        recentTickets = recents.rows || [];
+    } catch (dbError) {
+        console.error('Error fetching dashboard stats from DB:', dbError);
+        // Fallback silencioso: se renderizará con 0s
+    }
+
+    // 3. Renderizar pasando TODAS las variables
+    res.render('dashboard', { 
+        title: 'Dashboard - BIOHERTZ', 
+        user: user,       
+        stats: stats,     
+        tickets: recentTickets,
+        token: req.session?.token || '' // Pass token if available in session
+    });
+  } catch (error) {
+    console.error('Error renderizando dashboard:', error);
+    res.status(500).send('Error cargando el dashboard: ' + error.message);
+  }
 });
 
 app.get('/api/health', (req, res) => {
