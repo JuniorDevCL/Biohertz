@@ -21,22 +21,19 @@ function isAllowed(email) {
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get('/google/callback',
-  passport.authenticate('google', { failureRedirect: '/?error=Acceso denegado: Email no autorizado', session: false }),
+  passport.authenticate('google', { failureRedirect: '/' }),
   (req, res) => {
-    // Generar JWT para el usuario autenticado
-    const user = req.user;
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        nombre: user.nombre,
-        rol: user.rol
-      },
-      SECRET,
-      { expiresIn: '7d' }
-    );
-    // Redirigir al frontend con el token en la URL
-    res.redirect(`/?token=${token}`);
+    console.log('Google Auth Callback Success. User:', req.user ? req.user.email : 'none');
+    // 2. Forzar guardado para evitar condiciones de carrera
+    req.session.save((err) => {
+        if (err) {
+            console.error('Error guardando sesión:', err);
+            return res.redirect('/');
+        }
+        // 3. Redirigir LIMPIO al dashboard (sin tokens en URL)
+        console.log('Session saved, redirecting to dashboard');
+        res.redirect('/dashboard');
+    });
   }
 );
 
