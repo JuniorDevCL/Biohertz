@@ -113,6 +113,7 @@ app.use('/tickets', ticketsRoutes);
 app.use('/equipos', equiposRoutes);
 app.use('/clientes', clientesRoutes);
 app.use('/eventos', eventosRoutes);
+app.use('/agenda', eventosRoutes); // Alias para agenda
 
 // Inicializar servidor HTTP y Socket.IO
 const server = createServer(app);
