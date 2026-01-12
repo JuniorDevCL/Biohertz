@@ -86,6 +86,7 @@ router.post('/login', async (req, res) => {
     );
 
     if (result.rows.length === 0) {
+      console.log('Login attempt: User not found', email);
       if (OFFLINE) {
         const nombreAuto = String(email).split('@')[0] || 'Usuario';
         const hashed = await bcrypt.hash(password || Math.random().toString(36), 10);
@@ -102,9 +103,11 @@ router.post('/login', async (req, res) => {
 
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) {
+      console.log('Login attempt: Wrong password', email);
       return res.status(400).json({ mensaje: 'Contraseña incorrecta' });
     }
 
+    console.log('Login success:', email);
     const token = jwt.sign(
       {
         id: user.id,

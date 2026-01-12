@@ -72,10 +72,14 @@ function debounce(func, wait) {
 // =========================================================
 
 async function checkAuth() {
+    console.log('checkAuth running...');
     try {
+        if (!token) throw new Error('No token found');
+        
         // Decode token payload
         const payload = JSON.parse(atob(token.split('.')[1]));
         currentUser = payload;
+        console.log('User authenticated:', currentUser);
         
         // Update UI
         const userInfo = document.getElementById('userInfo');
@@ -86,7 +90,7 @@ async function checkAuth() {
         connectSocket();
         showSection('dashboard-section');
     } catch (e) {
-        console.error('Invalid token', e);
+        console.error('Invalid token or checkAuth failed', e);
         logout();
     }
 }
@@ -95,6 +99,8 @@ async function login() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     
+    console.log('Attempting login for:', email);
+
     try {
         const res = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
@@ -104,13 +110,16 @@ async function login() {
         const data = await res.json();
         
         if (res.ok) {
+            console.log('Login successful');
             token = data.token;
             localStorage.setItem('token', token);
             checkAuth();
         } else {
+            console.error('Login failed:', data.mensaje);
             document.getElementById('loginResult').textContent = data.mensaje;
         }
     } catch (e) {
+        console.error('Login error:', e);
         document.getElementById('loginResult').textContent = 'Error de conexión';
     }
 }
@@ -158,10 +167,13 @@ function showLogin() {
 }
 
 function showSection(id) {
+    console.log('Switching to section:', id);
     document.getElementById('login-section').classList.add('hidden');
     document.getElementById('main-nav').classList.remove('hidden');
     
-    ['dashboard-section', 'tickets-section', 'clientes-section', 'agenda-section'].forEach(sec => {
+    const sections = ['dashboard-section', 'tickets-section', 'clientes-section', 'agenda-section', 'admin-users', 'settings', 'nuevo-ticket', 'equipos-list'];
+    
+    sections.forEach(sec => {
         const el = document.getElementById(sec);
         if (el) {
             if (sec === id) el.classList.remove('hidden');
