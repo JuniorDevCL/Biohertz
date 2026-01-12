@@ -1,85 +1,50 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <title>BIOHERTZ Tickets</title>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://*.gstatic.com https://cdn.socket.io https://cdn.tailwindcss.com; img-src 'self' data: https:; connect-src *; frame-src 'self' https://accounts.google.com https://*.gstatic.com; style-src 'self' 'unsafe-inline';">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="/styles.css" rel="stylesheet">
-  <script>
-    // Inject server-side user/token data into client-side
-    const CURRENT_USER = <%- JSON.stringify(typeof user !== 'undefined' ? user : {}) %>;
-    const API_TOKEN = "<%= typeof token !== 'undefined' ? token : '' %>";
+<!DOCTYPE html> 
+<html lang="es"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>BIOHERTZ - ERP</title> 
+    <script src="https://cdn.tailwindcss.com"></script> 
+    <style> 
+        /* Previene imágenes gigantes */ 
+        img, svg { max-width: 100%; } 
+        .glass-sidebar { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); } 
+    </style> 
+</head> 
+<body class="bg-slate-950 text-white h-screen w-screen overflow-hidden flex"> 
+    <aside class="w-64 h-full flex-shrink-0 flex flex-col justify-between border-r border-white/10 glass-sidebar z-50"> 
+    <div> 
+            <div class="h-16 flex items-center gap-3 px-6 border-b border-white/5"> 
+            <div class="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center"> 
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> 
+            </div> 
+            <span class="font-bold text-lg tracking-wide">BIOHERTZ</span> 
+        </div> 
+            <nav class="p-4 space-y-1"> 
+            <a href="/dashboard" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-all">Dashboard</a> 
+            <a href="/tickets" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-all">Tickets</a> 
+            <a href="/equipos" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-all">Equipos</a> 
+            <a href="/agenda" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-all">Agenda</a> 
+            <a href="/clientes" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-all">Clientes</a> 
+        </nav> 
+    </div> 
+        <div class="p-4 border-t border-white/5"> 
+        <div class="flex items-center gap-3"> 
+            <div class="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-400">US</div> 
+            <div class="text-sm"> 
+                <p class="font-medium text-white">Usuario</p> 
+                <p class="text-xs text-slate-500">Conectado</p> 
+            </div> 
+        </div> 
+    </div> 
+</aside> 
+    <main class="flex-1 h-full relative overflow-y-auto bg-slate-950"> 
+        <div class="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-950/0 to-slate-950/0"></div> 
     
-    if (API_TOKEN) {
-        localStorage.setItem('token', API_TOKEN);
-    }
-  </script>
-</head>
-<body class="bg-slate-950 text-white h-screen overflow-hidden flex">
-  
-  <div id="main-app" class="w-full h-full flex">
-      
-      <!-- Sidebar -->
-      <aside class="w-64 h-full flex-shrink-0 flex flex-col justify-between border-r border-white/[0.05] bg-[#0f172a]/60 backdrop-blur-2xl shadow-2xl shadow-black/50">
-          <div>
-              <div class="p-6 border-b border-white/5 flex items-center gap-3">
-                  <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a10 10 0 0 1 14.88-3.36L23 4"/><path d="M1 20l4.62-1.54A10 10 0 0 0 20.49 15"/></svg>
-                  </div>
-                  <h1 class="text-xl font-bold text-white tracking-tight">BIOHERTZ</h1>
-              </div>
-              <nav class="px-4 py-6 space-y-2" id="main-nav">
-                  <a href="/dashboard" class="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-blue-400 bg-blue-500/10">
-                      Dashboard
-                  </a>
-                  <a href="/tickets" class="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-white/5 hover:text-white">
-                      Tickets
-                  </a>
-                  <a href="/equipos" class="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-white/5 hover:text-white">
-                      Equipos
-                  </a>
-                  <a href="/agenda" class="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-white/5 hover:text-white">
-                      <svg class="w-4 h-4 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                      Agenda
-                  </a>
-                  <a href="/clientes" class="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-white/5 hover:text-white">
-                      Clientes
-                  </a>
-                  <% if (typeof user !== 'undefined' && user.rol === 'admin') { %>
-                  <a href="/usuarios" class="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-white/5 hover:text-white">
-                      Usuarios
-                  </a>
-                  <% } %>
-              </nav>
-          </div>
-          
-          <div class="p-4 border-t border-white/5">
-              <div class="flex items-center gap-3 mb-4">
-                  <button id="themeToggle" class="btn btn-ghost btn-small w-full justify-center text-slate-400 hover:text-white" title="Cambiar tema">
-                      <svg class="w-5 h-5 sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                  </button>
-              </div>
-              <div class="flex items-center gap-3">
-                  <div class="login-avatar w-10 h-10 rounded-full overflow-hidden flex-shrink-0" id="sidebar-avatar-slot">
-                    <div class="w-full h-full bg-blue-500 flex items-center justify-center text-white font-bold" id="userAvatar">
-                        <%= typeof user !== 'undefined' && user.nombre ? user.nombre.charAt(0).toUpperCase() : 'U' %>
-                    </div>
-                  </div>
-                  <div class="truncate text-sm text-white flex flex-col">
-                    <span id="user-nombre" class="font-medium"><%= typeof user !== 'undefined' && user.nombre ? user.nombre : 'Usuario' %></span>
-                    <span class="text-xs text-slate-400"><%= typeof user !== 'undefined' && user.email ? user.email : '' %></span>
-                  </div>
-              </div>
-          </div>
-      </aside>
-
-      <!-- Main Content -->
-      <main class="flex-1 h-full overflow-y-auto relative bg-slate-950">
-          <%- body %>
-      </main>
-  </div>
-  
-  <script src="/socket.io/socket.io.js"></script>
+    <div class="relative z-10 max-w-7xl mx-auto px-6 py-8"> 
+        <%- body %> 
+    </div> 
+</main> 
+<!-- Updated: 2026-01-12 to force git detection -->
 </body>
 </html>
