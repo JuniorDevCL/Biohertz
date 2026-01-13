@@ -6,20 +6,34 @@ import { enviarNotificacionTicket } from '../services/mailer.js';
 
 const router = express.Router();
 
+let ready = false;
+async function ensureSchema() {
+  if (ready) return;
+  try {
+    await pool.query(`
+      ALTER TABLE tickets ADD COLUMN IF NOT EXISTS cliente_id INTEGER;
+    `);
+  } catch (err) {
+    console.error('Error al actualizar esquema de tickets:', err);
+  }
+  ready = true;
+}
+
 // Crear ticket
 router.post('/', authRequired, async (req, res) => {
   try {
-    const { titulo, descripcion, asignado_a, equipo_id } = req.body;
+    await ensureSchema();
+    const { titulo, descripcion, asignado_a, equipo_id, cliente_id } = req.body;
 
     if (!titulo) {
       return res.status(400).json({ error: 'El título es obligatorio' });
     }
 
     const result = await pool.query(
-      `INSERT INTO tickets (titulo, descripcion, creado_por, asignado_a, equipo_id, estado, creado_en, actualizado_en)
-       VALUES ($1, $2, $3, $4, $5, 'pendiente', NOW(), NOW())
+      `INSERT INTO tickets (titulo, descripcion, creado_por, asignado_a, equipo_id, cliente_id, estado, creado_en, actualizado_en)
+       VALUES ($1, $2, $3, $4, $5, $6, 'pendiente', NOW(), NOW())
        RETURNING *`,
-      [titulo, descripcion || null, req.user.id, asignado_a || null, equipo_id || null]
+      [titulo, descripcion || null, req.user.id, asignado_a || null, equipo_id || null, cliente_id || null]
     );
 
     // res.status(201).json({

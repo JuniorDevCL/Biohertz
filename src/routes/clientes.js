@@ -60,7 +60,7 @@ router.post('/', authRequired, async (req, res) => {
     res.redirect('/clientes');
   } catch (err) {
     console.error('Error al crear cliente:', err);
-    res.status(500).json({ error: 'Error al crear cliente' });
+    res.status(500).json({ error: 'Error al crear cliente: ' + err.message });
   }
 });
 

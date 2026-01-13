@@ -64,35 +64,38 @@
                                       <td class="py-3 px-4"><%= ticket.asignado_nombre || 'Sin asignar' %></td>
                                       <td class="py-3 px-4 text-slate-400"><%= new Date(ticket.creado_en).toLocaleDateString() %></td>
                                       <td class="py-3 px-4">
-                                          <% if (ticket.estado !== 'terminado') { %>
-                                              <button onclick="markCompleted('<%= ticket.id %>')" class="text-green-400 hover:text-green-300 transition-colors" title="Marcar como terminado">
-                                                  <i class="ph ph-check-circle text-xl"></i>
-                                              </button>
-                                          <% } else { %>
-                                              <i class="ph ph-check-circle text-blue-500 text-xl" title="Terminado"></i>
-                                          <% } %>
-                                      </td>
-                                  </tr>
-                              <% }); %>
-                          </tbody>
-                      </table>
-                  </div>
-              <% } else { %>
-                  <p class="text-slate-400 text-center py-8">No tienes tickets asignados recientemente.</p>
-              <% } %>
-            </div>
+                                      <div class="relative inline-block">
+                                          <select onchange="updateStatus('<%= ticket.id %>', this.value)" 
+                                                  class="appearance-none bg-slate-700 text-white text-xs rounded-lg px-3 py-1.5 pr-8 border border-slate-600 focus:outline-none focus:border-blue-500 cursor-pointer hover:bg-slate-600 transition-colors w-full">
+                                              <option value="pendiente" <%= ticket.estado === 'pendiente' ? 'selected' : '' %>>Pendiente</option>
+                                              <option value="en_proceso" <%= ticket.estado === 'en_proceso' ? 'selected' : '' %>>En Proceso</option>
+                                              <option value="terminado" <%= ticket.estado === 'terminado' ? 'selected' : '' %>>Terminado</option>
+                                          </select>
+                                          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                                              <i class="ph ph-caret-down text-xs"></i>
+                                          </div>
+                                      </div>
+                                  </td>
+                              </tr>
+                          <% }); %>
+                      </tbody>
+                  </table>
+              </div>
+          <% } else { %>
+              <p class="text-slate-400 text-center py-8">No tienes tickets asignados recientemente.</p>
+          <% } %>
         </div>
-    </section>
+    </div>
+</section>
 </div>
 
 <script>
-async function markCompleted(id) {
-    if (!confirm('¿Marcar ticket como terminado?')) return;
+async function updateStatus(id, newStatus) {
     try {
         const res = await fetch(`/tickets/${id}/status`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estado: 'terminado' })
+            body: JSON.stringify({ estado: newStatus })
         });
         if (res.ok) window.location.reload();
         else alert('Error al actualizar');
