@@ -49,12 +49,12 @@ router.get('/', authRequired, async (req, res) => {
 router.post('/', authRequired, async (req, res) => {
   try {
     await ensureSchema();
-    const { nombre, empresa } = req.body;
+    const { nombre, empresa, email, telefono, ubicacion } = req.body;
     console.log('Crear cliente request:', { nombre, empresa });
     const ins = await pool.query(`
-      INSERT INTO clientes (nombre, empresa, creado_en, actualizado_en)
-      VALUES ($1, $2, NOW(), NOW()) RETURNING *
-    `, [nombre || null, empresa || null]);
+      INSERT INTO clientes (nombre, empresa, email, telefono, ubicacion, creado_en, actualizado_en)
+      VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING *
+    `, [nombre || null, empresa || null, email || null, telefono || null, ubicacion || null]);
     console.log('Cliente creado:', ins.rows[0]);
     // res.status(201).json(ins.rows[0]);
     res.redirect('/clientes');
@@ -86,12 +86,23 @@ router.get('/:id', authRequired, async (req, res) => {
     const { id } = req.params;
     // Evitar conflicto con 'count' si express no lo maneja bien (aunque el orden importa)
     if (id === 'count') return; 
-    const r = await pool.query('SELECT * FROM clientes WHERE id = $1', [id]);
-    if (r.rows.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
-    res.json(r.rows[0]);
+    
+    const [clientRes, equiposRes] = await Promise.all([
+      pool.query('SELECT * FROM clientes WHERE id = $1', [id]),
+      pool.query('SELECT * FROM equipos WHERE cliente_id = $1 ORDER BY actualizado_en DESC', [id])
+    ]);
+    
+    if (clientRes.rows.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
+    
+    res.render('cliente_detalle', {
+      cliente: clientRes.rows[0],
+      equipos: equiposRes.rows,
+      title: `${clientRes.rows[0].nombre} - Detalle Cliente`,
+      user: req.user || req.session.user || { nombre: 'Usuario' }
+    });
   } catch (err) {
     console.error('Error al obtener cliente:', err);
-    res.status(500).json({ error: 'Error al obtener cliente' });
+    res.status(500).render('error', { error: 'Error al obtener cliente' });
   }
 });
 

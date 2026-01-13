@@ -77,6 +77,17 @@
                     <input type="text" name="ubicacion" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
+                    <label class="block text-slate-400 text-sm mb-2">Cliente (Opcional)</label>
+                    <select name="cliente_id" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                        <option value="">Seleccionar Cliente</option>
+                        <% if (typeof clientes !== 'undefined') { %>
+                            <% clientes.forEach(c => { %>
+                                <option value="<%= c.id %>"><%= c.nombre %></option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+                <div>
                     <label class="block text-slate-400 text-sm mb-2">Estado</label>
                     <select name="estado" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                         <option value="operativo">Operativo</option>

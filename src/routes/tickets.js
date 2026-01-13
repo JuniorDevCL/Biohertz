@@ -45,6 +45,26 @@ router.post('/', authRequired, async (req, res) => {
   }
 });
 
+router.patch('/:id/status', authRequired, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estado } = req.body;
+    const result = await pool.query(
+      'UPDATE tickets SET estado = $1, actualizado_en = NOW() WHERE id = $2 RETURNING *',
+      [estado, id]
+    );
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Ticket no encontrado' });
+    
+    const io = req.app.get('io');
+    io?.emit('ticket:updated', result.rows[0]);
+    
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error actualizando estado:', err);
+    res.status(500).json({ error: 'Error actualizando estado' });
+  }
+});
+
 // Listar todos los tickets
 router.get('/', authRequired, async (req, res) => {
   try {
@@ -82,9 +102,17 @@ router.get('/', authRequired, async (req, res) => {
                  ${where.length ? ' WHERE ' + where.join(' AND ') : ''}
                  ORDER BY t.creado_en DESC
                  LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
-    const result = await pool.query(sql, [...values, limit, offset]);
+    
+    const [result, clientesRes, usuariosRes] = await Promise.all([
+      pool.query(sql, [...values, limit, offset]),
+      pool.query('SELECT id, nombre FROM clientes ORDER BY nombre'),
+      pool.query('SELECT id, nombre, email FROM usuarios ORDER BY nombre')
+    ]);
+
     res.render('tickets', { 
       tickets: result.rows,
+      clientes: clientesRes.rows,
+      usuarios: usuariosRes.rows,
       title: 'Tickets - BIOHERTS',
       user: req.user || req.session.user || { nombre: 'Usuario' }
     });

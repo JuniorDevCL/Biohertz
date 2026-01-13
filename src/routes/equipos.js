@@ -47,8 +47,13 @@ router.get('/', authRequired, async (req, res) => {
 
     const sql = `SELECT * FROM equipos${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
     const result = await pool.query(sql, [...values, limit, offset]);
+
+    // Fetch clients for dropdown
+    const clientsRes = await pool.query('SELECT id, nombre FROM clientes ORDER BY nombre');
+
     res.render('equipos', {
       equipos: result.rows,
+      clientes: clientsRes.rows,
       title: 'Equipos - BIOHERTS',
       user: req.user || req.session.user || { nombre: 'Usuario' }
     });

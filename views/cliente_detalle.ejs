@@ -1,0 +1,144 @@
+<div class="max-w-4xl mx-auto px-6 py-8">
+    <div class="mb-6">
+        <a href="/clientes" class="text-slate-400 hover:text-white flex items-center mb-4 transition-colors">
+            <i class="ph ph-arrow-left mr-2"></i> Volver a Clientes
+        </a>
+        <div class="flex justify-between items-start">
+            <div>
+                <h2 class="text-3xl font-bold text-white mb-2"><%= cliente.nombre %></h2>
+                <div class="flex flex-wrap gap-4 text-slate-400">
+                    <% if (cliente.empresa) { %>
+                        <div class="flex items-center">
+                            <i class="ph ph-buildings mr-2"></i> <%= cliente.empresa %>
+                        </div>
+                    <% } %>
+                    <% if (cliente.email) { %>
+                        <div class="flex items-center">
+                            <i class="ph ph-envelope mr-2"></i> <%= cliente.email %>
+                        </div>
+                    <% } %>
+                    <% if (cliente.telefono) { %>
+                        <div class="flex items-center">
+                            <i class="ph ph-phone mr-2"></i> <%= cliente.telefono %>
+                        </div>
+                    <% } %>
+                    <% if (cliente.ubicacion) { %>
+                        <div class="flex items-center">
+                            <i class="ph ph-map-pin mr-2"></i> <%= cliente.ubicacion %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+            <button onclick="document.getElementById('edit-client-modal').classList.remove('hidden')" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                <i class="ph ph-pencil-simple mr-2"></i> Editar
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6">
+        <!-- Equipos Asignados -->
+        <div class="card p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white flex items-center">
+                    <i class="ph ph-desktop mr-2 text-blue-400"></i> Equipos Asignados
+                </h3>
+            </div>
+            
+            <% if (equipos && equipos.length > 0) { %>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-slate-400 border-b border-slate-700">
+                                <th class="py-2 px-4">Equipo</th>
+                                <th class="py-2 px-4">Serie</th>
+                                <th class="py-2 px-4">Estado</th>
+                                <th class="py-2 px-4">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% equipos.forEach(equipo => { %>
+                                <tr class="border-b border-slate-800 hover:bg-slate-900/50">
+                                    <td class="py-3 px-4 text-white">
+                                        <div class="font-medium"><%= equipo.nombre %></div>
+                                        <div class="text-xs text-slate-400"><%= equipo.marca %> <%= equipo.modelo %></div>
+                                    </td>
+                                    <td class="py-3 px-4 text-slate-400"><%= equipo.numero_serie %></td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-2 py-1 rounded text-xs font-medium bg-slate-700 text-slate-300">
+                                            <%= equipo.estado %>
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <a href="/equipos/<%= equipo.id %>" class="text-blue-400 hover:text-blue-300"><i class="ph ph-eye"></i></a>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="text-center py-8 bg-slate-800/50 rounded-lg">
+                    <p class="text-slate-400">No hay equipos asignados a este cliente.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Cliente -->
+<div id="edit-client-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-md shadow-2xl border border-slate-700">
+        <h3 class="text-xl font-bold text-white mb-4">Editar Cliente</h3>
+        <form id="edit-client-form">
+            <div class="mb-4">
+                <label class="block text-slate-400 text-sm mb-2">Nombre</label>
+                <input type="text" name="nombre" value="<%= cliente.nombre %>" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div class="mb-4">
+                <label class="block text-slate-400 text-sm mb-2">Empresa</label>
+                <input type="text" name="empresa" value="<%= cliente.empresa %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div class="mb-4">
+                <label class="block text-slate-400 text-sm mb-2">Correo</label>
+                <input type="email" name="email" value="<%= cliente.email %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div class="mb-4">
+                <label class="block text-slate-400 text-sm mb-2">Número</label>
+                <input type="text" name="telefono" value="<%= cliente.telefono %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div class="mb-4">
+                <label class="block text-slate-400 text-sm mb-2">Ubicación</label>
+                <input type="text" name="ubicacion" value="<%= cliente.ubicacion %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button type="button" onclick="document.getElementById('edit-client-modal').classList.add('hidden')" class="px-4 py-2 text-slate-300 hover:text-white">Cancelar</button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('edit-client-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    
+    try {
+        const res = await fetch('/clientes/<%= cliente.id %>', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (res.ok) {
+            window.location.reload();
+        } else {
+            alert('Error al actualizar cliente');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error de conexión');
+    }
+});
+</script>

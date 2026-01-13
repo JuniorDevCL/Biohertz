@@ -59,6 +59,31 @@
                 <label class="block text-slate-400 text-sm mb-2">Título</label>
                 <input type="text" name="titulo" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
             </div>
+            
+            <div class="mb-4">
+                <label class="block text-slate-400 text-sm mb-2">Cliente (Opcional)</label>
+                <select name="cliente_id" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                    <option value="">Seleccionar Cliente</option>
+                    <% if (typeof clientes !== 'undefined') { %>
+                        <% clientes.forEach(c => { %>
+                            <option value="<%= c.id %>"><%= c.nombre %></option>
+                        <% }); %>
+                    <% } %>
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-slate-400 text-sm mb-2">Asignar a (Notificación por correo)</label>
+                <select name="asignado_a" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                    <option value="">Seleccionar Usuario</option>
+                    <% if (typeof usuarios !== 'undefined') { %>
+                        <% usuarios.forEach(u => { %>
+                            <option value="<%= u.id %>"><%= u.nombre %></option>
+                        <% }); %>
+                    <% } %>
+                </select>
+            </div>
+
             <div class="mb-4">
                 <label class="block text-slate-400 text-sm mb-2">Descripción</label>
                 <textarea name="descripcion" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500"></textarea>
