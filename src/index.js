@@ -18,16 +18,14 @@ import pool from './db.js';
 
 const app = express();
 
-// --- FIX: PERMITIR TAILWIND CSS --- 
-app.use((req, res, next) => { 
-    res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:;"); 
-    next(); 
-}); 
-// ----------------------------------
+// --- FIX IMPORTANTE: PERMISO PARA TAILWIND ---
+app.use((req, res, next) => {
+    res.setHeader("Content-Security-Policy", "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com");
+    next();
+});
+// ---------------------------------------------
 
-console.log(`Server Build ID: ${new Date().getTime()} - Definite Fix`);
-
-console.log('Force CSS Restore: ' + Date.now());
+console.log('Server Fix Applied: ' + Date.now());
 
 // Middleware para servir archivos estáticos
 app.use(express.static(path.join(process.cwd(), 'public')));
@@ -35,12 +33,15 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(process.cwd(), 'views'));
 
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
 app.use(session({
-  secret: process.env.JWT_SECRET || 'secret_session_key',
+  secret: process.env.JWT_SECRET || 'secret_key_biohertz',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // process.env.NODE_ENV === 'production', // Deshabilitado temporalmente para dev
+    secure: false, 
     maxAge: 24 * 60 * 60 * 1000
   }
 }));
