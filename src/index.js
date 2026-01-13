@@ -7,6 +7,7 @@ import path from 'path';
 import passport from 'passport';
 import session from 'express-session';
 import './passport.js';
+import expressLayouts from 'express-ejs-layouts';
 dotenv.config();
 
 import authRoutes from './routes/auth.js';
