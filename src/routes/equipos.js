@@ -47,7 +47,11 @@ router.get('/', authRequired, async (req, res) => {
 
     const sql = `SELECT * FROM equipos${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
     const result = await pool.query(sql, [...values, limit, offset]);
-    res.json(result.rows);
+    res.render('equipos', {
+      equipos: result.rows,
+      title: 'Equipos - BIOHERTS',
+      user: req.user || req.session.user || { nombre: 'Usuario' }
+    });
   } catch (err) {
     console.error('Error al listar equipos:', err);
     res.status(500).json({ error: 'Error al listar equipos' });
@@ -117,10 +121,12 @@ router.post('/', authRequired, async (req, res) => {
       [nombre, marca || null, modelo || null, numero_serie || null, ubicacion || null, estado || 'activo', aplicacion || null, finalClienteName || null, finalClienteId, anio_venta ? parseInt(anio_venta) : null, mantenciones ? JSON.stringify(mantenciones) : null]
     );
 
-    res.status(201).json({ mensaje: 'Equipo creado', equipo: insert.rows[0] });
+    // res.status(201).json({ mensaje: 'Equipo creado', equipo: insert.rows[0] });
 
     const io = req.app.get('io');
     io?.emit('equipo:created', insert.rows[0]);
+
+    res.redirect('/equipos');
   } catch (err) {
     console.error('Error al crear equipo:', err);
     res.status(500).json({ error: 'Error al crear equipo' });

@@ -22,10 +22,10 @@ router.post('/', authRequired, async (req, res) => {
       [titulo, descripcion || null, req.user.id, asignado_a || null, equipo_id || null]
     );
 
-    res.status(201).json({
-      mensaje: 'Ticket creado',
-      ticket: result.rows[0],
-    });
+    // res.status(201).json({
+    //   mensaje: 'Ticket creado',
+    //   ticket: result.rows[0],
+    // });
 
     const io = req.app.get('io');
     io?.emit('ticket:created', result.rows[0]);
@@ -83,7 +83,11 @@ router.get('/', authRequired, async (req, res) => {
                  ORDER BY t.creado_en DESC
                  LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
     const result = await pool.query(sql, [...values, limit, offset]);
-    res.json(result.rows);
+    res.render('tickets', { 
+      tickets: result.rows,
+      title: 'Tickets - BIOHERTS',
+      user: req.user || req.session.user || { nombre: 'Usuario' }
+    });
   } catch (err) {
     console.error('Error al obtener tickets:', err);
     res.status(500).json({ error: 'Error al obtener tickets' });

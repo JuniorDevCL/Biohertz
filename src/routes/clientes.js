@@ -35,7 +35,11 @@ router.get('/', authRequired, async (req, res) => {
     let offset = parseInt(offsetStr); if (isNaN(offset) || offset < 0) offset = 0;
     const sql = `SELECT * FROM clientes${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
     const r = await pool.query(sql, [...values, limit, offset]);
-    res.json(r.rows);
+    res.render('clientes', {
+      clientes: r.rows,
+      title: 'Clientes - BIOHERTS',
+      user: req.user || req.session.user || { nombre: 'Usuario' }
+    });
   } catch (err) {
     console.error('Error al listar clientes:', err);
     res.status(500).json({ error: 'Error al listar clientes' });
@@ -52,7 +56,8 @@ router.post('/', authRequired, async (req, res) => {
       VALUES ($1, $2, NOW(), NOW()) RETURNING *
     `, [nombre || null, empresa || null]);
     console.log('Cliente creado:', ins.rows[0]);
-    res.status(201).json(ins.rows[0]);
+    // res.status(201).json(ins.rows[0]);
+    res.redirect('/clientes');
   } catch (err) {
     console.error('Error al crear cliente:', err);
     res.status(500).json({ error: 'Error al crear cliente' });

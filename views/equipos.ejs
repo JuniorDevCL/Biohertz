@@ -1,0 +1,94 @@
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-white">Equipos</h2>
+        <button onclick="document.getElementById('new-equipo-modal').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+            <i class="ph ph-plus mr-2"></i> Nuevo Equipo
+        </button>
+    </div>
+
+    <div class="card p-6">
+        <% if (typeof equipos !== 'undefined' && equipos && equipos.length > 0) { %>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-slate-400 border-b border-slate-700">
+                            <th class="py-3 px-4">Nombre</th>
+                            <th class="py-3 px-4">Marca/Modelo</th>
+                            <th class="py-3 px-4">Serie</th>
+                            <th class="py-3 px-4">Ubicación</th>
+                            <th class="py-3 px-4">Estado</th>
+                            <th class="py-3 px-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% equipos.forEach(equipo => { %>
+                            <tr class="border-b border-slate-800 hover:bg-slate-900/50">
+                                <td class="py-3 px-4 font-medium text-white"><%= equipo.nombre %></td>
+                                <td class="py-3 px-4 text-slate-300"><%= equipo.marca %> <%= equipo.modelo ? '- ' + equipo.modelo : '' %></td>
+                                <td class="py-3 px-4 text-slate-400"><%= equipo.numero_serie %></td>
+                                <td class="py-3 px-4 text-slate-400"><%= equipo.ubicacion %></td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 rounded text-xs font-medium bg-slate-700 text-slate-300">
+                                        <%= equipo.estado %>
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <a href="/equipos/<%= equipo.id %>" class="text-blue-400 hover:text-blue-300 mr-2"><i class="ph ph-eye"></i></a>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <div class="text-center py-12">
+                <div class="text-slate-500 mb-4 text-5xl"><i class="ph ph-desktop"></i></div>
+                <p class="text-slate-400 text-lg">No hay equipos registrados.</p>
+                <p class="text-slate-500 text-sm">Registra un nuevo equipo para comenzar.</p>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<!-- Modal Nuevo Equipo -->
+<div id="new-equipo-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-lg shadow-2xl border border-slate-700 overflow-y-auto max-h-[90vh]">
+        <h3 class="text-xl font-bold text-white mb-4">Nuevo Equipo</h3>
+        <form action="/equipos" method="POST">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Nombre</label>
+                    <input type="text" name="nombre" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Marca</label>
+                    <input type="text" name="marca" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Modelo</label>
+                    <input type="text" name="modelo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">N° Serie</label>
+                    <input type="text" name="numero_serie" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Ubicación</label>
+                    <input type="text" name="ubicacion" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Estado</label>
+                    <select name="estado" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                        <option value="operativo">Operativo</option>
+                        <option value="en_reparacion">En Reparación</option>
+                        <option value="baja">De Baja</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button type="button" onclick="document.getElementById('new-equipo-modal').classList.add('hidden')" class="px-4 py-2 text-slate-300 hover:text-white">Cancelar</button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
