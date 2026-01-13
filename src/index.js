@@ -31,6 +31,8 @@ console.log('Server Fix Applied: ' + Date.now());
 // Middleware para servir archivos estáticos
 app.use(express.static(path.join(process.cwd(), 'public')));
 
+app.use(expressLayouts);
+app.set('layout', 'layout');
 app.set('view engine', 'ejs');
 app.set('views', path.join(process.cwd(), 'views'));
 
