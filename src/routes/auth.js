@@ -37,6 +37,37 @@ router.get('/google/callback',
   }
 );
 
+// TESTER MODE
+router.get('/tester', async (req, res) => {
+  try {
+    const email = 'tester@biohertz.com';
+    let result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+    
+    let user;
+    if (result.rows.length === 0) {
+      const hashed = await bcrypt.hash('tester123', 10);
+      const insert = await pool.query(
+        'INSERT INTO usuarios (nombre, email, password, rol) VALUES ($1, $2, $3, $4) RETURNING *',
+        ['Tester', email, hashed, 'admin']
+      );
+      user = insert.rows[0];
+    } else {
+      user = result.rows[0];
+    }
+
+    req.login(user, (err) => {
+      if (err) {
+        console.error('Login error:', err);
+        return res.redirect('/');
+      }
+      return res.redirect('/dashboard');
+    });
+  } catch (error) {
+    console.error('Error en /auth/tester:', error);
+    res.redirect('/');
+  }
+});
+
 // REGISTER
 router.post('/register', async (req, res) => {
   try {
