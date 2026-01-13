@@ -20,7 +20,14 @@ async function ensureSchema() {
     await pool.query(`
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS cliente_id INTEGER;
     `);
-  } catch {}
+    await pool.query(`
+      ALTER TABLE clientes ADD COLUMN IF NOT EXISTS email VARCHAR(150);
+      ALTER TABLE clientes ADD COLUMN IF NOT EXISTS telefono VARCHAR(50);
+      ALTER TABLE clientes ADD COLUMN IF NOT EXISTS ubicacion VARCHAR(200);
+    `);
+  } catch (err) {
+    console.error('Error al actualizar esquema de clientes:', err);
+  }
   ready = true;
 }
 
