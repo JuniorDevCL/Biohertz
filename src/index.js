@@ -8,6 +8,7 @@ import passport from 'passport';
 import session from 'express-session';
 import './passport.js';
 import expressLayouts from 'express-ejs-layouts';
+import { Server } from 'socket.io';
 dotenv.config();
 
 import authRoutes from './routes/auth.js';
