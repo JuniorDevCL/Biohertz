@@ -18,6 +18,13 @@ import pool from './db.js';
 
 const app = express();
 
+// --- FIX: PERMITIR TAILWIND CSS --- 
+app.use((req, res, next) => { 
+    res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:;"); 
+    next(); 
+}); 
+// ----------------------------------
+
 console.log(`Server Build ID: ${new Date().getTime()} - Definite Fix`);
 
 console.log('Force CSS Restore: ' + Date.now());
