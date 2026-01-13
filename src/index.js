@@ -125,8 +125,24 @@ app.use('/clientes', clientesRoutes);
 // Inicializar servidor HTTP
 const server = createServer(app);
 
-// Disponibilizar io para las rutas (mock o null si se elimina socket)
-app.set('io', null);
+// Inicializar Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+// Disponibilizar io para las rutas
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  console.log('Cliente conectado:', socket.id);
+  
+  socket.on('disconnect', () => {
+    console.log('Cliente desconectado:', socket.id);
+  });
+});
 
 async function ensureBaseSchema() {
   try {

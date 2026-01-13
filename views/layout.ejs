@@ -1,27 +1,137 @@
-<!DOCTYPE html> 
-<html lang="es"> 
-<head> 
-    <meta charset="UTF-8"> 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>BIOHERTZ ERP</title> 
-    <script src="https://cdn.tailwindcss.com"></script> 
-    <style> 
-        body { background-color: #0f172a; color: white; font-family: sans-serif; } 
-        a { color: #94a3b8; text-decoration: none; } 
-        a:hover { color: white; } 
-    </style> 
-</head> 
-<body class="bg-slate-950 text-white h-screen flex overflow-hidden"> 
-    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col"> 
-        <div class="p-6 font-bold text-xl text-blue-400">BIOHERTZ</div> 
-        <nav class="flex-1 px-4 space-y-2 mt-4"> 
-            <a href="/dashboard" class="block px-4 py-3 rounded hover:bg-slate-800">Dashboard</a> 
-            <a href="/tickets" class="block px-4 py-3 rounded hover:bg-slate-800">Tickets</a> 
-            <a href="/clientes" class="block px-4 py-3 rounded hover:bg-slate-800">Clientes</a> 
-        </nav> 
-    </aside> 
-    <main class="flex-1 p-8 overflow-auto relative"> 
-        <%- body %> 
-    </main> 
-</body> 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIOHERTZ ERP</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Socket.IO -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <style>
+        body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        .sidebar-link { 
+            display: flex; 
+            align-items: center; 
+            padding: 0.75rem 1rem; 
+            color: #94a3b8; 
+            text-decoration: none; 
+            border-radius: 0.5rem; 
+            transition: all 0.2s; 
+        }
+        .sidebar-link:hover, .sidebar-link.active { 
+            background-color: #1e293b; 
+            color: white; 
+        }
+        .sidebar-link i { margin-right: 0.75rem; font-size: 1.25rem; }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden bg-slate-950">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col transition-all duration-300" id="sidebar">
+        <div class="p-6 flex items-center justify-between">
+            <div class="font-bold text-xl text-blue-500 tracking-wider">BIOHERTZ</div>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2 mt-4">
+            <a href="/dashboard" class="sidebar-link hover:text-blue-400">
+                <i class="ph ph-squares-four"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/tickets" class="sidebar-link hover:text-blue-400">
+                <i class="ph ph-ticket"></i>
+                <span>Tickets</span>
+            </a>
+            <a href="/clientes" class="sidebar-link hover:text-blue-400">
+                <i class="ph ph-users"></i>
+                <span>Clientes</span>
+            </a>
+            <a href="/equipos" class="sidebar-link hover:text-blue-400">
+                <i class="ph ph-desktop"></i>
+                <span>Equipos</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center gap-3 px-2 py-2">
+                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">
+                    <%= typeof user !== 'undefined' ? user.nombre.charAt(0).toUpperCase() : 'U' %>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-white truncate">
+                        <%= typeof user !== 'undefined' ? user.nombre : 'Usuario' %>
+                    </p>
+                    <p class="text-xs text-slate-400 truncate">
+                        <%= typeof user !== 'undefined' ? user.email : '' %>
+                    </p>
+                </div>
+                <a href="/auth/logout" class="text-slate-400 hover:text-red-400" title="Cerrar Sesión">
+                    <i class="ph ph-sign-out text-lg"></i>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Header Mobile (Visible only on small screens) -->
+        <header class="bg-slate-900 border-b border-slate-800 p-4 flex items-center justify-between md:hidden">
+            <div class="font-bold text-blue-500">BIOHERTZ</div>
+            <button class="text-white" onclick="document.getElementById('sidebar').classList.toggle('-translate-x-full')">
+                <i class="ph ph-list text-2xl"></i>
+            </button>
+        </header>
+
+        <main class="flex-1 overflow-auto p-6 relative">
+            <!-- Flash Messages -->
+            <% if (typeof success_msg !== 'undefined' && success_msg) { %>
+                <div class="bg-green-500/10 border border-green-500/50 text-green-400 px-4 py-3 rounded mb-4 flex items-center gap-2">
+                    <i class="ph ph-check-circle text-lg"></i>
+                    <%= success_msg %>
+                </div>
+            <% } %>
+            <% if (typeof error_msg !== 'undefined' && error_msg) { %>
+                <div class="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded mb-4 flex items-center gap-2">
+                    <i class="ph ph-warning-circle text-lg"></i>
+                    <%= error_msg %>
+                </div>
+            <% } %>
+
+            <%- body %>
+        </main>
+    </div>
+
+    <script>
+        // Socket.IO Connection
+        const socket = io();
+
+        socket.on('connect', () => {
+            console.log('Conectado al servidor de WebSocket');
+        });
+
+        socket.on('ticket:created', (ticket) => {
+            console.log('Nuevo ticket recibido:', ticket);
+            // Si estamos en el dashboard, recargar para ver los cambios
+            if (window.location.pathname === '/dashboard') {
+                window.location.reload();
+            }
+        });
+
+        // Highlight active link
+        const currentPath = window.location.pathname;
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active', 'bg-slate-800', 'text-blue-400');
+                link.querySelector('i').classList.add('text-blue-400');
+            }
+        });
+    </script>
+</body>
 </html>
