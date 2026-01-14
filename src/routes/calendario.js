@@ -167,7 +167,7 @@ router.post('/eventos', authRequired, async (req, res) => {
     // Insertamos tanto en 'fecha' como en 'fecha_inicio' para compatibilidad
     await pool.query(
       `INSERT INTO eventos (titulo, descripcion, fecha, fecha_inicio, fecha_fin, color, creado_por, creado_en, actualizado_en)
-       VALUES ($1, $2, $3, $3, $3, '#3b82f6', $4, NOW(), NOW())`,
+       VALUES ($1, $2, $3::DATE, $3::DATE, $3::DATE, '#3b82f6', $4, NOW(), NOW())`,
       [cleanTitulo, descripcion || null, cleanFecha, user.id || null]
     );
 
