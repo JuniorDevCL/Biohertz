@@ -62,6 +62,7 @@ router.post('/', authRequired, async (req, res) => {
 
 router.patch('/:id/status', authRequired, async (req, res) => {
   try {
+    await ensureSchema();
     const { id } = req.params;
     const { estado } = req.body;
     const result = await pool.query(
@@ -87,6 +88,7 @@ router.patch('/:id/status', authRequired, async (req, res) => {
 // Listar todos los tickets
 router.get('/', authRequired, async (req, res) => {
   try {
+    await ensureSchema();
     const { estado, asignado_a, equipo_id, q, limit: limitStr, offset: offsetStr } = req.query;
     const where = [];
     const values = [];
@@ -149,6 +151,7 @@ router.get('/', authRequired, async (req, res) => {
 
 router.get('/count', authRequired, async (req, res) => {
   try {
+    await ensureSchema();
     const { estado, asignado_a, equipo_id, q } = req.query;
     const where = [];
     const values = [];
@@ -168,6 +171,7 @@ router.get('/count', authRequired, async (req, res) => {
 // Obtener detalle de un ticket
 router.get('/:id', authRequired, async (req, res) => {
   try {
+    await ensureSchema();
     const { id } = req.params;
     const result = await pool.query(
       `SELECT t.*, 
@@ -196,6 +200,7 @@ router.get('/:id', authRequired, async (req, res) => {
 // Cambiar estado (pendiente / hecho)
 router.patch('/:id/estado', authRequired, async (req, res) => {
   try {
+    await ensureSchema();
     const { id } = req.params;
     const { estado } = req.body;
 
@@ -233,6 +238,7 @@ router.patch('/:id/estado', authRequired, async (req, res) => {
 // Asignar / cambiar usuario asignado
 router.patch('/:id/asignado', authRequired, async (req, res) => {
   try {
+    await ensureSchema();
     const { id } = req.params;
     const { asignado_a } = req.body;
 
