@@ -17,6 +17,7 @@ import ticketsRoutes from './routes/tickets.js';
 import { createServer } from 'http';
 import equiposRoutes from './routes/equipos.js';
 import clientesRoutes from './routes/clientes.js';
+import calendarioRoutes from './routes/calendario.js';
 import pool from './db.js';
 
 const app = express();
@@ -131,6 +132,7 @@ app.use('/auth', authRoutes);
 app.use('/tickets', ticketsRoutes);
 app.use('/equipos', equiposRoutes);
 app.use('/clientes', clientesRoutes);
+app.use('/calendario', calendarioRoutes);
 
 // Inicializar servidor HTTP
 const server = createServer(app);
@@ -200,6 +202,16 @@ async function ensureBaseSchema() {
       CREATE INDEX IF NOT EXISTS idx_tickets_cliente_id ON tickets(cliente_id);
       CREATE INDEX IF NOT EXISTS idx_tickets_equipo_id ON tickets(equipo_id);
       CREATE INDEX IF NOT EXISTS idx_equipos_estado ON equipos(estado);
+      CREATE TABLE IF NOT EXISTS eventos (
+        id SERIAL PRIMARY KEY,
+        titulo VARCHAR(200) NOT NULL,
+        descripcion TEXT,
+        fecha DATE NOT NULL,
+        creado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+        creado_en TIMESTAMPTZ DEFAULT NOW(),
+        actualizado_en TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_eventos_fecha ON eventos(fecha);
     `);
 
     // Actualizaciones de esquema para Google Auth
