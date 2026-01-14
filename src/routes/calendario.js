@@ -10,14 +10,16 @@ async function ensureSchema() {
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS eventos (
-        id SERIAL PRIMARY KEY,
-        titulo VARCHAR(200) NOT NULL,
-        descripcion TEXT,
-        fecha DATE NOT NULL,
-        creado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
-        creado_en TIMESTAMPTZ DEFAULT NOW(),
-        actualizado_en TIMESTAMPTZ DEFAULT NOW()
+        id SERIAL PRIMARY KEY
       );
+    `);
+    await pool.query(`
+      ALTER TABLE eventos ADD COLUMN IF NOT EXISTS titulo VARCHAR(200);
+      ALTER TABLE eventos ADD COLUMN IF NOT EXISTS descripcion TEXT;
+      ALTER TABLE eventos ADD COLUMN IF NOT EXISTS fecha DATE;
+      ALTER TABLE eventos ADD COLUMN IF NOT EXISTS creado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL;
+      ALTER TABLE eventos ADD COLUMN IF NOT EXISTS creado_en TIMESTAMPTZ DEFAULT NOW();
+      ALTER TABLE eventos ADD COLUMN IF NOT EXISTS actualizado_en TIMESTAMPTZ DEFAULT NOW();
     `);
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_eventos_fecha ON eventos(fecha);
@@ -40,7 +42,11 @@ function buildCalendarWeeks(year, month, events) {
   const todayKey = new Date().toISOString().slice(0, 10);
 
   events.forEach(e => {
-    const key = e.fecha.toISOString().slice(0, 10);
+    const rawFecha = e.fecha;
+    if (!rawFecha) return;
+    const key = typeof rawFecha === 'string'
+      ? rawFecha.slice(0, 10)
+      : rawFecha.toISOString().slice(0, 10);
     if (!eventsByDate[key]) eventsByDate[key] = [];
     eventsByDate[key].push(e);
   });
@@ -179,4 +185,3 @@ router.post('/eventos', authRequired, async (req, res) => {
 });
 
 export default router;
-
