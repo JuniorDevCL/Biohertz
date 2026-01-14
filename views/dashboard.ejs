@@ -49,7 +49,7 @@
                                   <th class="py-3 px-4">Estado</th>
                                   <th class="py-3 px-4">Asignado</th>
                                   <th class="py-3 px-4">Fecha</th>
-                                  <th class="py-3 px-4">Acciones</th>
+                                  <th class="py-3 px-4 text-center">Acción</th>
                               </tr>
                           </thead>
                           <tbody>
@@ -63,19 +63,19 @@
                                       </td>
                                       <td class="py-3 px-4"><%= ticket.asignado_nombre || 'Sin asignar' %></td>
                                       <td class="py-3 px-4 text-slate-400"><%= new Date(ticket.creado_en).toLocaleDateString() %></td>
-                                      <td class="py-3 px-4">
-                                      <div class="relative inline-block">
-                                          <select onchange="updateStatus('<%= ticket.id %>', this.value)" 
-                                                  class="appearance-none bg-slate-700 text-white text-xs rounded-lg px-3 py-1.5 pr-8 border border-slate-600 focus:outline-none focus:border-blue-500 cursor-pointer hover:bg-slate-600 transition-colors w-full">
-                                              <option value="pendiente" <%= ticket.estado === 'pendiente' ? 'selected' : '' %>>Pendiente</option>
-                                              <option value="en_proceso" <%= ticket.estado === 'en_proceso' ? 'selected' : '' %>>En Proceso</option>
-                                              <option value="terminado" <%= ticket.estado === 'terminado' ? 'selected' : '' %>>Terminado</option>
-                                          </select>
-                                          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
-                                              <i class="ph ph-caret-down text-xs"></i>
-                                          </div>
-                                      </div>
-                                  </td>
+                                      <td class="py-3 px-4 text-center">
+                                          <% if (ticket.estado === 'terminado' || ticket.estado === 'hecho') { %>
+                                              <button disabled class="inline-flex items-center px-3 py-1.5 text-xs rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 cursor-default">
+                                                  <i class="ph ph-check-circle mr-1.5"></i>
+                                                  Terminado
+                                              </button>
+                                          <% } else { %>
+                                              <button onclick="finishTicket('<%= ticket.id %>')" class="inline-flex items-center px-3 py-1.5 text-xs rounded-full bg-blue-600 hover:bg-blue-500 text-white border border-blue-400/60 shadow-sm shadow-blue-500/30 transition-colors">
+                                                  <i class="ph ph-check mr-1.5"></i>
+                                                  Marcar como terminado
+                                              </button>
+                                          <% } %>
+                                      </td>
                               </tr>
                           <% }); %>
                       </tbody>
@@ -90,15 +90,15 @@
 </div>
 
 <script>
-async function updateStatus(id, newStatus) {
+async function finishTicket(id) {
     try {
         const res = await fetch(`/tickets/${id}/status`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estado: newStatus })
+            body: JSON.stringify({ estado: 'terminado' })
         });
         if (res.ok) window.location.reload();
-        else alert('Error al actualizar');
+        else alert('Error al marcar como terminado');
     } catch (e) { console.error(e); alert('Error de conexión'); }
 }
 </script>

@@ -44,6 +44,7 @@ router.get('/', authRequired, async (req, res) => {
     const r = await pool.query(sql, [...values, limit, offset]);
     res.render('clientes', {
       clientes: r.rows,
+      query: q || '',
       title: 'Clientes - BIOHERTS',
       user: req.user || req.session.user || { nombre: 'Usuario' }
     });
@@ -129,11 +130,17 @@ router.patch('/:id', authRequired, async (req, res) => {
   try {
     await ensureSchema();
     const { id } = req.params;
-    const { nombre, empresa } = req.body;
+    const { nombre, empresa, email, telefono, ubicacion } = req.body;
     const u = await pool.query(`
-      UPDATE clientes SET nombre = COALESCE($1, nombre), empresa = COALESCE($2, empresa), actualizado_en = NOW()
-      WHERE id = $3 RETURNING *
-    `, [nombre, empresa, id]);
+      UPDATE clientes 
+      SET nombre = COALESCE($1, nombre), 
+          empresa = COALESCE($2, empresa),
+          email = COALESCE($3, email),
+          telefono = COALESCE($4, telefono),
+          ubicacion = COALESCE($5, ubicacion),
+          actualizado_en = NOW()
+      WHERE id = $6 RETURNING *
+    `, [nombre, empresa, email, telefono, ubicacion, id]);
     if (u.rows.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
     res.json(u.rows[0]);
   } catch (err) {

@@ -78,9 +78,21 @@ if (isOffline) {
       }
 
       if (s.startsWith('INSERT INTO tickets')) {
-        const [titulo, descripcion, creado_por, asignado_a, equipo_id] = params;
+        const [titulo, descripcion, creado_por, asignado_a, equipo_id, cliente_id] = params;
         const id = store.seq.tickets++;
-        const t = { id, titulo, descripcion, creado_por, asignado_a: asignado_a ?? null, equipo_id: equipo_id ?? null, estado: 'pendiente', creado_en: nowISO(), actualizado_en: nowISO() };
+        const t = { 
+          id, 
+          titulo, 
+          descripcion, 
+          creado_por, 
+          asignado_a: asignado_a ?? null, 
+          equipo_id: equipo_id ?? null, 
+          cliente_id: cliente_id ? Number(cliente_id) : null,
+          estado: 'pendiente', 
+          creado_en: nowISO(), 
+          actualizado_en: nowISO(),
+          terminado_en: null
+        };
         store.tickets.push(t);
         saveStore(store);
         return { rows: [t], rowCount: 1 };
@@ -148,6 +160,9 @@ if (isOffline) {
         if (!t) return { rows: [], rowCount: 0 };
         t.estado = estado;
         t.actualizado_en = nowISO();
+        if (estado === 'terminado' || estado === 'hecho') {
+          t.terminado_en = nowISO();
+        }
         saveStore(store);
         return { rows: [t], rowCount: 1 };
       }
@@ -328,9 +343,18 @@ if (isOffline) {
       }
 
       if (s.startsWith('INSERT INTO clientes')) {
-        const [nombre, empresa] = params;
+        const [nombre, empresa, email, telefono, ubicacion] = params;
         const id = store.seq.clientes++;
-        const c = { id, nombre: nombre || null, empresa: empresa || null, creado_en: nowISO(), actualizado_en: nowISO() };
+        const c = { 
+          id, 
+          nombre: nombre || null, 
+          empresa: empresa || null, 
+          email: email || null,
+          telefono: telefono || null,
+          ubicacion: ubicacion || null,
+          creado_en: nowISO(), 
+          actualizado_en: nowISO() 
+        };
         store.clientes.push(c);
         saveStore(store);
         return { rows: [c], rowCount: 1 };
@@ -364,11 +388,14 @@ if (isOffline) {
         return { rows: [deleted], rowCount: 1 };
       }
       if (s.startsWith('UPDATE clientes')) {
-        const [nombre, empresa, id] = params;
+        const [nombre, empresa, email, telefono, ubicacion, id] = params;
         const c = store.clientes.find(x => String(x.id) === String(id));
         if (!c) return { rows: [], rowCount: 0 };
         if (nombre !== undefined && nombre !== null) c.nombre = nombre;
         if (empresa !== undefined && empresa !== null) c.empresa = empresa;
+        if (email !== undefined && email !== null) c.email = email;
+        if (telefono !== undefined && telefono !== null) c.telefono = telefono;
+        if (ubicacion !== undefined && ubicacion !== null) c.ubicacion = ubicacion;
         c.actualizado_en = nowISO();
         saveStore(store);
         return { rows: [c], rowCount: 1 };

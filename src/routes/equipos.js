@@ -54,6 +54,7 @@ router.get('/', authRequired, async (req, res) => {
     res.render('equipos', {
       equipos: result.rows,
       clientes: clientsRes.rows,
+      query: q || '',
       title: 'Equipos - BIOHERTS',
       user: req.user || req.session.user || { nombre: 'Usuario' }
     });

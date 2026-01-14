@@ -12,6 +12,7 @@ async function ensureSchema() {
   try {
     await pool.query(`
       ALTER TABLE tickets ADD COLUMN IF NOT EXISTS cliente_id INTEGER;
+      ALTER TABLE tickets ADD COLUMN IF NOT EXISTS terminado_en TIMESTAMP;
     `);
   } catch (err) {
     console.error('Error al actualizar esquema de tickets:', err);
@@ -64,7 +65,11 @@ router.patch('/:id/status', authRequired, async (req, res) => {
     const { id } = req.params;
     const { estado } = req.body;
     const result = await pool.query(
-      'UPDATE tickets SET estado = $1, actualizado_en = NOW() WHERE id = $2 RETURNING *',
+      `UPDATE tickets 
+       SET estado = $1, 
+           actualizado_en = NOW(),
+           terminado_en = CASE WHEN $1 IN ('terminado','hecho') THEN NOW() ELSE terminado_en END
+       WHERE id = $2 RETURNING *`,
       [estado, id]
     );
     if (result.rowCount === 0) return res.status(404).json({ error: 'Ticket no encontrado' });
@@ -109,10 +114,16 @@ router.get('/', authRequired, async (req, res) => {
     if (limit > 100) limit = 100;
     if (isNaN(offset) || offset < 0) offset = 0;
 
-    const sql = `SELECT t.*, u.nombre AS creado_por_nombre, ua.nombre AS asignado_a_nombre
+    const sql = `SELECT t.*, 
+                        u.nombre AS creado_por_nombre, 
+                        ua.nombre AS asignado_a_nombre,
+                        c.nombre AS cliente_nombre,
+                        e.nombre AS equipo_nombre
                  FROM tickets t
                  LEFT JOIN usuarios u ON u.id = t.creado_por
                  LEFT JOIN usuarios ua ON ua.id = t.asignado_a
+                 LEFT JOIN clientes c ON c.id = t.cliente_id
+                 LEFT JOIN equipos e ON e.id = t.equipo_id
                  ${where.length ? ' WHERE ' + where.join(' AND ') : ''}
                  ORDER BY t.creado_en DESC
                  LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
@@ -194,7 +205,9 @@ router.patch('/:id/estado', authRequired, async (req, res) => {
 
     const result = await pool.query(
       `UPDATE tickets
-       SET estado = $1, actualizado_en = NOW()
+       SET estado = $1, 
+           actualizado_en = NOW(),
+           terminado_en = CASE WHEN $1 = 'hecho' THEN NOW() ELSE terminado_en END
        WHERE id = $2
        RETURNING *`,
       [estado, id]
