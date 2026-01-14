@@ -39,7 +39,16 @@
                                 <td class="py-3 px-4 text-slate-400"><%= new Date(ticket.creado_en).toLocaleDateString() %></td>
                                 <td class="py-3 px-4 text-slate-400"><%= ticket.terminado_en ? new Date(ticket.terminado_en).toLocaleDateString() : '-' %></td>
                                 <td class="py-3 px-4">
-                                    <a href="/tickets/<%= ticket.id %>" class="text-blue-400 hover:text-blue-300 mr-2"><i class="ph ph-eye"></i></a>
+                                    <div class="flex items-center gap-2">
+                                        <a href="/tickets/<%= ticket.id %>" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors" title="Ver detalle">
+                                            <i class="ph ph-eye text-sm"></i>
+                                        </a>
+                                        <% if (typeof user !== 'undefined' && user && user.rol === 'admin') { %>
+                                            <button type="button" onclick="deleteTicket('<%= ticket.id %>')" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-900/40 hover:bg-red-700/70 text-red-200 transition-colors" title="Eliminar ticket">
+                                                <i class="ph ph-trash text-sm"></i>
+                                            </button>
+                                        <% } %>
+                                    </div>
                                 </td>
                             </tr>
                         <% }); %>
@@ -101,3 +110,21 @@
         </form>
     </div>
 </div>
+
+<script>
+async function deleteTicket(id) {
+    const confirmed = confirm('¿Seguro que deseas eliminar este ticket? Esta acción no se puede deshacer.');
+    if (!confirmed) return;
+    try {
+        const res = await fetch('/tickets/' + id, { method: 'DELETE' });
+        if (res.ok) {
+            window.location.reload();
+        } else {
+            alert('Error al eliminar ticket');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Error de conexión');
+    }
+}
+</script>

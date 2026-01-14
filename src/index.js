@@ -83,13 +83,14 @@ app.get('/dashboard', authRequired, async (req, res) => {
         const [ticketsCount, pendingCount, teamsCount, clientsCount, recents] = await Promise.all([
             pool.query('SELECT COUNT(*) FROM tickets WHERE asignado_a = $1', [userId]),
             pool.query("SELECT COUNT(*) FROM tickets WHERE estado = 'pendiente' AND asignado_a = $1", [userId]),
-            pool.query('SELECT COUNT(*) FROM equipos'), // Global count for context? Or maybe assigned? Keeping global for now as user didn't specify for equipments
+            pool.query('SELECT COUNT(*) FROM equipos'),
             pool.query('SELECT COUNT(*) FROM clientes'),
             pool.query(`
                 SELECT t.*, u.nombre as asignado_nombre 
                 FROM tickets t 
                 LEFT JOIN usuarios u ON t.asignado_a = u.id 
                 WHERE t.asignado_a = $1
+                  AND t.estado = 'pendiente'
                 ORDER BY t.creado_en DESC LIMIT 10
             `, [userId])
         ]);
