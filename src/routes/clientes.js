@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import pool from '../db.js';
 import authRequired from '../middleware/authRequired.js';
+import { clearEquiposClientsCache } from './equipos.js';
 
 const router = Router();
 
@@ -64,6 +65,7 @@ router.post('/', authRequired, async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING *
     `, [nombre || null, empresa || null, email || null, telefono || null, ubicacion || null]);
     console.log('Cliente creado:', ins.rows[0]);
+    clearEquiposClientsCache();
     // res.status(201).json(ins.rows[0]);
     res.redirect('/clientes');
   } catch (err) {
@@ -142,6 +144,7 @@ router.patch('/:id', authRequired, async (req, res) => {
       WHERE id = $6 RETURNING *
     `, [nombre, empresa, email, telefono, ubicacion, id]);
     if (u.rows.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
+    clearEquiposClientsCache();
     res.json(u.rows[0]);
   } catch (err) {
     console.error('Error al actualizar cliente:', err);
@@ -171,6 +174,7 @@ router.delete('/:id', authRequired, async (req, res) => {
         return res.status(404).json({ error: 'Cliente no encontrado al intentar eliminar' });
     }
     console.log(`[DELETE] Cliente eliminado exitosamente.`);
+    clearEquiposClientsCache();
     res.json({ message: 'Cliente eliminado', deleted: d.rows[0] });
   } catch (err) {
     console.error('Error al eliminar cliente:', err);

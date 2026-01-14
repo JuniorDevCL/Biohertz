@@ -19,6 +19,26 @@ async function ensureExtendedSchema() {
   extendedReady = true;
 }
 
+let clientsCache = null;
+let clientsCacheTs = 0;
+const CLIENTS_CACHE_TTL_MS = 5 * 60 * 1000;
+
+async function getClientsCached() {
+  const now = Date.now();
+  if (clientsCache && now - clientsCacheTs < CLIENTS_CACHE_TTL_MS) {
+    return clientsCache;
+  }
+  const result = await pool.query('SELECT id, nombre FROM clientes ORDER BY nombre');
+  clientsCache = result.rows;
+  clientsCacheTs = now;
+  return clientsCache;
+}
+
+export function clearEquiposClientsCache() {
+  clientsCache = null;
+  clientsCacheTs = 0;
+}
+
 router.get('/', authRequired, async (req, res) => {
   try {
     await ensureExtendedSchema();
@@ -45,15 +65,14 @@ router.get('/', authRequired, async (req, res) => {
     if (limit > 100) limit = 100;
     if (isNaN(offset) || offset < 0) offset = 0;
 
-    const sql = `SELECT * FROM equipos${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+    const sql = `SELECT id, nombre, marca, modelo, numero_serie, ubicacion, estado, cliente, cliente_id, actualizado_en FROM equipos${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
     const result = await pool.query(sql, [...values, limit, offset]);
 
-    // Fetch clients for dropdown
-    const clientsRes = await pool.query('SELECT id, nombre FROM clientes ORDER BY nombre');
+    const clients = await getClientsCached();
 
     res.render('equipos', {
       equipos: result.rows,
-      clientes: clientsRes.rows,
+      clientes: clients,
       query: q || '',
       title: 'Equipos - BIOHERTS',
       user: req.user || req.session.user || { nombre: 'Usuario' }
