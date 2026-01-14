@@ -17,6 +17,11 @@ async function ensureSchema() {
       ALTER TABLE eventos ADD COLUMN IF NOT EXISTS titulo VARCHAR(200);
       ALTER TABLE eventos ADD COLUMN IF NOT EXISTS descripcion TEXT;
       ALTER TABLE eventos ADD COLUMN IF NOT EXISTS fecha DATE;
+      ALTER TABLE eventos ADD COLUMN IF NOT EXISTS fecha_inicio DATE;
+      ALTER TABLE eventos ADD COLUMN IF NOT EXISTS fecha_fin DATE;
+      ALTER TABLE eventos ADD COLUMN IF NOT EXISTS hora_inicio TIME;
+      ALTER TABLE eventos ADD COLUMN IF NOT EXISTS hora_fin TIME;
+      ALTER TABLE eventos ADD COLUMN IF NOT EXISTS color VARCHAR(20) DEFAULT '#3b82f6';
       ALTER TABLE eventos ADD COLUMN IF NOT EXISTS creado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL;
       ALTER TABLE eventos ADD COLUMN IF NOT EXISTS creado_en TIMESTAMPTZ DEFAULT NOW();
       ALTER TABLE eventos ADD COLUMN IF NOT EXISTS actualizado_en TIMESTAMPTZ DEFAULT NOW();
@@ -99,10 +104,11 @@ router.get('/', authRequired, async (req, res) => {
     const endDate = new Date(year, month, 1);
 
     const eventsRes = await pool.query(
-      `SELECT id, titulo, descripcion, fecha, creado_por, creado_en
+      `SELECT id, titulo, descripcion, fecha, fecha_inicio, hora_inicio, hora_fin, color, creado_por, creado_en
        FROM eventos
-       WHERE fecha >= $1 AND fecha < $2
-       ORDER BY fecha ASC, creado_en ASC`,
+       WHERE (fecha >= $1 AND fecha < $2) 
+          OR (fecha_inicio >= $1 AND fecha_inicio < $2)
+       ORDER BY COALESCE(fecha_inicio, fecha) ASC, hora_inicio ASC, creado_en ASC`,
       [startDate, endDate]
     );
 
@@ -155,7 +161,7 @@ router.post('/eventos', authRequired, async (req, res) => {
     await ensureSchema();
 
     const user = req.user || req.session.user || { id: null };
-    const { titulo, descripcion, fecha } = req.body;
+    const { titulo, descripcion, fecha, hora_inicio, hora_fin } = req.body;
 
     const cleanTitulo = String(titulo || '').trim();
     const cleanFecha = String(fecha || '').trim();
@@ -166,9 +172,9 @@ router.post('/eventos', authRequired, async (req, res) => {
 
     // Insertamos tanto en 'fecha' como en 'fecha_inicio' para compatibilidad
     await pool.query(
-      `INSERT INTO eventos (titulo, descripcion, fecha, fecha_inicio, fecha_fin, color, creado_por, creado_en, actualizado_en)
-       VALUES ($1, $2, $3::DATE, $3::DATE, $3::DATE, '#3b82f6', $4, NOW(), NOW())`,
-      [cleanTitulo, descripcion || null, cleanFecha, user.id || null]
+      `INSERT INTO eventos (titulo, descripcion, fecha, fecha_inicio, fecha_fin, hora_inicio, hora_fin, color, creado_por, creado_en, actualizado_en)
+       VALUES ($1, $2, $3::DATE, $3::DATE, $3::DATE, $4, $5, '#3b82f6', $6, NOW(), NOW())`,
+      [cleanTitulo, descripcion || null, cleanFecha, hora_inicio || null, hora_fin || null, user.id || null]
     );
 
     const redirectMonth = req.body.month || '';

@@ -1,6 +1,6 @@
 {
   "seq": {
-    "usuarios": 33,
+    "usuarios": 34,
     "tickets": 78,
     "comentarios": 21,
     "equipos": 83,
@@ -26,6 +26,13 @@
       "nombre": "Test User",
       "email": "testuser_1766727049871@test.com",
       "password": "$2b$10$XfbKTbMExGBlqCHILJuoCOwbMA7O2S.gh8S0bu9UB8hbByZDRvJ1O",
+      "rol": "admin"
+    },
+    {
+      "id": 33,
+      "nombre": "Tester",
+      "email": "tester@biohertz.com",
+      "password": "$2b$10$wPzWfryVMCajG1eyh0w9Vu6qDNU0XeyrMSKu0uw8.sumB.6.wBU4S",
       "rol": "admin"
     }
   ],

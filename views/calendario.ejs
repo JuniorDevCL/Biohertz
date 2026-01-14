@@ -44,7 +44,10 @@
                     <% if (!day) { %>
                         <div class="h-24 rounded-lg bg-slate-900/40 border border-slate-800"></div>
                     <% } else { %>
-                        <div class="h-24 rounded-lg bg-slate-900/80 border border-slate-800 flex flex-col p-2 overflow-hidden">
+                        <div class="h-24 rounded-lg bg-slate-900/80 border border-slate-800 flex flex-col p-2 overflow-hidden cursor-pointer hover:bg-slate-800/50 transition-colors"
+                             onclick="openDayDetails(this)"
+                             data-date="<%= day.dateKey %>"
+                             data-events="<%= JSON.stringify(day.events).replace(/"/g, '&quot;') %>">
                             <div class="flex items-center justify-between mb-1">
                                 <span class="text-xs font-semibold <%= day.isToday ? 'text-emerald-400' : 'text-slate-300' %>">
                                     <%= day.day %>
@@ -58,8 +61,11 @@
                             <div class="space-y-1 overflow-y-auto pr-1 custom-scroll">
                                 <% if (day.events && day.events.length > 0) { %>
                                     <% day.events.forEach(function(ev) { %>
-                                        <div class="text-[11px] px-2 py-1 rounded bg-blue-600/20 text-blue-200 truncate">
-                                            <%= ev.titulo %>
+                                        <div class="text-[11px] px-2 py-1 rounded bg-blue-600/20 text-blue-200 truncate flex justify-between items-center gap-1">
+                                            <span class="truncate"><%= ev.titulo %></span>
+                                            <% if (ev.hora_inicio) { %>
+                                                <span class="text-[9px] opacity-70"><%= ev.hora_inicio.slice(0, 5) %></span>
+                                            <% } %>
                                         </div>
                                     <% }); %>
                                 <% } else { %>
@@ -74,6 +80,69 @@
     </div>
 </div>
 
+<div id="day-details-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-md shadow-2xl border border-slate-700 max-h-[80vh] flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="day-details-title" class="text-xl font-bold text-white">Eventos</h3>
+            <button onclick="document.getElementById('day-details-modal').classList.add('hidden')" class="text-slate-400 hover:text-white">
+                <i class="ph ph-x text-lg"></i>
+            </button>
+        </div>
+        <div id="day-details-content" class="flex-1 overflow-y-auto space-y-3 custom-scroll pr-2">
+            <!-- Events will be injected here -->
+        </div>
+    </div>
+</div>
+
+<script>
+function openDayDetails(el) {
+    const date = el.getAttribute('data-date');
+    const eventsStr = el.getAttribute('data-events');
+    const events = JSON.parse(eventsStr || '[]');
+    
+    // Format date
+    const dateObj = new Date(date + 'T00:00:00');
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateFormatted = dateObj.toLocaleDateString('es-ES', options);
+    // Capitalize first letter
+    document.getElementById('day-details-title').textContent = dateFormatted.charAt(0).toUpperCase() + dateFormatted.slice(1);
+    
+    const container = document.getElementById('day-details-content');
+    container.innerHTML = '';
+    
+    if (events.length === 0) {
+        container.innerHTML = '<p class="text-slate-400 text-center py-4">No hay eventos para este día.</p>';
+    } else {
+        events.forEach(ev => {
+            const div = document.createElement('div');
+            div.className = 'bg-slate-900/50 p-3 rounded-lg border border-slate-700/50';
+            
+            let timeStr = '';
+            if (ev.hora_inicio) {
+                timeStr += ev.hora_inicio.slice(0, 5);
+                if (ev.hora_fin) {
+                    timeStr += ' - ' + ev.hora_fin.slice(0, 5);
+                }
+            }
+            
+            div.innerHTML = `
+                <div class="flex justify-between items-start gap-2">
+                    <h4 class="font-medium text-blue-300 text-sm">\${ev.titulo}</h4>
+                    \${timeStr ? `<span class="text-xs text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded whitespace-nowrap">\${timeStr}</span>` : ''}
+                </div>
+                \${ev.descripcion ? `<p class="text-slate-400 text-xs mt-1 whitespace-pre-wrap">\${ev.descripcion}</p>` : ''}
+                <div class="text-[10px] text-slate-500 mt-2 text-right">
+                    Creado por: usuario #\${ev.creado_por || '?'}
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+    
+    document.getElementById('day-details-modal').classList.remove('hidden');
+}
+</script>
+
 <div id="new-event-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
     <div class="bg-slate-800 p-6 rounded-xl w-full max-w-md shadow-2xl border border-slate-700">
         <h3 class="text-xl font-bold text-white mb-4">Nuevo Evento</h3>
@@ -87,6 +156,16 @@
             <div>
                 <label class="block text-slate-400 text-sm mb-2">Fecha</label>
                 <input type="date" name="fecha" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Hora Inicio</label>
+                    <input type="time" name="hora_inicio" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Hora Fin</label>
+                    <input type="time" name="hora_fin" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
             </div>
             <div>
                 <label class="block text-slate-400 text-sm mb-2">Descripción (Opcional)</label>
