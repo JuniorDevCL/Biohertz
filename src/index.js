@@ -1,5 +1,6 @@
 // top-level file: index.js
 import express from 'express';
+import compression from 'compression';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import fs from 'fs';
@@ -28,6 +29,9 @@ app.use((req, res, next) => {
 // ---------------------------------------------
 
 console.log('Server Fix Applied: ' + Date.now());
+
+// Compresión HTTP para respuestas más ligeras
+app.use(compression());
 
 // Middleware para servir archivos estáticos
 app.use(express.static(path.join(process.cwd(), 'public')));
@@ -184,6 +188,7 @@ async function ensureBaseSchema() {
         creado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
         asignado_a INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
         equipo_id INTEGER REFERENCES equipos(id) ON DELETE SET NULL,
+        cliente_id INTEGER,
         estado VARCHAR(20) NOT NULL DEFAULT 'pendiente',
         creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -191,6 +196,9 @@ async function ensureBaseSchema() {
 
       CREATE INDEX IF NOT EXISTS idx_tickets_estado ON tickets(estado);
       CREATE INDEX IF NOT EXISTS idx_tickets_asignado ON tickets(asignado_a);
+      CREATE INDEX IF NOT EXISTS idx_tickets_creado_en ON tickets(creado_en DESC);
+      CREATE INDEX IF NOT EXISTS idx_tickets_cliente_id ON tickets(cliente_id);
+      CREATE INDEX IF NOT EXISTS idx_tickets_equipo_id ON tickets(equipo_id);
       CREATE INDEX IF NOT EXISTS idx_equipos_estado ON equipos(estado);
     `);
 

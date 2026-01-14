@@ -2,8 +2,9 @@ import jwt from 'jsonwebtoken';
 const SECRET = process.env.JWT_SECRET || 'offline_secret';
 
 export default function authRequired(req, res, next) {
-  // Debug log
-  console.log('Auth Middleware Check - isAuthenticated:', req.isAuthenticated && req.isAuthenticated(), 'User:', req.user ? req.user.email : 'none', 'SessionID:', req.sessionID);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Auth Middleware Check - isAuthenticated:', req.isAuthenticated && req.isAuthenticated(), 'User:', req.user ? req.user.email : 'none', 'SessionID:', req.sessionID);
+  }
 
   // 1. Support Passport Session (SSR)
   if (req.isAuthenticated && req.isAuthenticated()) {
