@@ -48,8 +48,7 @@
                             <% } else { %>
                                 <div class="h-24 rounded-lg bg-slate-900/80 border border-slate-800 flex flex-col p-2 overflow-hidden cursor-pointer hover:bg-slate-800/50 transition-colors"
                                      onclick="openDayDetails(this)"
-                                     data-date="<%= day.dateKey %>"
-                                     data-events="<%= JSON.stringify(day.events).replace(/"/g, '&quot;') %>">
+                                     data-date="<%= day.dateKey %>">
                                     <div class="flex items-center justify-between mb-1">
                                         <span class="text-xs font-semibold <%= day.isToday ? 'text-emerald-400' : 'text-slate-300' %>">
                                             <%= day.day %>
@@ -93,7 +92,8 @@
     </div>
 </div>
 
-<div id="day-details-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+<div id="day-details-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50"
+     onclick="if (event.target === this) this.classList.add('hidden')">
     <div class="bg-slate-800 p-6 rounded-xl w-full max-w-md shadow-2xl border border-slate-700 max-h-[80vh] flex flex-col">
         <div class="flex justify-between items-center mb-4">
             <h3 id="day-details-title" class="text-xl font-bold text-white">Eventos</h3>
@@ -101,24 +101,28 @@
                 <i class="ph ph-x text-lg"></i>
             </button>
         </div>
-        <div id="day-details-content" class="flex-1 overflow-y-auto space-y-3 custom-scroll pr-2">
-            <!-- Events will be injected here -->
+        <div id="day-details-content" class="flex-1 overflow-y-auto space-y-3 custom-scroll pr-2"></div>
+        <div class="mt-4 flex justify-end">
+            <button type="button" class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm"
+                    onclick="document.getElementById('day-details-modal').classList.add('hidden')">
+                Cerrar
+            </button>
         </div>
     </div>
 </div>
 
 <script>
+const calendarEventsByDate = {};
+<% weeks.forEach(function(week) { %>
+    <% week.forEach(function(day) { if (day) { %>
+        calendarEventsByDate["<%= day.dateKey %>"] = <%- JSON.stringify(day.events || []) %>;
+    <% } }); %>
+<% }); %>
+
 function openDayDetails(el) {
     const date = el.getAttribute('data-date');
-    const rawEventsStr = el.getAttribute('data-events') || '[]';
-    let events;
-    try {
-        events = JSON.parse(rawEventsStr);
-        if (!Array.isArray(events)) events = [];
-    } catch (e) {
-        console.error('Error al parsear eventos del día', e, rawEventsStr);
-        events = [];
-    }
+    const rawEvents = calendarEventsByDate[date];
+    let events = Array.isArray(rawEvents) ? rawEvents : [];
 
     const dateObj = new Date(date + 'T00:00:00');
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
