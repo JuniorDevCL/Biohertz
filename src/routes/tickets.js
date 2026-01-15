@@ -65,13 +65,14 @@ router.patch('/:id/status', authRequired, async (req, res) => {
     await ensureSchema();
     const { id } = req.params;
     const { estado } = req.body;
+    const nuevoEstado = String(estado || '').trim();
     const result = await pool.query(
       `UPDATE tickets 
        SET estado = $1, 
            actualizado_en = NOW(),
-           terminado_en = CASE WHEN $1 IN ('terminado','hecho') THEN NOW() ELSE terminado_en END
+           terminado_en = CASE WHEN $1::varchar IN ('terminado','hecho') THEN NOW() ELSE terminado_en END
        WHERE id = $2 RETURNING *`,
-      [estado, id]
+      [nuevoEstado, id]
     );
     if (result.rowCount === 0) return res.status(404).json({ error: 'Ticket no encontrado' });
     
@@ -203,8 +204,9 @@ router.patch('/:id/estado', authRequired, async (req, res) => {
     await ensureSchema();
     const { id } = req.params;
     const { estado } = req.body;
+    const nuevoEstado = String(estado || '').trim();
 
-    if (!['pendiente', 'hecho'].includes(estado)) {
+    if (!['pendiente', 'hecho'].includes(nuevoEstado)) {
       return res.status(400).json({ error: 'Estado inválido' });
     }
 
@@ -212,10 +214,10 @@ router.patch('/:id/estado', authRequired, async (req, res) => {
       `UPDATE tickets
        SET estado = $1, 
            actualizado_en = NOW(),
-           terminado_en = CASE WHEN $1 = 'hecho' THEN NOW() ELSE terminado_en END
+           terminado_en = CASE WHEN $1::varchar = 'hecho' THEN NOW() ELSE terminado_en END
        WHERE id = $2
        RETURNING *`,
-      [estado, id]
+      [nuevoEstado, id]
     );
 
     if (result.rowCount === 0) {
