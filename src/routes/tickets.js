@@ -6,20 +6,60 @@ import { enviarNotificacionTicket } from '../services/mailer.js';
 
 const router = express.Router();
 
-let ready = false;
+let initializationPromise = null;
+
 async function ensureSchema() {
-  if (ready) return;
-  try {
-    await pool.query(`
-      ALTER TABLE tickets ADD COLUMN IF NOT EXISTS cliente_id INTEGER;
-      ALTER TABLE tickets ADD COLUMN IF NOT EXISTS terminado_en TIMESTAMP;
-      ALTER TABLE tickets ADD COLUMN IF NOT EXISTS tipo VARCHAR(50);
-      ALTER TABLE tickets ADD COLUMN IF NOT EXISTS codigo VARCHAR(50);
-    `);
-  } catch (err) {
-    console.error('Error al actualizar esquema de tickets:', err);
-  }
-  ready = true;
+  if (initializationPromise) return initializationPromise;
+
+  initializationPromise = (async () => {
+    try {
+      console.log('Verificando esquema de base de datos...');
+      
+      // Crear tabla comentarios
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS comentarios (
+          id SERIAL PRIMARY KEY,
+          ticket_id INTEGER NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+          autor_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE SET NULL,
+          contenido TEXT NOT NULL,
+          creado_en TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+
+      // Crear tabla historial_tickets
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS historial_tickets (
+          id SERIAL PRIMARY KEY,
+          ticket_id INTEGER NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+          usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+          tipo_cambio VARCHAR(50) NOT NULL,
+          valor_anterior TEXT,
+          valor_nuevo TEXT,
+          creado_en TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+
+      // Actualizar tabla tickets (columnas nuevas)
+      const alters = [
+        'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS cliente_id INTEGER',
+        'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS terminado_en TIMESTAMP',
+        'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS tipo VARCHAR(50)',
+        'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS codigo VARCHAR(50)'
+      ];
+
+      for (const sql of alters) {
+        await pool.query(sql);
+      }
+
+      console.log('Esquema verificado correctamente.');
+    } catch (err) {
+      console.error('Error CRÍTICO actualizando esquema:', err);
+      initializationPromise = null; // Permitir reintento
+      throw err;
+    }
+  })();
+
+  return initializationPromise;
 }
 
 // Crear ticket
