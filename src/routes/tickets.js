@@ -13,6 +13,8 @@ async function ensureSchema() {
     await pool.query(`
       ALTER TABLE tickets ADD COLUMN IF NOT EXISTS cliente_id INTEGER;
       ALTER TABLE tickets ADD COLUMN IF NOT EXISTS terminado_en TIMESTAMP;
+      ALTER TABLE tickets ADD COLUMN IF NOT EXISTS tipo VARCHAR(50);
+      ALTER TABLE tickets ADD COLUMN IF NOT EXISTS codigo VARCHAR(50);
     `);
   } catch (err) {
     console.error('Error al actualizar esquema de tickets:', err);
@@ -24,17 +26,50 @@ async function ensureSchema() {
 router.post('/', authRequired, async (req, res) => {
   try {
     await ensureSchema();
-    const { titulo, descripcion, asignado_a, equipo_id, cliente_id } = req.body;
+    const { titulo, descripcion, asignado_a, equipo_id, cliente_id, tipo } = req.body;
 
-    if (!titulo) {
+    const cleanTitulo = String(titulo || '').trim();
+
+    if (!cleanTitulo) {
       return res.status(400).json({ error: 'El título es obligatorio' });
     }
 
+    let rawTipo = String(tipo || '').trim().toLowerCase();
+    let tipoNormalizado;
+    if (rawTipo === 'mantencion' || rawTipo === 'm') {
+      tipoNormalizado = 'mantencion';
+    } else if (rawTipo === 'visita_tecnica' || rawTipo === 'visita tecnica' || rawTipo === 'v') {
+      tipoNormalizado = 'visita_tecnica';
+    } else if (rawTipo === 'garantia' || rawTipo === 'g') {
+      tipoNormalizado = 'garantia';
+    } else {
+      tipoNormalizado = 'mantencion';
+    }
+
+    let prefijo;
+    if (tipoNormalizado === 'mantencion') {
+      prefijo = 'M';
+    } else if (tipoNormalizado === 'visita_tecnica') {
+      prefijo = 'V';
+    } else if (tipoNormalizado === 'garantia') {
+      prefijo = 'G';
+    } else {
+      prefijo = 'T';
+    }
+
+    const countRes = await pool.query(
+      'SELECT COUNT(*) FROM tickets WHERE tipo = $1',
+      [tipoNormalizado]
+    );
+    const count = Number(countRes.rows[0]?.count || 0);
+    const nextNumber = count + 1;
+    const codigo = `${prefijo}-${String(nextNumber).padStart(3, '0')}`;
+
     const result = await pool.query(
-      `INSERT INTO tickets (titulo, descripcion, creado_por, asignado_a, equipo_id, cliente_id, estado, creado_en, actualizado_en)
-       VALUES ($1, $2, $3, $4, $5, $6, 'pendiente', NOW(), NOW())
+      `INSERT INTO tickets (titulo, descripcion, creado_por, asignado_a, equipo_id, cliente_id, tipo, codigo, estado, creado_en, actualizado_en)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pendiente', NOW(), NOW())
        RETURNING *`,
-      [titulo, descripcion || null, req.user.id, asignado_a || null, equipo_id || null, cliente_id || null]
+      [cleanTitulo, descripcion || null, req.user.id, asignado_a || null, equipo_id || null, cliente_id || null, tipoNormalizado, codigo]
     );
 
     // res.status(201).json({

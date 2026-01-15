@@ -78,7 +78,7 @@ if (isOffline) {
       }
 
       if (s.startsWith('INSERT INTO tickets')) {
-        const [titulo, descripcion, creado_por, asignado_a, equipo_id, cliente_id] = params;
+        const [titulo, descripcion, creado_por, asignado_a, equipo_id, cliente_id, tipo, codigo] = params;
         const id = store.seq.tickets++;
         const t = { 
           id, 
@@ -88,6 +88,8 @@ if (isOffline) {
           asignado_a: asignado_a ?? null, 
           equipo_id: equipo_id ?? null, 
           cliente_id: cliente_id ? Number(cliente_id) : null,
+          tipo: tipo || null,
+          codigo: codigo || null,
           estado: 'pendiente', 
           creado_en: nowISO(), 
           actualizado_en: nowISO(),
@@ -129,6 +131,12 @@ if (isOffline) {
             const idx = parseInt(eqMatch[1]) - 1;
             const val = params[idx];
             list = list.filter(t => Number(t.equipo_id) === Number(val));
+        }
+        const tipoMatch = s.match(/(?:t\.)?tipo = \$(\d+)/);
+        if (tipoMatch) {
+            const idx = parseInt(tipoMatch[1]) - 1;
+            const val = params[idx];
+            list = list.filter(t => t.tipo === val);
         }
         const qMatch = s.match(/\((?:t\.)?titulo ILIKE \$(\d+) OR/);
         if (qMatch) {
