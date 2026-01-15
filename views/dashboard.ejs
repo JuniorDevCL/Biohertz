@@ -92,13 +92,24 @@
 <script>
 async function finishTicket(id) {
     try {
-        const res = await fetch(`/tickets/${id}/status`, {
+        const res = await fetch(`/tickets/${id}/estado`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estado: 'terminado' })
+            body: JSON.stringify({ estado: 'hecho' })
         });
-        if (res.ok) window.location.reload();
-        else alert('Error al marcar como terminado');
-    } catch (e) { console.error(e); alert('Error de conexión'); }
+        if (res.ok) {
+            window.location.reload();
+        } else {
+            let msg = 'Error al marcar como terminado';
+            try {
+                const data = await res.json();
+                if (data && data.error) msg = data.error;
+            } catch {}
+            alert(msg);
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Error de conexión');
+    }
 }
 </script>

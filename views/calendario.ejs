@@ -97,34 +97,39 @@
 <script>
 function openDayDetails(el) {
     const date = el.getAttribute('data-date');
-    const eventsStr = el.getAttribute('data-events');
-    const events = JSON.parse(eventsStr || '[]');
-    
-    // Format date
+    const rawEventsStr = el.getAttribute('data-events') || '[]';
+    let events;
+    try {
+        events = JSON.parse(rawEventsStr);
+        if (!Array.isArray(events)) events = [];
+    } catch (e) {
+        console.error('Error al parsear eventos del día', e, rawEventsStr);
+        events = [];
+    }
+
     const dateObj = new Date(date + 'T00:00:00');
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const dateFormatted = dateObj.toLocaleDateString('es-ES', options);
-    // Capitalize first letter
     document.getElementById('day-details-title').textContent = dateFormatted.charAt(0).toUpperCase() + dateFormatted.slice(1);
-    
+
     const container = document.getElementById('day-details-content');
     container.innerHTML = '';
-    
+
     if (events.length === 0) {
         container.innerHTML = '<p class="text-slate-400 text-center py-4">No hay eventos para este día.</p>';
     } else {
         events.forEach(ev => {
             const div = document.createElement('div');
             div.className = 'bg-slate-900/50 p-3 rounded-lg border border-slate-700/50';
-            
+
             let timeStr = '';
             if (ev.hora_inicio) {
-                timeStr += ev.hora_inicio.slice(0, 5);
+                timeStr += String(ev.hora_inicio).slice(0, 5);
                 if (ev.hora_fin) {
-                    timeStr += ' - ' + ev.hora_fin.slice(0, 5);
+                    timeStr += ' - ' + String(ev.hora_fin).slice(0, 5);
                 }
             }
-            
+
             div.innerHTML = `
                 <div class="flex justify-between items-start gap-2">
                     <h4 class="font-medium text-blue-300 text-sm">\${ev.titulo}</h4>
@@ -138,7 +143,7 @@ function openDayDetails(el) {
             container.appendChild(div);
         });
     }
-    
+
     document.getElementById('day-details-modal').classList.remove('hidden');
 }
 </script>
@@ -182,4 +187,3 @@ function openDayDetails(el) {
         </form>
     </div>
 </div>
-
