@@ -1,8 +1,14 @@
 <div class="max-w-7xl mx-auto px-6 py-8">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-            <h1 class="text-3xl font-bold text-white tracking-tight">Equipos</h1>
-            <p class="text-slate-400 text-sm mt-1">Visualiza todos los equipos y su estado actual.</p>
+        <div class="space-y-2">
+            <div class="flex items-center gap-3">
+                <h1 class="text-3xl font-bold text-white tracking-tight">Equipos</h1>
+                <span class="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-800 text-xs text-slate-200 border border-slate-700">
+                    <i class="ph ph-desktop text-sm mr-1.5"></i>
+                    Equipos totales: <span class="ml-1 font-semibold"><%= typeof totalEquipos !== 'undefined' ? totalEquipos : 0 %></span>
+                </span>
+            </div>
+            <p class="text-slate-400 text-sm">Visualiza todos los equipos y su estado actual.</p>
         </div>
         <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <form action="/equipos" method="GET" class="flex-1 flex items-center gap-2">

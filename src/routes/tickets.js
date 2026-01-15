@@ -132,16 +132,20 @@ router.get('/', authRequired, async (req, res) => {
                  ORDER BY t.creado_en DESC
                  LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
     
-    const [result, clientesRes, usuariosRes] = await Promise.all([
+    const [result, clientesRes, usuariosRes, equiposCountRes] = await Promise.all([
       pool.query(sql, [...values, limit, offset]),
       pool.query('SELECT id, nombre FROM clientes ORDER BY nombre'),
-      pool.query('SELECT id, nombre, email FROM usuarios ORDER BY nombre')
+      pool.query('SELECT id, nombre, email FROM usuarios ORDER BY nombre'),
+      pool.query('SELECT COUNT(*) FROM equipos')
     ]);
+
+    const totalEquipos = Number(equiposCountRes.rows[0].count) || 0;
 
     res.render('tickets', { 
       tickets: result.rows,
       clientes: clientesRes.rows,
       usuarios: usuariosRes.rows,
+      totalEquipos,
       title: 'Tickets - BIOHERTS',
       user: req.user || req.session.user || { nombre: 'Usuario' }
     });

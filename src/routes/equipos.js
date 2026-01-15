@@ -68,12 +68,17 @@ router.get('/', authRequired, async (req, res) => {
     const sql = `SELECT id, nombre, marca, modelo, numero_serie, ubicacion, estado, cliente, cliente_id, actualizado_en FROM equipos${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
     const result = await pool.query(sql, [...values, limit, offset]);
 
+    const totalSql = 'SELECT COUNT(*) FROM equipos';
+    const totalResult = await pool.query(totalSql);
+    const totalEquipos = Number(totalResult.rows[0].count) || 0;
+
     const clients = await getClientsCached();
 
     res.render('equipos', {
       equipos: result.rows,
       clientes: clients,
       query: q || '',
+      totalEquipos,
       title: 'Equipos - BIOHERTS',
       user: req.user || req.session.user || { nombre: 'Usuario' }
     });
