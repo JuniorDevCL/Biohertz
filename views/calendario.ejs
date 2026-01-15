@@ -144,16 +144,30 @@ function openDayDetails(el) {
                 }
             }
 
-            div.innerHTML = `
-                <div class="flex justify-between items-start gap-2">
-                    <h4 class="font-medium text-blue-300 text-sm">\${ev.titulo}</h4>
-                    \${timeStr ? `<span class="text-xs text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded whitespace-nowrap">\${timeStr}</span>` : ''}
-                </div>
-                \${ev.descripcion ? `<p class="text-slate-400 text-xs mt-1 whitespace-pre-wrap">\${ev.descripcion}</p>` : ''}
-                <div class="text-[10px] text-slate-500 mt-2 text-right">
-                    Creado por: usuario #\${ev.creado_por || '?'}
-                </div>
-            `;
+            const timeBadgeHtml = timeStr
+                ? '<span class="text-xs text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded whitespace-nowrap">' +
+                  timeStr +
+                  '</span>'
+                : '';
+
+            const descHtml = ev.descripcion
+                ? '<p class="text-slate-400 text-xs mt-1 whitespace-pre-wrap">' +
+                  ev.descripcion +
+                  '</p>'
+                : '';
+
+            const creator = ev.creado_por || '?';
+
+            div.innerHTML =
+                '<div class="flex justify-between items-start gap-2">' +
+                    '<h4 class="font-medium text-blue-300 text-sm">' + (ev.titulo || '') + '</h4>' +
+                    timeBadgeHtml +
+                '</div>' +
+                descHtml +
+                '<div class="text-[10px] text-slate-500 mt-2 text-right">' +
+                    'Creado por: usuario #' + creator +
+                '</div>';
+
             container.appendChild(div);
         });
     }
@@ -183,17 +197,28 @@ function openDayDetails(el) {
                     }
                 }
 
-                item.innerHTML = `
-                    <div class="flex justify-between items-start gap-2">
-                        <div>
-                            <div class="text-sm font-medium text-blue-300">\${ev.titulo}</div>
-                            \${ev.descripcion ? `<div class="text-xs text-slate-400 mt-1 line-clamp-3 whitespace-pre-wrap">\${ev.descripcion}</div>` : ''}
-                        </div>
-                        \${timeStr ? `<span class="text-xs text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded whitespace-nowrap ml-2">\${timeStr}</span>` : ''}
-                    </div>
-                `;
+                const timeBadgeHtml = timeStr
+                    ? '<span class="text-xs text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded whitespace-nowrap ml-2">' +
+                      timeStr +
+                      '</span>'
+                    : '';
 
-                item.addEventListener('click', () => {
+                const descHtml = ev.descripcion
+                    ? '<div class="text-xs text-slate-400 mt-1 whitespace-pre-wrap">' +
+                      ev.descripcion +
+                      '</div>'
+                    : '';
+
+                item.innerHTML =
+                    '<div class="flex justify-between items-start gap-2">' +
+                        '<div>' +
+                            '<div class="text-sm font-medium text-blue-300">' + (ev.titulo || '') + '</div>' +
+                            descHtml +
+                        '</div>' +
+                        timeBadgeHtml +
+                    '</div>';
+
+                item.addEventListener('click', function () {
                     document.getElementById('day-details-modal').classList.remove('hidden');
                 });
 
