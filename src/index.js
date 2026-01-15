@@ -79,13 +79,14 @@ app.get('/dashboard', authRequired, async (req, res) => {
         clients: 0 
     };
     let recentTickets = [];
+    let todayEvents = [];
 
     // Intentamos cargar datos reales si la DB está disponible
     try {
         const userId = user.id || 0; // Ensure we have a user ID
 
         // Dashboard filtering: Only show tickets assigned to the logged-in user
-        const [ticketsCount, pendingCount, teamsCount, clientsCount, recents] = await Promise.all([
+        const [ticketsCount, pendingCount, teamsCount, clientsCount, recents, eventsToday] = await Promise.all([
             pool.query('SELECT COUNT(*) FROM tickets WHERE asignado_a = $1', [userId]),
             pool.query("SELECT COUNT(*) FROM tickets WHERE estado = 'pendiente' AND asignado_a = $1", [userId]),
             pool.query('SELECT COUNT(*) FROM equipos'),
@@ -97,7 +98,12 @@ app.get('/dashboard', authRequired, async (req, res) => {
                 WHERE t.asignado_a = $1
                   AND t.estado = 'pendiente'
                 ORDER BY t.creado_en DESC LIMIT 10
-            `, [userId])
+            `, [userId]),
+            pool.query(`
+                SELECT * FROM eventos 
+                WHERE fecha = CURRENT_DATE 
+                ORDER BY hora_inicio ASC
+            `)
         ]);
 
         stats.totalTickets = parseInt(ticketsCount.rows[0].count) || 0;
@@ -105,6 +111,7 @@ app.get('/dashboard', authRequired, async (req, res) => {
         stats.teams = parseInt(teamsCount.rows[0].count) || 0;
         stats.clients = parseInt(clientsCount.rows[0].count) || 0;
         recentTickets = recents.rows || [];
+        todayEvents = eventsToday.rows || [];
     } catch (dbError) {
         console.error('Error fetching dashboard stats from DB:', dbError);
         // Fallback silencioso: se renderizará con 0s
@@ -116,6 +123,7 @@ app.get('/dashboard', authRequired, async (req, res) => {
         user: user,       
         stats: stats,     
         tickets: recentTickets,
+        events: todayEvents,
         token: req.session?.token || '' // Pass token if available in session
     });
   } catch (error) {

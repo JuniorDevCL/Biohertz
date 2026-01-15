@@ -1,100 +1,222 @@
 <div class="max-w-7xl mx-auto px-6 py-8">
-    <span class="hidden" id="status"></span>
-
-    <section id="dashboard-section" class="">
-        <div class="card">
-            <div class="card-header"><h2>Dashboard</h2></div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <div class="card flex items-center p-5 bg-gradient-to-br from-blue-600/20 via-transparent to-transparent">
-                    <div class="rounded-xl h-12 w-12 flex items-center justify-center text-blue-400 border border-white/10 mr-4">
-                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                    </div>
-                    <div class="flex-1">
-                        <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Tickets</div>
-                        <div class="text-4xl font-bold text-white mt-1" id="total-tickets-count"><%= stats.totalTickets %></div>
-                    </div>
-                </div>
-                <div class="card flex items-center p-5 bg-gradient-to-br from-orange-500/20 via-transparent to-transparent">
-                    <div class="rounded-xl h-12 w-12 flex items-center justify-center text-orange-400 border border-white/10 mr-4">
-                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                    </div>
-                    <div class="flex-1">
-                        <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Pending</div>
-                        <div class="text-4xl font-bold text-white mt-1" id="assigned-count"><%= stats.pendingTickets %></div>
-                    </div>
-                </div>
-                <div class="card flex items-center p-5 bg-gradient-to-br from-cyan-500/20 via-transparent to-transparent">
-                    <div class="rounded-xl h-12 w-12 flex items-center justify-center text-cyan-400 border border-white/10 mr-4">
-                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21v-2a6.5 6.5 0 0 1 13 0v2"/></svg>
-                    </div>
-                    <div class="flex-1">
-                        <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Clients</div>
-                        <div class="text-4xl font-bold text-white mt-1" id="total-clientes-count"><%= stats.clients %></div>
-                    </div>
-                </div>
-            </div>
+    
+    <!-- Welcome Header -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-white tracking-tight">Dashboard</h1>
+            <p class="text-slate-400 mt-1">Bienvenido de vuelta, <span class="text-blue-400 font-medium"><%= user.nombre %></span></p>
         </div>
-        <div class="card mt-6 p-6">
-            <div class="card-header">
-                <h2 class="text-xl font-semibold text-white">Recent Tickets</h2>
-                <a href="/tickets" class="btn btn-primary text-sm px-4 py-2 rounded-lg no-underline inline-block">Ver Todos</a>
-            </div>
-            <div id="assigned-list" class="tickets-grid">
-              <% if (typeof tickets !== 'undefined' && tickets && tickets.length > 0) { %>
-                  <div class="overflow-x-auto">
-                      <table class="w-full text-left border-collapse">
-                          <thead>
-                              <tr class="text-slate-400 border-b border-slate-700">
-                                  <th class="py-3 px-4">Título</th>
-                                  <th class="py-3 px-4">Estado</th>
-                                  <th class="py-3 px-4">Asignado</th>
-                                  <th class="py-3 px-4">Fecha</th>
-                                  <th class="py-3 px-4 text-center">Acción</th>
-                              </tr>
-                          </thead>
-                          <tbody>
-                              <% tickets.forEach(ticket => { %>
-                                  <tr class="border-b border-slate-800 hover:bg-slate-900/50">
-                                <td class="py-3 px-4">
-                                    <button type="button" class="text-white hover:underline text-left" onclick="openTicketDetails('<%= ticket.id %>')">
-                                        <%= ticket.titulo %>
-                                    </button>
-                                </td>
-                                      <td class="py-3 px-4">
-                                          <span class="px-2 py-1 rounded text-xs font-medium <%= ticket.estado === 'pendiente' ? 'bg-orange-500/20 text-orange-400' : (ticket.estado === 'terminado' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400') %>">
-                                              <%= ticket.estado %>
-                                          </span>
-                                      </td>
-                                      <td class="py-3 px-4"><%= ticket.asignado_nombre || 'Sin asignar' %></td>
-                                      <td class="py-3 px-4 text-slate-400"><%= new Date(ticket.creado_en).toLocaleDateString() %></td>
-                                      <td class="py-3 px-4 text-center">
-                                          <% if (ticket.estado === 'terminado' || ticket.estado === 'hecho') { %>
-                                              <button disabled class="inline-flex items-center px-3 py-1.5 text-xs rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 cursor-default">
-                                                  <i class="ph ph-check-circle mr-1.5"></i>
-                                                  Terminado
-                                              </button>
-                                          <% } else { %>
-                                              <button onclick="finishTicket('<%= ticket.id %>')" class="inline-flex items-center px-3 py-1.5 text-xs rounded-full bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/60 shadow-sm shadow-emerald-500/30 transition-colors">
-                                                  <i class="ph ph-check mr-1.5"></i>
-                                                  Marcar como terminado
-                                              </button>
-                                          <% } %>
-                                      </td>
-                              </tr>
-                          <% }); %>
-                      </tbody>
-                  </table>
-              </div>
-          <% } else { %>
-              <p class="text-slate-400 text-center py-8">No tienes tickets asignados recientemente.</p>
-          <% } %>
+        <div class="text-sm text-slate-500 bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700/50">
+            <%= new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
         </div>
     </div>
-</section>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Tickets Totales -->
+        <div class="relative group overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-all duration-300 shadow-lg shadow-black/20">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="ph ph-ticket text-6xl text-blue-500"></i>
+            </div>
+            <div class="relative z-10">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                        <i class="ph ph-ticket text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium text-slate-400 uppercase tracking-wider">Tickets Totales</span>
+                </div>
+                <div class="text-3xl font-bold text-white"><%= stats.totalTickets %></div>
+            </div>
+            <div class="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600 w-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
+        </div>
+
+        <!-- Tickets Pendientes -->
+        <div class="relative group overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-all duration-300 shadow-lg shadow-black/20">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="ph ph-clock text-6xl text-orange-500"></i>
+            </div>
+            <div class="relative z-10">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="p-2 bg-orange-500/10 rounded-lg text-orange-400">
+                        <i class="ph ph-clock text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium text-slate-400 uppercase tracking-wider">Pendientes</span>
+                </div>
+                <div class="text-3xl font-bold text-white"><%= stats.pendingTickets %></div>
+            </div>
+            <div class="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-orange-500 to-orange-600 w-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
+        </div>
+
+        <!-- Clientes -->
+        <div class="relative group overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-all duration-300 shadow-lg shadow-black/20">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="ph ph-users text-6xl text-cyan-500"></i>
+            </div>
+            <div class="relative z-10">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="p-2 bg-cyan-500/10 rounded-lg text-cyan-400">
+                        <i class="ph ph-users text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium text-slate-400 uppercase tracking-wider">Clientes</span>
+                </div>
+                <div class="text-3xl font-bold text-white"><%= stats.clients %></div>
+            </div>
+            <div class="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-cyan-500 to-cyan-600 w-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
+        </div>
+
+        <!-- Equipos -->
+        <div class="relative group overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-all duration-300 shadow-lg shadow-black/20">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="ph ph-desktop text-6xl text-purple-500"></i>
+            </div>
+            <div class="relative z-10">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="p-2 bg-purple-500/10 rounded-lg text-purple-400">
+                        <i class="ph ph-desktop text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium text-slate-400 uppercase tracking-wider">Equipos</span>
+                </div>
+                <div class="text-3xl font-bold text-white"><%= stats.teams %></div>
+            </div>
+            <div class="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-purple-500 to-purple-600 w-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
+        </div>
+    </div>
+
+    <!-- Main Content Split -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left Column: Tickets Pendientes (Takes 2/3 space) -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                        <i class="ph ph-list-dashes text-slate-400"></i>
+                        Tickets Pendientes Recientes
+                    </h2>
+                    <a href="/tickets" class="text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium">Ver todos &rarr;</a>
+                </div>
+                
+                <% if (typeof tickets !== 'undefined' && tickets && tickets.length > 0) { %>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-800/30 text-xs uppercase text-slate-400 font-semibold tracking-wider">
+                                    <th class="py-4 px-6">Ticket</th>
+                                    <th class="py-4 px-6">Estado</th>
+                                    <th class="py-4 px-6">Fecha</th>
+                                    <th class="py-4 px-6 text-right">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800">
+                                <% tickets.forEach(ticket => { %>
+                                    <tr class="hover:bg-slate-800/40 transition-colors group">
+                                        <td class="py-4 px-6">
+                                            <button onclick="openTicketDetails('<%= ticket.id %>')" class="text-left">
+                                                <div class="font-medium text-white group-hover:text-blue-400 transition-colors"><%= ticket.titulo %></div>
+                                                <div class="text-xs text-slate-500 mt-0.5"><%= ticket.asignado_nombre || 'Sin asignar' %></div>
+                                            </button>
+                                        </td>
+                                        <td class="py-4 px-6">
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse"></span>
+                                                Pendiente
+                                            </span>
+                                        </td>
+                                        <td class="py-4 px-6 text-sm text-slate-400">
+                                            <%= new Date(ticket.creado_en).toLocaleDateString() %>
+                                        </td>
+                                        <td class="py-4 px-6 text-right">
+                                            <button onclick="finishTicket('<%= ticket.id %>')" class="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/20" title="Marcar como terminado">
+                                                <i class="ph ph-check text-lg"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="flex flex-col items-center justify-center py-12 px-4 text-center">
+                        <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                            <i class="ph ph-check-circle text-3xl text-slate-600"></i>
+                        </div>
+                        <h3 class="text-white font-medium mb-1">¡Todo al día!</h3>
+                        <p class="text-slate-400 text-sm max-w-xs">No tienes tickets pendientes asignados recientemente. ¡Buen trabajo!</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Right Column: Events & Quick Info (Takes 1/3 space) -->
+        <div class="space-y-6">
+            <!-- Today's Events -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                        <i class="ph ph-calendar-blank text-slate-400"></i>
+                        Eventos de Hoy
+                    </h2>
+                    <a href="/calendario" class="text-xs text-slate-400 hover:text-white transition-colors bg-slate-800 px-2 py-1 rounded border border-slate-700">Ver Calendario</a>
+                </div>
+                
+                <div class="p-5">
+                    <% if (typeof events !== 'undefined' && events && events.length > 0) { %>
+                        <div class="space-y-4">
+                            <% events.forEach(event => { %>
+                                <div class="relative pl-4 border-l-2 border-blue-500/50 hover:border-blue-500 transition-colors py-1">
+                                    <div class="text-sm font-semibold text-white"><%= event.titulo %></div>
+                                    <div class="text-xs text-slate-400 mt-1 flex items-center gap-2">
+                                        <% if (event.hora_inicio) { %>
+                                            <span class="flex items-center gap-1 bg-slate-800 px-1.5 py-0.5 rounded text-slate-300">
+                                                <i class="ph ph-clock text-[10px]"></i> 
+                                                <%= event.hora_inicio.slice(0,5) %>
+                                                <% if (event.hora_fin) { %> - <%= event.hora_fin.slice(0,5) %> <% } %>
+                                            </span>
+                                        <% } else { %>
+                                            <span class="italic">Todo el día</span>
+                                        <% } %>
+                                    </div>
+                                    <% if (event.descripcion) { %>
+                                        <p class="text-xs text-slate-500 mt-1 line-clamp-2"><%= event.descripcion %></p>
+                                    <% } %>
+                                </div>
+                            <% }); %>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-8">
+                            <i class="ph ph-calendar-x text-4xl text-slate-700 mb-3 block"></i>
+                            <p class="text-slate-400 text-sm">No hay eventos programados para hoy.</p>
+                            <a href="/calendario" class="text-blue-400 text-xs hover:underline mt-2 inline-block">Agendar evento</a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Quick Actions / Mini Info -->
+            <div class="bg-gradient-to-br from-blue-900/40 to-slate-900 border border-blue-500/20 rounded-2xl p-6 relative overflow-hidden">
+                <div class="relative z-10">
+                    <h3 class="text-lg font-semibold text-white mb-2">Acceso Rápido</h3>
+                    <p class="text-sm text-blue-200/70 mb-4">Gestiona tus recursos de manera eficiente.</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <a href="/tickets?new=true" class="flex flex-col items-center justify-center p-3 bg-blue-600 hover:bg-blue-500 rounded-xl text-white transition-colors text-center group">
+                            <i class="ph ph-plus-circle text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-medium">Nuevo Ticket</span>
+                        </a>
+                        <a href="/clientes" class="flex flex-col items-center justify-center p-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-200 transition-colors text-center group border border-slate-700">
+                            <i class="ph ph-users-three text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-medium">Ver Clientes</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
+<!-- Scripts reused from previous version -->
 <script>
 async function finishTicket(id) {
+    if(!confirm('¿Marcar este ticket como terminado?')) return;
     try {
         const res = await fetch(`/tickets/${id}/estado`, {
             method: 'PATCH',
@@ -144,33 +266,61 @@ async function openTicketDetails(id) {
 }
 </script>
 
-<div id="ticket-details-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center">
-    <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-lg p-6 shadow-2xl">
-        <div class="flex justify-between items-start mb-4">
+<!-- Ticket Details Modal (Same as before but with updated styling if needed) -->
+<div id="ticket-details-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="p-6 border-b border-slate-800 flex justify-between items-start bg-slate-800/50 rounded-t-2xl">
             <div>
                 <h3 id="ticket-details-title" class="text-xl font-bold text-white"></h3>
-                <p class="text-xs text-slate-400 mt-1">
-                    Estado: <span id="ticket-details-estado" class="font-medium"></span>
-                </p>
+                <div class="flex items-center gap-2 mt-2">
+                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Estado:</span>
+                    <span id="ticket-details-estado" class="text-xs font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700 uppercase"></span>
+                </div>
             </div>
-            <button type="button" class="text-slate-400 hover:text-white" onclick="document.getElementById('ticket-details-modal').classList.add('hidden')">
+            <button type="button" class="text-slate-400 hover:text-white transition-colors bg-slate-800 p-2 rounded-lg hover:bg-slate-700" onclick="document.getElementById('ticket-details-modal').classList.add('hidden')">
                 <i class="ph ph-x text-lg"></i>
             </button>
         </div>
-        <div class="space-y-2 text-sm text-slate-200">
-            <p><span class="font-semibold text-slate-400">Creado por:</span> <span id="ticket-details-creado"></span></p>
-            <p><span class="font-semibold text-slate-400">Asignado a:</span> <span id="ticket-details-asignado"></span></p>
-            <p><span class="font-semibold text-slate-400">Cliente:</span> <span id="ticket-details-cliente"></span></p>
-            <p><span class="font-semibold text-slate-400">Equipo:</span> <span id="ticket-details-equipo"></span></p>
-            <p><span class="font-semibold text-slate-400">Fecha creación:</span> <span id="ticket-details-fecha-creacion"></span></p>
-            <p><span class="font-semibold text-slate-400">Fecha término:</span> <span id="ticket-details-fecha-termino"></span></p>
-            <div class="pt-2">
-                <p class="font-semibold text-slate-400 mb-1">Descripción</p>
-                <p id="ticket-details-descripcion" class="text-slate-200 whitespace-pre-wrap text-sm"></p>
+        
+        <div class="p-6 overflow-y-auto space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
+                    <p class="text-xs text-slate-500 mb-1">Cliente</p>
+                    <p id="ticket-details-cliente" class="text-sm font-medium text-slate-200"></p>
+                </div>
+                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
+                    <p class="text-xs text-slate-500 mb-1">Equipo</p>
+                    <p id="ticket-details-equipo" class="text-sm font-medium text-slate-200"></p>
+                </div>
+                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
+                    <p class="text-xs text-slate-500 mb-1">Asignado a</p>
+                    <p id="ticket-details-asignado" class="text-sm font-medium text-slate-200"></p>
+                </div>
+                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
+                    <p class="text-xs text-slate-500 mb-1">Creado por</p>
+                    <p id="ticket-details-creado" class="text-sm font-medium text-slate-200"></p>
+                </div>
+            </div>
+
+            <div class="bg-slate-800/30 p-4 rounded-xl border border-slate-700/30">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Descripción</p>
+                <p id="ticket-details-descripcion" class="text-slate-300 text-sm whitespace-pre-wrap leading-relaxed"></p>
+            </div>
+
+            <div class="flex gap-4 text-xs text-slate-500 border-t border-slate-800 pt-4">
+                <div>
+                    <span class="block mb-0.5">Creado:</span>
+                    <span id="ticket-details-fecha-creacion" class="text-slate-400"></span>
+                </div>
+                <div>
+                    <span class="block mb-0.5">Terminado:</span>
+                    <span id="ticket-details-fecha-termino" class="text-slate-400"></span>
+                </div>
             </div>
         </div>
-        <div class="mt-6 flex justify-end">
-            <button type="button" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm" onclick="document.getElementById('ticket-details-modal').classList.add('hidden')">
+
+        <div class="p-4 border-t border-slate-800 bg-slate-800/30 rounded-b-2xl flex justify-end">
+            <button type="button" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium transition-colors border border-slate-700" onclick="document.getElementById('ticket-details-modal').classList.add('hidden')">
                 Cerrar
             </button>
         </div>
