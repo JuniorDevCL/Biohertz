@@ -113,11 +113,25 @@
 
 <script>
 const calendarEventsByDate = {};
+const calendarEventsById = {};
+const calendarCanEditEvents = true;
+
 <% weeks.forEach(function(week) { %>
     <% week.forEach(function(day) { if (day) { %>
         calendarEventsByDate["<%= day.dateKey %>"] = <%- JSON.stringify(day.events || []) %>;
     <% } }); %>
 <% }); %>
+
+Object.keys(calendarEventsByDate).forEach(function (key) {
+    const list = calendarEventsByDate[key];
+    if (Array.isArray(list)) {
+        list.forEach(function (ev) {
+            if (ev && typeof ev.id !== 'undefined') {
+                calendarEventsById[String(ev.id)] = ev;
+            }
+        });
+    }
+});
 
 function openDayDetails(el) {
     const date = el.getAttribute('data-date');
@@ -162,15 +176,29 @@ function openDayDetails(el) {
 
             const creator = ev.creado_por || '?';
 
+            let actionsHtml = '';
+            if (calendarCanEditEvents && ev && typeof ev.id !== 'undefined') {
+                actionsHtml =
+                    '<div class="mt-2 flex gap-2 justify-end">' +
+                        '<button type="button" class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-xs text-slate-100" onclick="openEditEvent(' + ev.id + ')">Editar</button>' +
+                        '<button type="button" class="px-2 py-1 rounded bg-red-700 hover:bg-red-600 text-xs text-white" onclick="deleteEvent(' + ev.id + ')">Eliminar</button>' +
+                    '</div>';
+            }
+
             div.innerHTML =
                 '<div class="flex justify-between items-start gap-2">' +
-                    '<h4 class="font-medium text-blue-300 text-sm">' + (ev.titulo || '') + '</h4>' +
-                    timeBadgeHtml +
+                    '<div>' +
+                        '<h4 class="font-medium text-blue-300 text-sm">' + (ev.titulo || '') + '</h4>' +
+                        descHtml +
+                    '</div>' +
+                    '<div class="flex flex-col items-end gap-1">' +
+                        timeBadgeHtml +
+                    '</div>' +
                 '</div>' +
-                descHtml +
                 '<div class="text-[10px] text-slate-500 mt-2 text-right">' +
                     'Creado por: usuario #' + creator +
-                '</div>';
+                '</div>' +
+                actionsHtml;
 
             container.appendChild(div);
         });
@@ -222,16 +250,84 @@ function openDayDetails(el) {
                         timeBadgeHtml +
                     '</div>';
 
-                item.addEventListener('click', function () {
-                    document.getElementById('day-details-modal').classList.remove('hidden');
-                });
-
                 summaryList.appendChild(item);
             });
         }
     }
 
     document.getElementById('day-details-modal').classList.remove('hidden');
+}
+
+function openEditEvent(id) {
+    if (!calendarCanEditEvents) return;
+    const ev = calendarEventsById[String(id)];
+    if (!ev) return;
+
+    const fechaValue = (ev.fecha || ev.fecha_inicio || '').slice(0, 10);
+
+    document.getElementById('edit-event-id').value = id;
+    document.getElementById('edit-event-titulo').value = ev.titulo || '';
+    document.getElementById('edit-event-fecha').value = fechaValue || '';
+    document.getElementById('edit-event-hora-inicio').value = ev.hora_inicio ? String(ev.hora_inicio).slice(0, 5) : '';
+    document.getElementById('edit-event-hora-fin').value = ev.hora_fin ? String(ev.hora_fin).slice(0, 5) : '';
+    document.getElementById('edit-event-descripcion').value = ev.descripcion || '';
+
+    document.getElementById('edit-event-modal').classList.remove('hidden');
+}
+
+async function submitEditEvent(e) {
+    e.preventDefault();
+    if (!calendarCanEditEvents) return;
+
+    const id = document.getElementById('edit-event-id').value;
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const res = await fetch('/calendario/eventos/' + id, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (res.ok) {
+            window.location.reload();
+        } else {
+            let msg = 'Error al actualizar evento';
+            try {
+                const err = await res.json();
+                if (err && err.error) msg += ': ' + err.error;
+            } catch (_) {}
+            alert(msg);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error de conexión');
+    }
+}
+
+async function deleteEvent(id) {
+    if (!calendarCanEditEvents) return;
+    const confirmed = confirm('¿Seguro que deseas eliminar este evento? Esta acción no se puede deshacer.');
+    if (!confirmed) return;
+
+    try {
+        const res = await fetch('/calendario/eventos/' + id, {
+            method: 'DELETE'
+        });
+        if (res.ok) {
+            window.location.reload();
+        } else {
+            let msg = 'Error al eliminar evento';
+            try {
+                const err = await res.json();
+                if (err && err.error) msg += ': ' + err.error;
+            } catch (_) {}
+            alert(msg);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error de conexión');
+    }
 }
 </script>
 
@@ -269,6 +365,45 @@ function openDayDetails(el) {
                 </button>
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
                     Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="edit-event-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-md shadow-2xl border border-slate-700">
+        <h3 class="text-xl font-bold text-white mb-4">Editar Evento</h3>
+        <form onsubmit="submitEditEvent(event)" class="space-y-4">
+            <input type="hidden" id="edit-event-id" name="id">
+            <div>
+                <label class="block text-slate-400 text-sm mb-2">Título</label>
+                <input type="text" id="edit-event-titulo" name="titulo" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-slate-400 text-sm mb-2">Fecha</label>
+                <input type="date" id="edit-event-fecha" name="fecha" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Hora Inicio</label>
+                    <input type="time" id="edit-event-hora-inicio" name="hora_inicio" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Hora Fin</label>
+                    <input type="time" id="edit-event-hora-fin" name="hora_fin" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+            <div>
+                <label class="block text-slate-400 text-sm mb-2">Descripción (Opcional)</label>
+                <textarea id="edit-event-descripcion" name="descripcion" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+            <div class="flex justify-end gap-3 mt-4">
+                <button type="button" onclick="document.getElementById('edit-event-modal').classList.add('hidden')" class="px-4 py-2 text-slate-300 hover:text-white text-sm">
+                    Cancelar
+                </button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+                    Guardar cambios
                 </button>
             </div>
         </form>
