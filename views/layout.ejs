@@ -37,7 +37,9 @@
     <!-- Sidebar -->
     <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col transition-all duration-300" id="sidebar">
         <div class="p-6 flex items-center justify-between">
-            <div class="font-bold text-xl text-blue-500 tracking-wider">BIOHERTZ</div>
+            <div class="flex items-center gap-2">
+                <img src="/img/biohertz-logo.png" alt="BIOHERTZ" class="h-8 w-auto object-contain">
+            </div>
         </div>
 
         <nav class="flex-1 px-4 space-y-2 mt-4">
@@ -87,7 +89,9 @@
     <div class="flex-1 flex flex-col overflow-hidden">
         <!-- Header Mobile (Visible only on small screens) -->
         <header class="bg-slate-900 border-b border-slate-800 p-4 flex items-center justify-between md:hidden">
-            <div class="font-bold text-blue-500">BIOHERTZ</div>
+            <div class="flex items-center gap-2">
+                <img src="/img/biohertz-logo.png" alt="BIOHERTZ" class="h-7 w-auto object-contain">
+            </div>
             <button class="text-white" onclick="document.getElementById('sidebar').classList.toggle('-translate-x-full')">
                 <i class="ph ph-list text-2xl"></i>
             </button>
