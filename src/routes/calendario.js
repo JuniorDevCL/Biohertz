@@ -191,4 +191,65 @@ router.post('/eventos', authRequired, async (req, res) => {
   }
 });
 
+router.patch('/eventos/:id', authRequired, async (req, res) => {
+  try {
+    await ensureSchema();
+
+    const { id } = req.params;
+    const { titulo, descripcion, fecha, hora_inicio, hora_fin } = req.body;
+
+    const cleanTitulo = String(titulo || '').trim();
+    const cleanFecha = String(fecha || '').trim();
+
+    if (!cleanTitulo || !cleanFecha) {
+      return res.status(400).json({ error: 'Título y fecha son obligatorios' });
+    }
+
+    const updated = await pool.query(
+      `UPDATE eventos
+       SET titulo = $1,
+           descripcion = $2,
+           fecha = $3::DATE,
+           fecha_inicio = $3::DATE,
+           fecha_fin = $3::DATE,
+           hora_inicio = $4,
+           hora_fin = $5,
+           actualizado_en = NOW()
+       WHERE id = $6
+       RETURNING id, titulo, descripcion, fecha, fecha_inicio, fecha_fin, hora_inicio, hora_fin, color, creado_por, creado_en, actualizado_en`,
+      [cleanTitulo, descripcion || null, cleanFecha, hora_inicio || null, hora_fin || null, id]
+    );
+
+    if (updated.rowCount === 0) {
+      return res.status(404).json({ error: 'Evento no encontrado' });
+    }
+
+    res.json(updated.rows[0]);
+  } catch (err) {
+    console.error('Error al actualizar evento:', err);
+    res.status(500).json({ error: 'Error al actualizar evento' });
+  }
+});
+
+router.delete('/eventos/:id', authRequired, async (req, res) => {
+  try {
+    await ensureSchema();
+
+    const { id } = req.params;
+    const deleted = await pool.query(
+      'DELETE FROM eventos WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    if (deleted.rowCount === 0) {
+      return res.status(404).json({ error: 'Evento no encontrado' });
+    }
+
+    res.json({ mensaje: 'Evento eliminado' });
+  } catch (err) {
+    console.error('Error al eliminar evento:', err);
+    res.status(500).json({ error: 'Error al eliminar evento' });
+  }
+});
+
 export default router;

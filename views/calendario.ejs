@@ -280,28 +280,38 @@ async function submitEditEvent(e) {
     if (!calendarCanEditEvents) return;
 
     const id = document.getElementById('edit-event-id').value;
+    if (!id) {
+        alert('Error interno: ID del evento no encontrado.');
+        return;
+    }
+
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
 
     try {
         const res = await fetch('/calendario/eventos/' + id, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
             body: JSON.stringify(data)
         });
         if (res.ok) {
             window.location.reload();
         } else {
-            let msg = 'Error al actualizar evento';
+            let msg = 'Error ' + res.status;
             try {
                 const err = await res.json();
                 if (err && err.error) msg += ': ' + err.error;
-            } catch (_) {}
+            } catch (_) {
+                msg += ': Error inesperado del servidor (posiblemente HTML)';
+            }
             alert(msg);
         }
     } catch (err) {
         console.error(err);
-        alert('Error de conexión');
+        alert('Error de conexión: ' + err.message);
     }
 }
 
@@ -312,21 +322,26 @@ async function deleteEvent(id) {
 
     try {
         const res = await fetch('/calendario/eventos/' + id, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json'
+            }
         });
         if (res.ok) {
             window.location.reload();
         } else {
-            let msg = 'Error al eliminar evento';
+            let msg = 'Error ' + res.status;
             try {
                 const err = await res.json();
                 if (err && err.error) msg += ': ' + err.error;
-            } catch (_) {}
+            } catch (_) {
+                msg += ': Error inesperado del servidor (posiblemente HTML)';
+            }
             alert(msg);
         }
     } catch (err) {
         console.error(err);
-        alert('Error de conexión');
+        alert('Error de conexión: ' + err.message);
     }
 }
 </script>
