@@ -40,7 +40,7 @@
                             <th class="py-3 px-4">Ubicación</th>
                             <th class="py-3 px-4">Estado</th>
                             <th class="py-3 px-4">Cliente</th>
-                            <th class="py-3 px-4">Acciones</th>
+                            <th class="py-3 px-4 text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-800">
@@ -74,7 +74,19 @@
                                     <% } %>
                                 </td>
                                 <td class="py-3 px-4">
-                                    <a href="/equipos/<%= equipo.id %>" class="text-blue-400 hover:text-blue-300 mr-2"><i class="ph ph-eye"></i></a>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button type="button" onclick="openEditEquipo('<%= equipo.id %>')" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-600/40 hover:bg-yellow-500/60 text-yellow-200 transition-colors" title="Editar equipo">
+                                            <i class="ph ph-pencil-simple text-sm"></i>
+                                        </button>
+                                        <% if (typeof user !== 'undefined' && user && user.rol === 'admin') { %>
+                                            <button type="button" onclick="deleteEquipo('<%= equipo.id %>')" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-900/40 hover:bg-red-700/70 text-red-200 transition-colors" title="Eliminar equipo">
+                                                <i class="ph ph-trash text-sm"></i>
+                                            </button>
+                                        <% } %>
+                                        <a href="/equipos/<%= equipo.id %>" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors" title="Ver detalle">
+                                            <i class="ph ph-eye text-sm"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         <% }); %>
@@ -144,3 +156,143 @@
         </form>
     </div>
 </div>
+
+<div id="edit-equipo-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-lg shadow-2xl border border-slate-700 overflow-y-auto max-h-[90vh]">
+        <h3 class="text-xl font-bold text-white mb-4">Editar Equipo</h3>
+        <form onsubmit="submitEditEquipo(event)">
+            <input type="hidden" id="edit-equipo-id" name="id">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Nombre</label>
+                    <input type="text" id="edit-equipo-nombre" name="nombre" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Marca</label>
+                    <input type="text" id="edit-equipo-marca" name="marca" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Modelo</label>
+                    <input type="text" id="edit-equipo-modelo" name="modelo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">N° Serie</label>
+                    <input type="text" id="edit-equipo-numero_serie" name="numero_serie" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Ubicación</label>
+                    <input type="text" id="edit-equipo-ubicacion" name="ubicacion" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Cliente (Opcional)</label>
+                    <select id="edit-equipo-cliente" name="cliente_id" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                        <option value="">Seleccionar Cliente</option>
+                        <% if (typeof clientes !== 'undefined') { %>
+                            <% clientes.forEach(c => { %>
+                                <option value="<%= c.id %>"><%= c.nombre %></option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Estado</label>
+                    <select id="edit-equipo-estado" name="estado" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                        <option value="operativo">Operativo</option>
+                        <option value="en_reparacion">En Reparación</option>
+                        <option value="baja">De Baja</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button type="button" onclick="document.getElementById('edit-equipo-modal').classList.add('hidden')" class="px-4 py-2 text-slate-300 hover:text-white">Cancelar</button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Guardar cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+async function openEditEquipo(id) {
+    try {
+        const res = await fetch(`/equipos/${id}`);
+        if (!res.ok) {
+            alert('Error al cargar el equipo');
+            return;
+        }
+        const e = await res.json();
+        document.getElementById('edit-equipo-id').value = e.id || '';
+        document.getElementById('edit-equipo-nombre').value = e.nombre || '';
+        document.getElementById('edit-equipo-marca').value = e.marca || '';
+        document.getElementById('edit-equipo-modelo').value = e.modelo || '';
+        document.getElementById('edit-equipo-numero_serie').value = e.numero_serie || '';
+        document.getElementById('edit-equipo-ubicacion').value = e.ubicacion || '';
+        document.getElementById('edit-equipo-estado').value = e.estado || 'operativo';
+        const clienteSelect = document.getElementById('edit-equipo-cliente');
+        if (clienteSelect) {
+            clienteSelect.value = e.cliente_id || '';
+        }
+        document.getElementById('edit-equipo-modal').classList.remove('hidden');
+    } catch (err) {
+        console.error(err);
+        alert('Error de conexión');
+    }
+}
+
+async function submitEditEquipo(ev) {
+    ev.preventDefault();
+    const id = document.getElementById('edit-equipo-id').value;
+    if (!id) {
+        alert('ID de equipo no válido');
+        return;
+    }
+    const formData = new FormData(ev.target);
+    const data = Object.fromEntries(formData.entries());
+    try {
+        const res = await fetch(`/equipos/${id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        if (res.ok) {
+            window.location.reload();
+        } else {
+            let msg = 'Error ' + res.status;
+            try {
+                const err = await res.json();
+                if (err && err.error) msg += ': ' + err.error;
+            } catch (_) {}
+            alert(msg);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error de conexión');
+    }
+}
+
+async function deleteEquipo(id) {
+    const confirmed = confirm('¿Seguro que deseas eliminar este equipo? Esta acción no se puede deshacer.');
+    if (!confirmed) return;
+    try {
+        const res = await fetch(`/equipos/${id}`, {
+            method: 'DELETE',
+            headers: { 'Accept': 'application/json' }
+        });
+        if (res.ok) {
+            window.location.reload();
+        } else {
+            let msg = 'Error ' + res.status;
+            try {
+                const err = await res.json();
+                if (err && err.error) msg += ': ' + err.error;
+            } catch (_) {}
+            alert(msg);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error de conexión');
+    }
+}
+</script>
