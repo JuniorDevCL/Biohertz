@@ -44,12 +44,12 @@ router.get('/', authRequired, async (req, res) => {
     const sql = `SELECT * FROM clientes${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
     const r = await pool.query(sql, [...values, limit, offset]);
 
-    const equiposCountResult = await pool.query('SELECT COUNT(*) FROM equipos');
-    const totalEquipos = Number(equiposCountResult.rows[0].count) || 0;
+    const clientesCountResult = await pool.query('SELECT COUNT(*) FROM clientes');
+    const totalClientes = Number(clientesCountResult.rows[0].count) || 0;
     res.render('clientes', {
       clientes: r.rows,
       query: q || '',
-      totalEquipos,
+      totalClientes,
       title: 'Clientes - BIOHERTS',
       user: req.user || req.session.user || { nombre: 'Usuario' }
     });

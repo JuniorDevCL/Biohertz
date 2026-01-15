@@ -4,8 +4,8 @@
             <div class="flex items-center gap-3">
                 <h1 class="text-3xl font-bold text-white tracking-tight">Tickets</h1>
                 <span class="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-800 text-xs text-slate-200 border border-slate-700">
-                    <i class="ph ph-desktop text-sm mr-1.5"></i>
-                    Equipos totales: <span class="ml-1 font-semibold"><%= typeof totalEquipos !== 'undefined' ? totalEquipos : 0 %></span>
+                    <i class="ph ph-ticket text-sm mr-1.5"></i>
+                    Tickets totales: <span class="ml-1 font-semibold"><%= typeof totalTickets !== 'undefined' ? totalTickets : (tickets && tickets.length ? tickets.length : 0) %></span>
                 </span>
             </div>
             <p class="text-slate-400 text-sm">Gestiona y haz seguimiento de los tickets de servicio.</p>
