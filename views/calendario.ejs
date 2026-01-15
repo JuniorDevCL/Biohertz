@@ -149,104 +149,23 @@ function openDayDetails(el) {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const dateFormattedRaw = dateObj.toLocaleDateString('es-ES', options);
     const dateFormatted = dateFormattedRaw.charAt(0).toUpperCase() + dateFormattedRaw.slice(1);
-    document.getElementById('day-details-title').textContent = dateFormatted;
-
-    const container = document.getElementById('day-details-content');
-    container.innerHTML = '';
-
-    if (events.length === 0) {
-        container.innerHTML = '<p class="text-slate-400 text-center py-4">No hay eventos para este día.</p>';
-    } else {
-        events.forEach(ev => {
-            const div = document.createElement('div');
-            div.className = 'bg-slate-900/50 p-3 rounded-lg border border-slate-700/50';
-
-            let timeStr = '';
-            if (ev.hora_inicio) {
-                timeStr += String(ev.hora_inicio).slice(0, 5);
-                if (ev.hora_fin) {
-                    timeStr += ' - ' + String(ev.hora_fin).slice(0, 5);
-                }
-            }
-
-            const timeBadgeHtml = timeStr
-                ? '<span class="text-xs text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded whitespace-nowrap">' +
-                  timeStr +
-                  '</span>'
-                : '';
-
-            const descHtml = ev.descripcion
-                ? '<p class="text-slate-400 text-xs mt-1 whitespace-pre-wrap">' +
-                  ev.descripcion +
-                  '</p>'
-                : '';
-
-            const creator = ev.creado_por || '?';
-
-            const tipoHtml = ev.tipo
-                ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-200 uppercase tracking-wide">' +
-                  ev.tipo +
-                  '</span>'
-                : '';
-
-            let linksHtml = '';
-            if (ev.ticket_id) {
-                linksHtml =
-                    '<div class="mt-1 flex flex-wrap items-center gap-1">' +
-                        '<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-300 text-[10px] mr-1">Ticket #' +
-                        ev.ticket_id +
-                        '</span>' +
-                    '</div>';
-            }
-
-            let actionsHtml = '';
-            if (calendarCanEditEvents && ev && typeof ev.id !== 'undefined') {
-                actionsHtml =
-                    '<div class="mt-2 flex gap-2 justify-end">' +
-                        '<button type="button" class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-xs text-slate-100" onclick="openEditEvent(' + ev.id + ')">Editar</button>' +
-                        '<button type="button" class="px-2 py-1 rounded bg-red-700 hover:bg-red-600 text-xs text-white" onclick="deleteEvent(' + ev.id + ')">Eliminar</button>' +
-                    '</div>';
-            }
-
-            div.innerHTML =
-                '<div class="flex justify-between items-start gap-2">' +
-                    '<div>' +
-                        '<h4 class="font-medium text-blue-300 text-sm">' +
-                            (ev.titulo || '') +
-                            tipoHtml +
-                        '</h4>' +
-                        descHtml +
-                        linksHtml +
-                    '</div>' +
-                    '<div class="flex flex-col items-end gap-1">' +
-                        timeBadgeHtml +
-                    '</div>' +
-                '</div>' +
-                '<div class="text-[10px] text-slate-500 mt-2 text-right">' +
-                    'Creado por: usuario #' + creator +
-                '</div>' +
-                actionsHtml;
-
-            container.appendChild(div);
-        });
-    }
-
+    
+    // Actualizar panel lateral (day-summary-panel)
     const summaryPanel = document.getElementById('day-summary-panel');
     const summaryTitle = document.getElementById('day-summary-title');
     const summaryList = document.getElementById('day-summary-list');
 
     if (summaryPanel && summaryTitle && summaryList) {
-        if (!events || events.length === 0) {
-            summaryPanel.classList.add('hidden');
-            summaryList.innerHTML = '';
-        } else {
-            summaryPanel.classList.remove('hidden');
-            summaryTitle.textContent = dateFormatted;
-            summaryList.innerHTML = '';
+        summaryPanel.classList.remove('hidden');
+        summaryTitle.textContent = dateFormatted;
+        summaryList.innerHTML = '';
 
+        if (!events || events.length === 0) {
+            summaryList.innerHTML = '<p class="text-slate-400 text-xs text-center py-4">No hay eventos para este día.</p>';
+        } else {
             events.forEach(ev => {
                 const item = document.createElement('div');
-                item.className = 'bg-slate-900/60 border border-slate-700/70 rounded-lg p-3 cursor-pointer hover:bg-slate-800/80 transition-colors';
+                item.className = 'bg-slate-900/60 border border-slate-700/70 rounded-lg p-3 transition-colors mb-2';
 
                 let timeStr = '';
                 if (ev.hora_inicio) {
@@ -257,7 +176,7 @@ function openDayDetails(el) {
                 }
 
                 const timeBadgeHtml = timeStr
-                    ? '<span class="text-xs text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded whitespace-nowrap ml-2">' +
+                    ? '<span class="text-xs text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded whitespace-nowrap">' +
                       timeStr +
                       '</span>'
                     : '';
@@ -273,25 +192,49 @@ function openDayDetails(el) {
                       ev.tipo +
                       '</span>'
                     : '';
+                
+                const creator = ev.creado_por || '?';
+
+                let linksHtml = '';
+                if (ev.ticket_id) {
+                    linksHtml =
+                        '<div class="mt-1 flex flex-wrap items-center gap-1">' +
+                            '<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-300 text-[10px] mr-1">Ticket #' +
+                            ev.ticket_id +
+                            '</span>' +
+                        '</div>';
+                }
+                
+                let actionsHtml = '';
+                if (calendarCanEditEvents && ev && typeof ev.id !== 'undefined') {
+                    actionsHtml =
+                        '<div class="mt-2 flex gap-2 justify-end pt-2 border-t border-slate-800/50">' +
+                            '<button type="button" class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-[10px] text-slate-100 transition-colors" onclick="openEditEvent(' + ev.id + ')">Editar</button>' +
+                            '<button type="button" class="px-2 py-1 rounded bg-red-900/50 hover:bg-red-800/70 text-[10px] text-red-200 transition-colors" onclick="deleteEvent(' + ev.id + ')">Eliminar</button>' +
+                        '</div>';
+                }
 
                 item.innerHTML =
-                    '<div class="flex justify-between items-start gap-2">' +
-                        '<div>' +
-                            '<div class="text-sm font-medium text-blue-300">' +
-                                (ev.titulo || '') +
+                    '<div class="flex justify-between items-start gap-2 mb-1">' +
+                        '<div class="flex-1">' +
+                            '<div class="flex items-center flex-wrap">' +
+                                '<span class="text-sm font-medium text-blue-300 mr-1">' + (ev.titulo || '') + '</span>' +
                                 tipoHtml +
                             '</div>' +
-                            descHtml +
                         '</div>' +
                         timeBadgeHtml +
-                    '</div>';
+                    '</div>' +
+                    descHtml +
+                    linksHtml +
+                    '<div class="text-[10px] text-slate-600 mt-2 text-right italic">' +
+                        'Creado por: usuario #' + creator +
+                    '</div>' +
+                    actionsHtml;
 
                 summaryList.appendChild(item);
             });
         }
     }
-
-    document.getElementById('day-details-modal').classList.remove('hidden');
 }
 
 function openEditEvent(id) {
