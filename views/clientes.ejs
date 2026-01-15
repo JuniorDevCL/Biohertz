@@ -62,15 +62,18 @@
                                 <td class="py-3 px-4 text-slate-300"><%= cliente.ubicacion || '-' %></td>
                                 <td class="py-3 px-4 text-slate-400"><%= new Date(cliente.creado_en).toLocaleDateString() %></td>
                                 <td class="py-3 px-4">
-                                    <div class="flex items-center gap-2">
-                                        <button onclick="openEditModal('<%= cliente.id %>', '<%= cliente.nombre %>', '<%= cliente.empresa || '' %>', '<%= cliente.email || '' %>', '<%= cliente.telefono || '' %>', '<%= cliente.ubicacion || '' %>')" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-600/40 hover:bg-yellow-500/60 text-yellow-200 transition-colors" title="Editar">
-                                            <i class="ph ph-pencil-simple text-sm"></i>
+                                    <div class="flex flex-wrap items-center justify-end gap-2">
+                                        <button onclick="openEditModal('<%= cliente.id %>', '<%= cliente.nombre %>', '<%= cliente.empresa || '' %>', '<%= cliente.email || '' %>', '<%= cliente.telefono || '' %>', '<%= cliente.ubicacion || '' %>')" class="inline-flex items-center px-3 py-1.5 rounded-full bg-yellow-600/20 hover:bg-yellow-500/30 text-yellow-200 text-xs font-medium border border-yellow-500/40 transition-colors" title="Editar cliente">
+                                            <i class="ph ph-pencil-simple text-sm mr-1.5"></i>
+                                            Editar
                                         </button>
-                                        <button type="button" onclick="deleteClient('<%= cliente.id %>')" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-900/40 hover:bg-red-700/70 text-red-200 transition-colors" title="Eliminar">
-                                            <i class="ph ph-trash text-sm"></i>
+                                        <button type="button" onclick="deleteClient('<%= cliente.id %>')" class="inline-flex items-center px-3 py-1.5 rounded-full bg-red-600/20 hover:bg-red-600/40 text-red-200 text-xs font-medium border border-red-500/40 transition-colors" title="Eliminar cliente">
+                                            <i class="ph ph-trash text-sm mr-1.5"></i>
+                                            Eliminar
                                         </button>
-                                        <a href="/clientes/<%= cliente.id %>" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors" title="Ver Detalles">
-                                            <i class="ph ph-eye text-sm"></i>
+                                        <a href="/clientes/<%= cliente.id %>" class="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-600/60 transition-colors" title="Ver equipos asignados">
+                                            <i class="ph ph-desktop text-sm mr-1.5"></i>
+                                            Ver equipos
                                         </a>
                                     </div>
                                 </td>
