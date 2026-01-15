@@ -62,10 +62,17 @@
                                     <div class="space-y-1 overflow-y-auto pr-1 custom-scroll">
                                         <% if (day.events && day.events.length > 0) { %>
                                             <% day.events.forEach(function(ev) { %>
-                                                <div class="text-[11px] px-2 py-1 rounded bg-blue-600/20 text-blue-200 truncate flex justify-between items-center gap-1">
-                                                    <span class="truncate"><%= ev.titulo %></span>
-                                                    <% if (ev.hora_inicio) { %>
-                                                        <span class="text-[9px] opacity-70"><%= ev.hora_inicio.slice(0, 5) %></span>
+                                                <div class="text-[11px] px-2 py-1 rounded bg-blue-600/20 text-blue-200 truncate flex flex-col gap-0.5">
+                                                    <div class="flex justify-between items-center gap-1">
+                                                        <span class="truncate"><%= ev.titulo %></span>
+                                                        <% if (ev.hora_inicio) { %>
+                                                            <span class="text-[9px] opacity-70"><%= ev.hora_inicio.slice(0, 5) %></span>
+                                                        <% } %>
+                                                    </div>
+                                                    <% if (ev.tipo) { %>
+                                                        <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-900/60 border border-slate-700/60 uppercase tracking-wide">
+                                                            <%= ev.tipo %>
+                                                        </span>
                                                     <% } %>
                                                 </div>
                                             <% }); %>
@@ -176,6 +183,36 @@ function openDayDetails(el) {
 
             const creator = ev.creado_por || '?';
 
+            const tipoHtml = ev.tipo
+                ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-200 uppercase tracking-wide">' +
+                  ev.tipo +
+                  '</span>'
+                : '';
+
+            let linksHtml = '';
+            if (ev.ticket_id) {
+                linksHtml += '<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-300 text-[10px] mr-1">Ticket #' +
+                             ev.ticket_id +
+                             '</span>';
+            }
+            if (ev.equipo_id) {
+                linksHtml += '<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[10px] mr-1">Equipo #' +
+                             ev.equipo_id +
+                             '</span>';
+            }
+            if (ev.cliente_id) {
+                linksHtml += '<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 text-[10px] mr-1">Cliente #' +
+                             ev.cliente_id +
+                             '</span>';
+            }
+
+            if (linksHtml) {
+                linksHtml =
+                    '<div class="mt-1 flex flex-wrap items-center gap-1">' +
+                        linksHtml +
+                    '</div>';
+            }
+
             let actionsHtml = '';
             if (calendarCanEditEvents && ev && typeof ev.id !== 'undefined') {
                 actionsHtml =
@@ -188,8 +225,12 @@ function openDayDetails(el) {
             div.innerHTML =
                 '<div class="flex justify-between items-start gap-2">' +
                     '<div>' +
-                        '<h4 class="font-medium text-blue-300 text-sm">' + (ev.titulo || '') + '</h4>' +
+                        '<h4 class="font-medium text-blue-300 text-sm">' +
+                            (ev.titulo || '') +
+                            tipoHtml +
+                        '</h4>' +
                         descHtml +
+                        linksHtml +
                     '</div>' +
                     '<div class="flex flex-col items-end gap-1">' +
                         timeBadgeHtml +
@@ -241,10 +282,19 @@ function openDayDetails(el) {
                       '</div>'
                     : '';
 
+                const tipoHtml = ev.tipo
+                    ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-200 uppercase tracking-wide">' +
+                      ev.tipo +
+                      '</span>'
+                    : '';
+
                 item.innerHTML =
                     '<div class="flex justify-between items-start gap-2">' +
                         '<div>' +
-                            '<div class="text-sm font-medium text-blue-300">' + (ev.titulo || '') + '</div>' +
+                            '<div class="text-sm font-medium text-blue-300">' +
+                                (ev.titulo || '') +
+                                tipoHtml +
+                            '</div>' +
                             descHtml +
                         '</div>' +
                         timeBadgeHtml +
@@ -271,6 +321,10 @@ function openEditEvent(id) {
     document.getElementById('edit-event-hora-inicio').value = ev.hora_inicio ? String(ev.hora_inicio).slice(0, 5) : '';
     document.getElementById('edit-event-hora-fin').value = ev.hora_fin ? String(ev.hora_fin).slice(0, 5) : '';
     document.getElementById('edit-event-descripcion').value = ev.descripcion || '';
+    document.getElementById('edit-event-tipo').value = ev.tipo || '';
+    document.getElementById('edit-event-ticket-id').value = ev.ticket_id || '';
+    document.getElementById('edit-event-equipo-id').value = ev.equipo_id || '';
+    document.getElementById('edit-event-cliente-id').value = ev.cliente_id || '';
 
     document.getElementById('edit-event-modal').classList.remove('hidden');
 }
@@ -356,9 +410,20 @@ async function deleteEvent(id) {
                 <label class="block text-slate-400 text-sm mb-2">Título</label>
                 <input type="text" name="titulo" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
             </div>
-            <div>
-                <label class="block text-slate-400 text-sm mb-2">Fecha</label>
-                <input type="date" name="fecha" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Fecha</label>
+                    <input type="date" name="fecha" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Tipo de evento</label>
+                    <select name="tipo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:outline-none focus:border-blue-500">
+                        <option value="">General</option>
+                        <option value="ticket">Ticket</option>
+                        <option value="mantencion">Mantención</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -373,6 +438,20 @@ async function deleteEvent(id) {
             <div>
                 <label class="block text-slate-400 text-sm mb-2">Descripción (Opcional)</label>
                 <textarea name="descripcion" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">ID Ticket</label>
+                    <input type="number" name="ticket_id" min="1" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">ID Equipo</label>
+                    <input type="number" name="equipo_id" min="1" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">ID Cliente</label>
+                    <input type="number" name="cliente_id" min="1" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
             </div>
             <div class="flex justify-end gap-3 mt-4">
                 <button type="button" onclick="document.getElementById('new-event-modal').classList.add('hidden')" class="px-4 py-2 text-slate-300 hover:text-white text-sm">
@@ -395,9 +474,20 @@ async function deleteEvent(id) {
                 <label class="block text-slate-400 text-sm mb-2">Título</label>
                 <input type="text" id="edit-event-titulo" name="titulo" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
             </div>
-            <div>
-                <label class="block text-slate-400 text-sm mb-2">Fecha</label>
-                <input type="date" id="edit-event-fecha" name="fecha" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Fecha</label>
+                    <input type="date" id="edit-event-fecha" name="fecha" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Tipo de evento</label>
+                    <select id="edit-event-tipo" name="tipo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:outline-none focus:border-blue-500">
+                        <option value="">General</option>
+                        <option value="ticket">Ticket</option>
+                        <option value="mantencion">Mantención</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -412,6 +502,20 @@ async function deleteEvent(id) {
             <div>
                 <label class="block text-slate-400 text-sm mb-2">Descripción (Opcional)</label>
                 <textarea id="edit-event-descripcion" name="descripcion" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">ID Ticket</label>
+                    <input type="number" id="edit-event-ticket-id" name="ticket_id" min="1" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">ID Equipo</label>
+                    <input type="number" id="edit-event-equipo-id" name="equipo_id" min="1" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">ID Cliente</label>
+                    <input type="number" id="edit-event-cliente-id" name="cliente_id" min="1" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
             </div>
             <div class="flex justify-end gap-3 mt-4">
                 <button type="button" onclick="document.getElementById('edit-event-modal').classList.add('hidden')" class="px-4 py-2 text-slate-300 hover:text-white text-sm">

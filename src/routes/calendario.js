@@ -25,6 +25,10 @@ async function ensureSchema() {
       ALTER TABLE eventos ADD COLUMN IF NOT EXISTS creado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL;
       ALTER TABLE eventos ADD COLUMN IF NOT EXISTS creado_en TIMESTAMPTZ DEFAULT NOW();
       ALTER TABLE eventos ADD COLUMN IF NOT EXISTS actualizado_en TIMESTAMPTZ DEFAULT NOW();
+      ALTER TABLE eventos ADD COLUMN IF NOT EXISTS tipo VARCHAR(50);
+      ALTER TABLE eventos ADD COLUMN IF NOT EXISTS ticket_id INTEGER;
+      ALTER TABLE eventos ADD COLUMN IF NOT EXISTS equipo_id INTEGER;
+      ALTER TABLE eventos ADD COLUMN IF NOT EXISTS cliente_id INTEGER;
     `);
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_eventos_fecha ON eventos(fecha);
@@ -104,7 +108,7 @@ router.get('/', authRequired, async (req, res) => {
     const endDate = new Date(year, month, 1);
 
     const eventsRes = await pool.query(
-      `SELECT id, titulo, descripcion, fecha, fecha_inicio, hora_inicio, hora_fin, color, creado_por, creado_en
+      `SELECT id, titulo, descripcion, fecha, fecha_inicio, hora_inicio, hora_fin, color, creado_por, creado_en, tipo, ticket_id, equipo_id, cliente_id
        FROM eventos
        WHERE (fecha >= $1 AND fecha < $2) 
           OR (fecha_inicio >= $1 AND fecha_inicio < $2)
@@ -161,20 +165,34 @@ router.post('/eventos', authRequired, async (req, res) => {
     await ensureSchema();
 
     const user = req.user || req.session.user || { id: null };
-    const { titulo, descripcion, fecha, hora_inicio, hora_fin } = req.body;
+    const { titulo, descripcion, fecha, hora_inicio, hora_fin, tipo, ticket_id, equipo_id, cliente_id } = req.body;
 
     const cleanTitulo = String(titulo || '').trim();
     const cleanFecha = String(fecha || '').trim();
+    const cleanTipo = String(tipo || '').trim() || null;
+    const parsedTicketId = ticket_id ? parseInt(ticket_id, 10) : null;
+    const parsedEquipoId = equipo_id ? parseInt(equipo_id, 10) : null;
+    const parsedClienteId = cliente_id ? parseInt(cliente_id, 10) : null;
 
     if (!cleanTitulo || !cleanFecha) {
       return res.status(400).json({ error: 'Título y fecha son obligatorios' });
     }
 
-    // Insertamos tanto en 'fecha' como en 'fecha_inicio' para compatibilidad
     await pool.query(
-      `INSERT INTO eventos (titulo, descripcion, fecha, fecha_inicio, fecha_fin, hora_inicio, hora_fin, color, creado_por, creado_en, actualizado_en)
-       VALUES ($1, $2, $3::DATE, $3::DATE, $3::DATE, $4, $5, '#3b82f6', $6, NOW(), NOW())`,
-      [cleanTitulo, descripcion || null, cleanFecha, hora_inicio || null, hora_fin || null, user.id || null]
+      `INSERT INTO eventos (titulo, descripcion, fecha, fecha_inicio, fecha_fin, hora_inicio, hora_fin, color, creado_por, creado_en, actualizado_en, tipo, ticket_id, equipo_id, cliente_id)
+       VALUES ($1, $2, $3::DATE, $3::DATE, $3::DATE, $4, $5, '#3b82f6', $6, NOW(), NOW(), $7, $8, $9, $10)`,
+      [
+        cleanTitulo,
+        descripcion || null,
+        cleanFecha,
+        hora_inicio || null,
+        hora_fin || null,
+        user.id || null,
+        cleanTipo,
+        parsedTicketId,
+        parsedEquipoId,
+        parsedClienteId
+      ]
     );
 
     const redirectMonth = req.body.month || '';
@@ -196,10 +214,14 @@ router.patch('/eventos/:id', authRequired, async (req, res) => {
     await ensureSchema();
 
     const { id } = req.params;
-    const { titulo, descripcion, fecha, hora_inicio, hora_fin } = req.body;
+    const { titulo, descripcion, fecha, hora_inicio, hora_fin, tipo, ticket_id, equipo_id, cliente_id } = req.body;
 
     const cleanTitulo = String(titulo || '').trim();
     const cleanFecha = String(fecha || '').trim();
+    const cleanTipo = String(tipo || '').trim() || null;
+    const parsedTicketId = ticket_id ? parseInt(ticket_id, 10) : null;
+    const parsedEquipoId = equipo_id ? parseInt(equipo_id, 10) : null;
+    const parsedClienteId = cliente_id ? parseInt(cliente_id, 10) : null;
 
     if (!cleanTitulo || !cleanFecha) {
       return res.status(400).json({ error: 'Título y fecha son obligatorios' });
@@ -214,10 +236,25 @@ router.patch('/eventos/:id', authRequired, async (req, res) => {
            fecha_fin = $3::DATE,
            hora_inicio = $4,
            hora_fin = $5,
+           tipo = $6,
+           ticket_id = $7,
+           equipo_id = $8,
+           cliente_id = $9,
            actualizado_en = NOW()
-       WHERE id = $6
-       RETURNING id, titulo, descripcion, fecha, fecha_inicio, fecha_fin, hora_inicio, hora_fin, color, creado_por, creado_en, actualizado_en`,
-      [cleanTitulo, descripcion || null, cleanFecha, hora_inicio || null, hora_fin || null, id]
+       WHERE id = $10
+       RETURNING id, titulo, descripcion, fecha, fecha_inicio, fecha_fin, hora_inicio, hora_fin, color, creado_por, creado_en, actualizado_en, tipo, ticket_id, equipo_id, cliente_id`,
+      [
+        cleanTitulo,
+        descripcion || null,
+        cleanFecha,
+        hora_inicio || null,
+        hora_fin || null,
+        cleanTipo,
+        parsedTicketId,
+        parsedEquipoId,
+        parsedClienteId,
+        id
+      ]
     );
 
     if (updated.rowCount === 0) {
