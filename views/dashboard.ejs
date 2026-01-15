@@ -55,7 +55,11 @@
                           <tbody>
                               <% tickets.forEach(ticket => { %>
                                   <tr class="border-b border-slate-800 hover:bg-slate-900/50">
-                                      <td class="py-3 px-4"><%= ticket.titulo %></td>
+                                <td class="py-3 px-4">
+                                    <button type="button" class="text-white hover:underline text-left" onclick="openTicketDetails('<%= ticket.id %>')">
+                                        <%= ticket.titulo %>
+                                    </button>
+                                </td>
                                       <td class="py-3 px-4">
                                           <span class="px-2 py-1 rounded text-xs font-medium <%= ticket.estado === 'pendiente' ? 'bg-orange-500/20 text-orange-400' : (ticket.estado === 'terminado' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400') %>">
                                               <%= ticket.estado %>
@@ -112,4 +116,63 @@ async function finishTicket(id) {
         alert('Error de conexión');
     }
 }
+
+async function openTicketDetails(id) {
+    try {
+        const res = await fetch(`/tickets/${id}`);
+        if (!res.ok) {
+            alert('Error al cargar el ticket');
+            return;
+        }
+        const t = await res.json();
+        document.getElementById('ticket-details-title').textContent = t.titulo || '';
+        document.getElementById('ticket-details-estado').textContent = t.estado || '';
+        document.getElementById('ticket-details-creado').textContent = t.creado_por_nombre || 'Desconocido';
+        document.getElementById('ticket-details-asignado').textContent = t.asignado_a_nombre || 'Sin asignar';
+        document.getElementById('ticket-details-cliente').textContent = t.cliente_nombre || '-';
+        document.getElementById('ticket-details-equipo').textContent = t.equipo_nombre || '-';
+        document.getElementById('ticket-details-descripcion').textContent = t.descripcion || 'Sin descripción';
+        const creado = t.creado_en ? new Date(t.creado_en) : null;
+        const terminado = t.terminado_en ? new Date(t.terminado_en) : null;
+        document.getElementById('ticket-details-fecha-creacion').textContent = creado ? creado.toLocaleString() : '-';
+        document.getElementById('ticket-details-fecha-termino').textContent = terminado ? terminado.toLocaleString() : '-';
+        document.getElementById('ticket-details-modal').classList.remove('hidden');
+    } catch (e) {
+        console.error(e);
+        alert('Error de conexión');
+    }
+}
 </script>
+
+<div id="ticket-details-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-lg p-6 shadow-2xl">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h3 id="ticket-details-title" class="text-xl font-bold text-white"></h3>
+                <p class="text-xs text-slate-400 mt-1">
+                    Estado: <span id="ticket-details-estado" class="font-medium"></span>
+                </p>
+            </div>
+            <button type="button" class="text-slate-400 hover:text-white" onclick="document.getElementById('ticket-details-modal').classList.add('hidden')">
+                <i class="ph ph-x text-lg"></i>
+            </button>
+        </div>
+        <div class="space-y-2 text-sm text-slate-200">
+            <p><span class="font-semibold text-slate-400">Creado por:</span> <span id="ticket-details-creado"></span></p>
+            <p><span class="font-semibold text-slate-400">Asignado a:</span> <span id="ticket-details-asignado"></span></p>
+            <p><span class="font-semibold text-slate-400">Cliente:</span> <span id="ticket-details-cliente"></span></p>
+            <p><span class="font-semibold text-slate-400">Equipo:</span> <span id="ticket-details-equipo"></span></p>
+            <p><span class="font-semibold text-slate-400">Fecha creación:</span> <span id="ticket-details-fecha-creacion"></span></p>
+            <p><span class="font-semibold text-slate-400">Fecha término:</span> <span id="ticket-details-fecha-termino"></span></p>
+            <div class="pt-2">
+                <p class="font-semibold text-slate-400 mb-1">Descripción</p>
+                <p id="ticket-details-descripcion" class="text-slate-200 whitespace-pre-wrap text-sm"></p>
+            </div>
+        </div>
+        <div class="mt-6 flex justify-end">
+            <button type="button" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm" onclick="document.getElementById('ticket-details-modal').classList.add('hidden')">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>

@@ -49,11 +49,12 @@ router.post('/', authRequired, async (req, res) => {
       const ures = await pool.query('SELECT nombre, email FROM usuarios WHERE id = $1', [asignado_a]);
       if (ures.rowCount > 0) {
         console.log('Ticket asignado a:', ures.rows[0].email);
-        // Llamada asíncrona para no bloquear la respuesta ni fallar si hay error de correo
         enviarNotificacionTicket(ures.rows[0].email, titulo)
           .catch(e => console.error('Error enviando notificación en segundo plano:', e));
       }
     }
+
+    return res.redirect('/tickets');
   } catch (err) {
     console.error('Error al crear ticket:', err);
     res.status(500).json({ error: 'Error al crear ticket' });
@@ -169,7 +170,6 @@ router.get('/count', authRequired, async (req, res) => {
   }
 });
 
-// Obtener detalle de un ticket
 router.get('/:id', authRequired, async (req, res) => {
   try {
     await ensureSchema();
@@ -178,11 +178,13 @@ router.get('/:id', authRequired, async (req, res) => {
       `SELECT t.*, 
               u.nombre AS creado_por_nombre, 
               ua.nombre AS asignado_a_nombre,
-              e.nombre AS equipo_nombre
+              e.nombre AS equipo_nombre,
+              c.nombre AS cliente_nombre
        FROM tickets t
        LEFT JOIN usuarios u ON u.id = t.creado_por
        LEFT JOIN usuarios ua ON ua.id = t.asignado_a
        LEFT JOIN equipos e ON e.id = t.equipo_id
+       LEFT JOIN clientes c ON c.id = t.cliente_id
        WHERE t.id = $1`,
       [id]
     );
