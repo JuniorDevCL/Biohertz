@@ -80,6 +80,7 @@ function buildCalendarWeeks(year, month, events) {
           day: currentDay,
           dateKey: key,
           isToday: key === todayKey,
+          isPast: key < todayKey,
           events: eventsByDate[key] || []
         });
         currentDay++;

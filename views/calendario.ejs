@@ -46,11 +46,11 @@
                             <% if (!day) { %>
                                 <div class="h-24 rounded-lg bg-slate-900/40 border border-slate-800"></div>
                             <% } else { %>
-                                <div class="h-24 rounded-lg bg-slate-900/80 border border-slate-800 flex flex-col p-2 overflow-hidden cursor-pointer hover:bg-slate-800/50 transition-colors"
+                                <div class="h-24 rounded-lg border border-slate-800 flex flex-col p-2 overflow-hidden cursor-pointer transition-colors <%= day.isPast ? 'bg-slate-950/50 opacity-60 hover:bg-slate-900/50' : 'bg-slate-900/80 hover:bg-slate-800/50' %>"
                                      onclick="openDayDetails(this)"
                                      data-date="<%= day.dateKey %>">
                                     <div class="flex items-center justify-between mb-1">
-                                        <span class="text-xs font-semibold <%= day.isToday ? 'text-emerald-400' : 'text-slate-300' %>">
+                                        <span class="text-xs font-semibold <%= day.isToday ? 'text-emerald-400' : (day.isPast ? 'text-slate-500' : 'text-slate-300') %>">
                                             <%= day.day %>
                                         </span>
                                         <% if (day.isToday) { %>
