@@ -289,12 +289,13 @@ async function loadTicketComments(id) {
     try {
         const res = await fetch(`/tickets/${id}/comentarios`);
         if (!res.ok) {
+            console.error('Error fetching comments:', res.status, res.statusText);
             container.innerHTML = '<p class="text-xs text-red-400">No se pudieron cargar los comentarios.</p>';
             return;
         }
         const comentarios = await res.json();
         if (!comentarios || comentarios.length === 0) {
-            container.innerHTML = '<p class="text-xs text-slate-500">Sin comentarios aún.</p>';
+            container.innerHTML = '<p class="text-xs text-slate-500 italic">No hay comentarios.</p>';
             return;
         }
         container.innerHTML = '';

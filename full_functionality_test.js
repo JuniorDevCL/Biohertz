@@ -175,6 +175,28 @@ async function run() {
         if (!res.data.includes('Codigo,Titulo,Estado')) throw new Error('CSV missing headers');
         if (!res.data.includes('Ticket Integral')) throw new Error('CSV missing ticket title');
     });
+
+    // 9. Empty State Verification
+    await step('9. Empty State Verification', async () => {
+        // Create a new ticket with no history or comments
+        const res = await request('POST', '/tickets', {
+            titulo: 'Empty Ticket',
+            descripcion: 'Nothing here',
+            tipo: 'mantencion'
+        }, tokenAdmin);
+        const newTicketId = res.data.ticket.id;
+
+        // Check History (should be empty array or default creation entry if logic exists)
+        // My current logic returns fallback creation entry if table is empty? 
+        // No, current logic: if history table empty -> check ticket table -> return fallback (asignacion null->null, estado->pendiente)
+        // So it won't be empty.
+        
+        // Check Comments (should be empty array)
+        const commentsRes = await request('GET', `/tickets/${newTicketId}/comentarios`, null, tokenAdmin);
+        if (!Array.isArray(commentsRes.data)) throw new Error('Comments response is not an array');
+        if (commentsRes.data.length !== 0) throw new Error('Comments should be empty for new ticket');
+    });
 }
+
 
 run();

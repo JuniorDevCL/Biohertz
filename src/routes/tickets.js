@@ -534,6 +534,11 @@ router.post('/:id/comentarios', authRequired, async (req, res) => {
       return res.status(400).json({ error: 'Contenido requerido' });
     }
 
+    if (!req.user || !req.user.id) {
+      console.error('User not found in request:', req.user);
+      return res.status(401).json({ error: 'Usuario no autenticado' });
+    }
+
     const insert = await pool.query(
       `INSERT INTO comentarios (ticket_id, autor_id, contenido, creado_en)
        VALUES ($1, $2, $3, NOW())
@@ -541,16 +546,22 @@ router.post('/:id/comentarios', authRequired, async (req, res) => {
       [id, req.user.id, contenido]
     );
 
+    const autorRes = await pool.query('SELECT nombre FROM usuarios WHERE id = $1', [req.user.id]);
+    const comentario = {
+        ...insert.rows[0],
+        autor_nombre: autorRes.rows[0]?.nombre || 'Usuario'
+    };
+
     res.status(201).json({
       mensaje: 'Comentario agregado',
-      comentario: insert.rows[0],
+      comentario: comentario,
     });
 
     const io = req.app.get('io');
-    io?.emit('ticket:comment_added', insert.rows[0]);
+    io?.emit('ticket:comment_added', comentario);
   } catch (err) {
     console.error('Error al agregar comentario:', err);
-    res.status(500).json({ error: 'Error al agregar comentario' });
+    res.status(500).json({ error: 'Error al agregar comentario: ' + err.message });
   }
 });
 
