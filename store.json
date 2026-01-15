@@ -1,10 +1,10 @@
 {
   "seq": {
-    "usuarios": 61,
-    "tickets": 94,
-    "comentarios": 30,
-    "equipos": 95,
-    "clientes": 59
+    "usuarios": 63,
+    "tickets": 96,
+    "comentarios": 31,
+    "equipos": 96,
+    "clientes": 60
   },
   "usuarios": [
     {
@@ -222,6 +222,20 @@
       "nombre": "Tech A",
       "email": "techa_full@biohertz.com",
       "password": "$2b$10$o90kEBkMSAxDKOh4sTinMu7Y/zF5GvzsqzzEdTb2Y2jJOc.5YwWs2",
+      "rol": "user"
+    },
+    {
+      "id": 61,
+      "nombre": "Admin User",
+      "email": "admin_full@biohertz.com",
+      "password": "$2b$10$d8.M8BI91mpXCBKm2xpTnu6fn3tgAkFtOD5osbMqiiaKZB5tzBJgS",
+      "rol": "admin"
+    },
+    {
+      "id": 62,
+      "nombre": "Tech A",
+      "email": "techa_full@biohertz.com",
+      "password": "$2b$10$mMEwzALEuHfpal45Z1IinOXqjjT3a859BUaMDHminpUs5d7A95qRe",
       "rol": "user"
     }
   ],
@@ -1037,6 +1051,36 @@
       "creado_en": "2026-01-15T07:02:32.421Z",
       "actualizado_en": "2026-01-15T07:02:32.421Z",
       "terminado_en": null
+    },
+    {
+      "id": 94,
+      "titulo": "Ticket Integral",
+      "descripcion": "Probando todo",
+      "creado_por": 43,
+      "asignado_a": 44,
+      "equipo_id": null,
+      "cliente_id": 59,
+      "tipo": "visita_tecnica",
+      "codigo": "V-013",
+      "estado": "en_proceso",
+      "creado_en": "2026-01-15T07:06:51.013Z",
+      "actualizado_en": "2026-01-15T07:06:51.019Z",
+      "terminado_en": null
+    },
+    {
+      "id": 95,
+      "titulo": "Empty Ticket",
+      "descripcion": "Nothing here",
+      "creado_por": 43,
+      "asignado_a": null,
+      "equipo_id": null,
+      "cliente_id": null,
+      "tipo": "mantencion",
+      "codigo": "M-005",
+      "estado": "pendiente",
+      "creado_en": "2026-01-15T07:06:51.036Z",
+      "actualizado_en": "2026-01-15T07:06:51.036Z",
+      "terminado_en": null
     }
   ],
   "comentarios": [
@@ -1179,6 +1223,13 @@
       "autor_id": 44,
       "contenido": "Probando comentarios",
       "creado_en": "2026-01-15T07:02:32.409Z"
+    },
+    {
+      "id": 30,
+      "ticket_id": 94,
+      "autor_id": 44,
+      "contenido": "Probando comentarios",
+      "creado_en": "2026-01-15T07:06:51.025Z"
     }
   ],
   "equipos": [
@@ -2030,6 +2081,22 @@
       "mantenciones": [],
       "creado_en": "2026-01-15T07:02:32.385Z",
       "actualizado_en": "2026-01-15T07:02:32.385Z"
+    },
+    {
+      "id": 95,
+      "nombre": "Full Test Machine",
+      "marca": null,
+      "modelo": null,
+      "numero_serie": null,
+      "ubicacion": null,
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": "Full Test Client",
+      "cliente_id": 59,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2026-01-15T07:06:51.002Z",
+      "actualizado_en": "2026-01-15T07:06:51.002Z"
     }
   ],
   "clientes": [
@@ -2311,6 +2378,16 @@
       "ubicacion": null,
       "creado_en": "2026-01-15T07:02:32.380Z",
       "actualizado_en": "2026-01-15T07:02:32.380Z"
+    },
+    {
+      "id": 59,
+      "nombre": "Full Test Client",
+      "empresa": "Full Corp",
+      "email": "full@test.com",
+      "telefono": null,
+      "ubicacion": null,
+      "creado_en": "2026-01-15T07:06:50.999Z",
+      "actualizado_en": "2026-01-15T07:06:50.999Z"
     }
   ]
 }

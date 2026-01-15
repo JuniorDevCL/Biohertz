@@ -588,6 +588,7 @@ router.get('/:id/comentarios', authRequired, async (req, res) => {
 // Comentarios: eliminar (autor o admin)
 router.delete('/:ticketId/comentarios/:id', authRequired, async (req, res) => {
   try {
+    await ensureSchema();
     const { ticketId, id } = req.params;
     const buscar = await pool.query(`SELECT * FROM comentarios WHERE id = $1 AND ticket_id = $2`, [id, ticketId]);
     if (buscar.rowCount === 0) {
