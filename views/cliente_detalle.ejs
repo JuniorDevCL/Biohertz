@@ -36,7 +36,6 @@
     </div>
 
     <div class="grid grid-cols-1 gap-6">
-        <!-- Equipos Asignados -->
         <div class="card p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-white flex items-center">
@@ -79,6 +78,69 @@
             <% } else { %>
                 <div class="text-center py-8 bg-slate-800/50 rounded-lg">
                     <p class="text-slate-400">No hay equipos asignados a este cliente.</p>
+                </div>
+            <% } %>
+        </div>
+        
+        <div class="card p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white flex items-center">
+                    <i class="ph ph-ticket mr-2 text-emerald-400"></i> Tickets del cliente
+                </h3>
+            </div>
+            
+            <% if (typeof tickets !== 'undefined' && tickets && tickets.length > 0) { %>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-slate-400 border-b border-slate-700 text-xs uppercase tracking-wider">
+                                <th class="py-2 px-4">Código</th>
+                                <th class="py-2 px-4">Título</th>
+                                <th class="py-2 px-4">Estado</th>
+                                <th class="py-2 px-4">Asignado</th>
+                                <th class="py-2 px-4">F. creación</th>
+                                <th class="py-2 px-4">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <% tickets.forEach(ticket => { %>
+                                <tr class="border-b border-slate-800 hover:bg-slate-900/40">
+                                    <td class="py-3 px-4">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-slate-800 border border-slate-700 text-slate-100">
+                                            <%= ticket.codigo || '-' %>
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 text-white">
+                                        <div class="font-medium"><%= ticket.titulo %></div>
+                                        <div class="text-xs text-slate-400 truncate max-w-xs">
+                                            <%= ticket.descripcion || '' %>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-2 py-1 rounded text-xs font-medium <%= ticket.estado === 'pendiente' ? 'bg-orange-500/20 text-orange-400' : (ticket.estado === 'en_proceso' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400') %>">
+                                            <%= ticket.estado %>
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 text-slate-300">
+                                        <%= ticket.asignado_a_nombre || 'Sin asignar' %>
+                                    </td>
+                                    <td class="py-3 px-4 text-slate-400">
+                                        <%= ticket.creado_en ? new Date(ticket.creado_en).toLocaleDateString() : '-' %>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <a href="/tickets/<%= ticket.id %>" class="inline-flex items-center px-3 py-1.5 rounded-full bg-blue-600/20 hover:bg-blue-600/40 text-blue-200 text-xs font-medium border border-blue-500/40 transition-colors">
+                                            <i class="ph ph-arrow-up-right text-sm mr-1.5"></i>
+                                            Ver ticket
+                                        </a>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="text-center py-8 bg-slate-800/50 rounded-lg">
+                    <p class="text-slate-400">Este cliente aún no tiene tickets asociados.</p>
                 </div>
             <% } %>
         </div>

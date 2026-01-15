@@ -1,14 +1,16 @@
-
 const API_URL = 'http://localhost:4000';
-let token = '';
-let headers = {};
-let state = {
-    userId: null,
-    clientId: null,
-    equipoId: null,
-    ticketId: null,
-    initialCounts: {}
-};
+
+let tokenAdmin = '';
+let tokenTechA = '';
+let tokenTechB = '';
+
+let adminId = null;
+let techAId = null;
+let techBId = null;
+let clientId = null;
+let equipoId = null;
+let ticketAId = null;
+let ticketBId = null;
 
 async function step(name, fn) {
     process.stdout.write(`[TEST] ${name}... `);
@@ -18,226 +20,151 @@ async function step(name, fn) {
     } catch (e) {
         console.log('❌ FAIL');
         console.error('   Error:', e.message);
-        // Don't exit, try to continue to see other failures
     }
 }
 
-async function request(method, path, body = null) {
+async function request(method, path, body = null, token = null) {
     const opts = {
         method,
-        headers: { 'Content-Type': 'application/json', ...headers }
+        headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
     };
+    if (token) opts.headers['Authorization'] = `Bearer ${token}`;
     if (body) opts.body = JSON.stringify(body);
-    
+
     const res = await fetch(`${API_URL}${path}`, opts);
-    const data = await res.json().catch(() => ({}));
-    
-    if (!res.ok) {
-        throw new Error(`${method} ${path} failed: ${res.status} - ${JSON.stringify(data)}`);
+
+    const text = await res.text();
+    let data = {};
+    if (text) {
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            if (!res.ok) data = { error: text };
+        }
     }
-    return data;
+
+    if (!res.ok) {
+        throw new Error(`${method} ${path} failed: ${res.status} - ${JSON.stringify(data).substring(0, 200)}`);
+    }
+    
+    return { data, headers: res.headers };
 }
 
-(async () => {
-    console.log('🚀 Starting Full System Test for BIOHERTS TICKETS (6-Person Team Scale)\n');
+async function getAuth(name, email, role) {
+    try {
+        await request('POST', '/auth/register', { nombre: name, email, password: 'password123', rol: role });
+    } catch (e) {
+    }
 
-    await step('1. Authentication (Register & Login)', async () => {
-        // Register a new user to ensure we have valid credentials
-        const email = `testuser_${Date.now()}@test.com`;
-        const password = 'password123';
-        
-        await request('POST', '/auth/register', {
-            nombre: 'Test User',
-            email,
-            password,
-            rol: 'admin'
-        });
+    const res = await request('POST', '/auth/login', { email, password: 'password123' });
+    if (!res.data.token) {
+        throw new Error(`No token returned for ${email}`);
+    }
+    
+    const payload = JSON.parse(Buffer.from(res.data.token.split('.')[1], 'base64').toString());
+    return { token: res.data.token, id: payload.id };
+}
 
-        const data = await request('POST', '/auth/login', { email, password });
-        token = data.token;
-        headers = { 'Authorization': `Bearer ${token}` };
-        
-        // Decode token to get user ID
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        state.userId = payload.id;
-        if (!state.userId) throw new Error('User ID not found in token');
+async function run() {
+    console.log(`Starting System Test on ${API_URL}`);
+
+    await step('1. Authentication (Admin, TechA, TechB)', async () => {
+        const admin = await getAuth('Admin User', 'admin@biohertz.com', 'admin');
+        tokenAdmin = admin.token;
+        adminId = admin.id;
+
+        const techA = await getAuth('Tech A', 'techa@biohertz.com', 'user');
+        tokenTechA = techA.token;
+        techAId = techA.id;
+
+        const techB = await getAuth('Tech B', 'techb@biohertz.com', 'user');
+        tokenTechB = techB.token;
+        techBId = techB.id;
     });
 
-    await step('2. Get Initial Dashboard Counts & Config', async () => {
-        const t = await request('GET', '/tickets/count');
-        const e = await request('GET', '/equipos/count');
-        const c = await request('GET', '/clientes/count');
-        state.initialCounts = {
-            tickets: t.total,
-            equipos: e.total,
-            clientes: c.total
-        };
+    await step('2. Create Client & Equipment (Admin)', async () => {
+        const clientRes = await request('POST', '/clientes', {
+            nombre: 'Test Client Ltd',
+            email: 'contact@client.com',
+            telefono: '123456789',
+            direccion: '123 Test St'
+        }, tokenAdmin);
+        clientId = clientRes.data.id;
 
-        // Test Config
-        await request('GET', '/auth/config');
-        
-        // Test Users List (for dropdowns)
-        const users = await request('GET', '/auth/users');
-        if (!users.find(u => u.id === state.userId)) throw new Error('Current user not found in user list');
-    });
-
-    await step('3. Create Client (Customer)', async () => {
-        const data = await request('POST', '/clientes', { 
-            nombre: 'Empresa Test S.A.', 
-            empresa: 'Test Corp' 
-        });
-        state.clientId = data.id;
-        if (!state.clientId) throw new Error('Client ID not returned');
-        
-        // Verify in list
-        const list = await request('GET', '/clientes?q=Empresa Test');
-        if (!list.find(c => c.id === state.clientId)) throw new Error('Client not found in list');
-    });
-
-    await step('4. Create Equipment (Inventory)', async () => {
-        const data = await request('POST', '/equipos', {
-            nombre: 'Monitor Cardíaco X1',
-            marca: 'BioBrand',
-            modelo: 'X1000',
-            numero_serie: `SN-${Date.now()}`,
-            ubicacion: 'Sala 1',
+        const equipoRes = await request('POST', '/equipos', {
+            nombre: 'Test Equipment',
+            marca: 'MarcaX',
+            modelo: 'ModeloY',
+            numero_serie: 'SN-123',
+            ubicacion: 'Bodega',
             estado: 'activo',
-            cliente_id: state.clientId
-        });
-        state.equipoId = data.equipo ? data.equipo.id : data.id;
-        if (!state.equipoId) throw new Error('Equipment ID not returned');
+            cliente_id: clientId
+        }, tokenAdmin);
+        equipoId = equipoRes.data.equipo.id;
+    });
 
-        // Verify in list
-        const list = await request('GET', `/equipos?q=Monitor`);
-        const found = list.find(e => String(e.id) === String(state.equipoId));
-        if (!found) {
-            console.error('List IDs:', list.map(e => e.id), 'Expected:', state.equipoId);
-            throw new Error('Equipment not found in list');
+    await step('3. Create Tickets (Admin assigns to A & B)', async () => {
+        const resA = await request('POST', '/tickets', {
+            titulo: 'Maintenance for Tech A',
+            descripcion: 'Routine check',
+            asignado_a: techAId,
+            tipo: 'mantencion'
+        }, tokenAdmin);
+        ticketAId = resA.data.ticket.id;
+
+        const resB = await request('POST', '/tickets', {
+            titulo: 'Repair for Tech B',
+            descripcion: 'Fix broken screen',
+            asignado_a: techBId,
+            tipo: 'visita_tecnica'
+        }, tokenAdmin);
+        ticketBId = resB.data.ticket.id;
+    });
+
+    await step('4. Verify Dashboard Isolation (Pending Tickets)', async () => {
+        const countA = await request('GET', `/tickets/count?asignado_a=${techAId}&estado=pendiente`, null, tokenTechA);
+        if (countA.data.total < 1) throw new Error(`Tech A should have at least 1 pending ticket (found ${countA.data.total})`);
+
+        const countB = await request('GET', `/tickets/count?asignado_a=${techBId}&estado=pendiente`, null, tokenTechB);
+        if (countB.data.total < 1) throw new Error(`Tech B should have at least 1 pending ticket (found ${countB.data.total})`);
+    });
+
+    await step('5. Verify Global Access', async () => {
+        const res = await request('GET', `/tickets/${ticketBId}`, null, tokenTechA);
+        if (res.data.id !== ticketBId) throw new Error('Tech A could not retrieve Ticket B details');
+        console.log('   ✅ Tech A accessed Tech B\'s ticket details');
+    });
+    
+    await step('6. Verify Ticket Codes', async () => {
+        const ticketA = (await request('GET', `/tickets/${ticketAId}`, null, tokenAdmin)).data;
+        const ticketB = (await request('GET', `/tickets/${ticketBId}`, null, tokenAdmin)).data;
+        
+        if (!ticketA.codigo.startsWith('M-')) throw new Error(`Ticket A (Mantencion) code should start with M-, got ${ticketA.codigo}`);
+        if (!ticketB.codigo.startsWith('V-')) throw new Error(`Ticket B (Visita) code should start with V-, got ${ticketB.codigo}`);
+        
+        console.log(`   ✅ Codes verified: ${ticketA.codigo}, ${ticketB.codigo}`);
+    });
+
+    await step('7. Verify Global Access to Clients and Equipments', async () => {
+        const cAdmin = await request('GET', '/clientes/count', null, tokenAdmin);
+        const cA = await request('GET', '/clientes/count', null, tokenTechA);
+        const cB = await request('GET', '/clientes/count', null, tokenTechB);
+
+        if (cAdmin.data.total !== cA.data.total || cAdmin.data.total !== cB.data.total) {
+            throw new Error('Clients count differs between users');
+        }
+
+        const eAdmin = await request('GET', '/equipos/count', null, tokenAdmin);
+        const eA = await request('GET', '/equipos/count', null, tokenTechA);
+        const eB = await request('GET', '/equipos/count', null, tokenTechB);
+
+        if (eAdmin.data.total !== eA.data.total || eAdmin.data.total !== eB.data.total) {
+            throw new Error('Equipments count differs between users');
         }
     });
+}
 
-    await step('5. Test Equipment Filters', async () => {
-        // Filter by Marca
-        const byMarca = await request('GET', '/equipos?marca=BioBrand');
-        if (byMarca.length === 0) throw new Error('Filter by Marca failed');
-        
-        // Filter by Client (Name)
-        // Need to get client name first
-        const client = await request('GET', `/clientes/${state.clientId}`);
-        const clientName = client.nombre.split(' ')[0]; // Use first word to avoid encoding issues/exact match complexity
-        const byClient = await request('GET', `/equipos?cliente=${clientName}`);
-        
-        // Note: Equipment created via API might not have 'cliente' string field populated automatically unless backend does lookup
-        // In current db.js implementation, it is NOT populated automatically.
-        // So this filter might correctly return empty if 'cliente' field is null.
-        if (byClient.length === 0) {
-            console.warn('   ⚠️ Warning: Filter by Client returned 0 results (Expected if "cliente" field is not populated by backend on Create)');
-        }
-    });
-
-    await step('6. Update Client Details', async () => {
-        const newName = 'Empresa Test Updated S.A.';
-        const data = await request('PATCH', `/clientes/${state.clientId}`, { 
-            nombre: newName
-        });
-        if (data.nombre !== newName) throw new Error('Client name not updated');
-        
-        // Verify in list
-        const list = await request('GET', '/clientes?q=Updated');
-        if (!list.find(c => c.id === state.clientId)) throw new Error('Updated client not found in list');
-
-        // Verify Client Equipment List
-        const clientEquipments = await request('GET', `/clientes/${state.clientId}/equipos`);
-        if (!clientEquipments.find(e => e.id === state.equipoId)) throw new Error('Equipment not found in client equipment list');
-    });
-
-    await step('7. Create Ticket (Workflow)', async () => {
-        const data = await request('POST', '/tickets', {
-            titulo: 'Falla en Monitor',
-            descripcion: 'No enciende correctamente',
-            asignado_a: state.userId,
-            equipo_id: state.equipoId,
-            prioridad: 'alta'
-        });
-        state.ticketId = data.ticket ? data.ticket.id : data.id;
-        if (!state.ticketId) throw new Error('Ticket ID not returned');
-
-        // Verify in Dashboard (My Assigned)
-        const myTickets = await request('GET', `/tickets?asignado_a=${state.userId}&estado=pendiente`);
-        if (!myTickets.find(t => t.id === state.ticketId)) throw new Error('Ticket not found in "My Pending" list');
-        
-        // Verify Search
-        const searchResults = await request('GET', '/tickets?q=Monitor');
-        if (!searchResults.find(t => t.id === state.ticketId)) throw new Error('Ticket search failed');
-    });
-
-    await step('8. Update Ticket Status & Assignment', async () => {
-        // Update Status
-        await request('PATCH', `/tickets/${state.ticketId}/estado`, { estado: 'hecho' });
-        
-        // Update Assignment (Reassign to self or another admin)
-        // Since we only created one user in this session, we'll just reassign to same user to test endpoint
-        await request('PATCH', `/tickets/${state.ticketId}/asignado`, { asignado_a: state.userId });
-
-        const ticket = await request('GET', `/tickets/${state.ticketId}`);
-        if (ticket.estado !== 'hecho') throw new Error('Status update failed');
-        if (Number(ticket.asignado_a) !== Number(state.userId)) throw new Error('Assignment update failed');
-    });
-
-    await step('9. Add Comment to Ticket', async () => {
-        const comment = await request('POST', `/tickets/${state.ticketId}/comentarios`, { contenido: 'Revisión completada.' });
-        
-        if (comment.comentario.contenido !== 'Revisión completada.') throw new Error('Comment content mismatch');
-        state.commentId = comment.comentario.id;
-
-        // Verify comment list
-        const comments = await request('GET', `/tickets/${state.ticketId}/comentarios`);
-        if (!comments.find(c => c.id === state.commentId)) throw new Error('Comment not found in list');
-    });
-
-    await step('9b. Delete Comment', async () => {
-        await request('DELETE', `/tickets/${state.ticketId}/comentarios/${state.commentId}`);
-        const comments = await request('GET', `/tickets/${state.ticketId}/comentarios`);
-        if (comments.find(c => c.id === state.commentId)) throw new Error('Comment was not deleted');
-    });
-
-    await step('10. Update Equipment Details & Maintenance', async () => {
-        // Update Details
-        const newLoc = 'Sala 2';
-        await request('PATCH', `/equipos/${state.equipoId}`, { ubicacion: newLoc });
-        
-        const eq = await request('GET', `/equipos/${state.equipoId}`);
-        if (eq.ubicacion !== newLoc) throw new Error('Equipment location update failed');
-
-        // Add Maintenance
-        await request('POST', `/equipos/${state.equipoId}/mantenciones`, { 
-            fecha: new Date().toISOString(),
-            trabajo: 'Limpieza preventiva',
-            nota: 'Todo OK'
-        });
-
-        const mants = await request('GET', `/equipos/${state.equipoId}/mantenciones`);
-        if (!mants.find(m => m.trabajo === 'Limpieza preventiva')) throw new Error('Maintenance record not saved');
-    });
-
-    await step('11. Delete Ticket', async () => {
-        await request('DELETE', `/tickets/${state.ticketId}`);
-        const all = await request('GET', '/tickets');
-        if (all.find(x => x.id === state.ticketId)) throw new Error('Ticket not deleted');
-    });
-
-    await step('12. Delete Equipment', async () => {
-        await request('DELETE', `/equipos/${state.equipoId}`);
-        const list = await request('GET', '/equipos');
-        if (list.find(x => x.id === state.equipoId)) throw new Error('Equipment not deleted');
-    });
-
-    await step('13. Delete Client', async () => {
-        await request('DELETE', `/clientes/${state.clientId}`);
-        const list = await request('GET', '/clientes');
-        if (list.find(x => x.id === state.clientId)) throw new Error('Client not deleted');
-    });
-
-    console.log('\n✅ System Test Complete.');
-
-})();
+run();

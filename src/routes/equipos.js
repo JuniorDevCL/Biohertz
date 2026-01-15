@@ -74,6 +74,15 @@ router.get('/', authRequired, async (req, res) => {
 
     const clients = await getClientsCached();
 
+    if (req.accepts('json') && !req.accepts('html')) {
+      return res.json({
+        equipos: result.rows,
+        total: totalEquipos,
+        limit,
+        offset
+      });
+    }
+
     res.render('equipos', {
       equipos: result.rows,
       clientes: clients,
@@ -151,10 +160,12 @@ router.post('/', authRequired, async (req, res) => {
       [nombre, marca || null, modelo || null, numero_serie || null, ubicacion || null, estado || 'activo', aplicacion || null, finalClienteName || null, finalClienteId, anio_venta ? parseInt(anio_venta) : null, mantenciones ? JSON.stringify(mantenciones) : null]
     );
 
-    // res.status(201).json({ mensaje: 'Equipo creado', equipo: insert.rows[0] });
-
     const io = req.app.get('io');
     io?.emit('equipo:created', insert.rows[0]);
+
+    if (req.accepts('json') && !req.accepts('html')) {
+      return res.status(201).json({ mensaje: 'Equipo creado', equipo: insert.rows[0] });
+    }
 
     res.redirect('/equipos');
   } catch (err) {

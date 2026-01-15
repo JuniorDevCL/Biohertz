@@ -46,6 +46,16 @@ router.get('/', authRequired, async (req, res) => {
 
     const clientesCountResult = await pool.query('SELECT COUNT(*) FROM clientes');
     const totalClientes = Number(clientesCountResult.rows[0].count) || 0;
+
+    if (req.accepts('json') && !req.accepts('html')) {
+      return res.json({
+        clientes: r.rows,
+        total: totalClientes,
+        limit,
+        offset
+      });
+    }
+
     res.render('clientes', {
       clientes: r.rows,
       query: q || '',
@@ -70,7 +80,11 @@ router.post('/', authRequired, async (req, res) => {
     `, [nombre || null, empresa || null, email || null, telefono || null, ubicacion || null]);
     console.log('Cliente creado:', ins.rows[0]);
     clearEquiposClientsCache();
-    // res.status(201).json(ins.rows[0]);
+    
+    if (req.accepts('json') && !req.accepts('html')) {
+      return res.status(201).json(ins.rows[0]);
+    }
+
     res.redirect('/clientes');
   } catch (err) {
     console.error('Error al crear cliente:', err);
@@ -98,19 +112,39 @@ router.get('/:id', authRequired, async (req, res) => {
   try {
     await ensureSchema();
     const { id } = req.params;
-    // Evitar conflicto con 'count' si express no lo maneja bien (aunque el orden importa)
-    if (id === 'count') return; 
-    
-    const [clientRes, equiposRes] = await Promise.all([
+    if (id === 'count') return;
+
+    const [clientRes, equiposRes, ticketsRes] = await Promise.all([
       pool.query('SELECT * FROM clientes WHERE id = $1', [id]),
-      pool.query('SELECT * FROM equipos WHERE cliente_id = $1 ORDER BY actualizado_en DESC', [id])
+      pool.query('SELECT * FROM equipos WHERE cliente_id = $1 ORDER BY actualizado_en DESC', [id]),
+      pool.query(
+        `SELECT t.*, u.nombre AS asignado_a_nombre
+         FROM tickets t
+         LEFT JOIN usuarios u ON u.id = t.asignado_a
+         LEFT JOIN equipos e ON e.id = t.equipo_id
+         ORDER BY t.creado_en DESC`
+      )
     ]);
-    
+
+    console.log(`[DEBUG] Cliente ${id} tickets found: ${ticketsRes.rowCount}`);
+    if (ticketsRes.rowCount > 0) {
+        console.log(`[DEBUG] Sample ticket: ID=${ticketsRes.rows[0].id}, ClientID=${ticketsRes.rows[0].cliente_id}`);
+    }
+
     if (clientRes.rows.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
-    
+
+    if (req.accepts('json') && !req.accepts('html')) {
+      return res.json({
+        cliente: clientRes.rows[0],
+        equipos: equiposRes.rows,
+        tickets: ticketsRes.rows
+      });
+    }
+
     res.render('cliente_detalle', {
       cliente: clientRes.rows[0],
       equipos: equiposRes.rows,
+      tickets: ticketsRes.rows,
       title: `${clientRes.rows[0].nombre} - Detalle Cliente`,
       user: req.user || req.session.user || { nombre: 'Usuario' }
     });

@@ -72,11 +72,6 @@ router.post('/', authRequired, async (req, res) => {
       [cleanTitulo, descripcion || null, req.user.id, asignado_a || null, equipo_id || null, cliente_id || null, tipoNormalizado, codigo]
     );
 
-    // res.status(201).json({
-    //   mensaje: 'Ticket creado',
-    //   ticket: result.rows[0],
-    // });
-
     const io = req.app.get('io');
     io?.emit('ticket:created', result.rows[0]);
 
@@ -87,6 +82,14 @@ router.post('/', authRequired, async (req, res) => {
         enviarNotificacionTicket(ures.rows[0].email, titulo)
           .catch(e => console.error('Error enviando notificación en segundo plano:', e));
       }
+    }
+
+    const accept = String(req.headers.accept || '');
+    if (accept.includes('application/json')) {
+      return res.status(201).json({
+        mensaje: 'Ticket creado',
+        ticket: result.rows[0],
+      });
     }
 
     return res.redirect('/tickets');
@@ -209,6 +212,143 @@ router.get('/count', authRequired, async (req, res) => {
   }
 });
 
+router.get('/export/csv', authRequired, async (req, res) => {
+  try {
+    await ensureSchema();
+    const { estado, asignado_a, equipo_id, q } = req.query;
+    const where = [];
+    const values = [];
+
+    if (estado) {
+      values.push(estado);
+      where.push(`t.estado = $${values.length}`);
+    }
+    if (asignado_a) {
+      values.push(Number(asignado_a));
+      where.push(`t.asignado_a = $${values.length}`);
+    }
+    if (equipo_id) {
+      values.push(Number(equipo_id));
+      where.push(`t.equipo_id = $${values.length}`);
+    }
+    if (q) {
+      values.push(`%${q}%`);
+      where.push(`(t.titulo ILIKE $${values.length} OR t.descripcion ILIKE $${values.length})`);
+    }
+
+    const sql = `SELECT t.codigo, t.titulo, t.estado, t.tipo,
+                        u.nombre as creado_por,
+                        ua.nombre as asignado_a,
+                        c.nombre as cliente,
+                        e.nombre as equipo,
+                        t.creado_en, t.terminado_en
+                 FROM tickets t
+                 LEFT JOIN usuarios u ON u.id = t.creado_por
+                 LEFT JOIN usuarios ua ON ua.id = t.asignado_a
+                 LEFT JOIN clientes c ON c.id = t.cliente_id
+                 LEFT JOIN equipos e ON e.id = t.equipo_id
+                 ${where.length ? ' WHERE ' + where.join(' AND ') : ''}
+                 ORDER BY t.creado_en DESC`;
+
+    const result = await pool.query(sql, values);
+
+    const headers = [
+      'Codigo',
+      'Titulo',
+      'Estado',
+      'Tipo',
+      'Creado Por',
+      'Asignado A',
+      'Cliente',
+      'Equipo',
+      'Fecha Creacion',
+      'Fecha Termino'
+    ];
+
+    const rows = result.rows.map(row => [
+      row.codigo || '',
+      `"${String(row.titulo || '').replace(/"/g, '""')}"`,
+      row.estado || '',
+      row.tipo || '',
+      row.creado_por || '',
+      row.asignado_a || '',
+      `"${String(row.cliente || '').replace(/"/g, '""')}"`,
+      `"${String(row.equipo || '').replace(/"/g, '""')}"`,
+      row.creado_en ? new Date(row.creado_en).toISOString().split('T')[0] : '',
+      row.terminado_en ? new Date(row.terminado_en).toISOString().split('T')[0] : ''
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(r => r.join(','))
+    ].join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="tickets_reporte.csv"');
+    res.send(csvContent);
+  } catch (err) {
+    console.error('Error exportando CSV:', err);
+    res.status(500).send('Error al generar el reporte');
+  }
+});
+
+router.get('/:id/historial', authRequired, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      `SELECT h.*, u.nombre as usuario_nombre
+       FROM historial_tickets h
+       LEFT JOIN usuarios u ON u.id = h.usuario_id
+       WHERE h.ticket_id = $1
+       ORDER BY h.creado_en DESC`,
+      [id]
+    );
+    if (result.rowCount === 0) {
+      const ticketRes = await pool.query(
+        `SELECT t.*, 
+                cu.nombre as creado_por_nombre,
+                au.nombre as asignado_a_nombre
+         FROM tickets t
+         LEFT JOIN usuarios cu ON cu.id = t.creado_por
+         LEFT JOIN usuarios au ON au.id = t.asignado_a
+         WHERE t.id = $1`,
+        [id]
+      );
+      if (ticketRes.rowCount > 0) {
+        const t = ticketRes.rows[0];
+        const baseFecha = t.actualizado_en || t.creado_en || new Date();
+        const fallback = [
+          {
+            id: null,
+            ticket_id: t.id,
+            usuario_id: t.creado_por,
+            usuario_nombre: t.creado_por_nombre || null,
+            tipo_cambio: 'asignacion',
+            valor_anterior: 'Sin asignar',
+            valor_nuevo: t.asignado_a_nombre || 'Sin asignar',
+            creado_en: baseFecha
+          },
+          {
+            id: null,
+            ticket_id: t.id,
+            usuario_id: t.creado_por,
+            usuario_nombre: t.creado_por_nombre || null,
+            tipo_cambio: 'estado',
+            valor_anterior: 'pendiente',
+            valor_nuevo: t.estado,
+            creado_en: baseFecha
+          }
+        ];
+        return res.json(fallback);
+      }
+    }
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error al obtener historial:', err);
+    res.status(500).json({ error: 'Error al obtener historial' });
+  }
+});
+
 router.get('/:id', authRequired, async (req, res) => {
   try {
     await ensureSchema();
@@ -247,9 +387,11 @@ router.patch('/:id/estado', authRequired, async (req, res) => {
     const { estado } = req.body;
     const nuevoEstado = String(estado || '').trim();
 
-    if (!['pendiente', 'hecho'].includes(nuevoEstado)) {
+    if (!['pendiente', 'hecho', 'en_proceso'].includes(nuevoEstado)) {
       return res.status(400).json({ error: 'Estado inválido' });
     }
+
+    const antes = await pool.query('SELECT estado FROM tickets WHERE id = $1', [id]);
 
     const result = await pool.query(
       `UPDATE tickets
@@ -263,6 +405,15 @@ router.patch('/:id/estado', authRequired, async (req, res) => {
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Ticket no encontrado' });
+    }
+
+    // Historial
+    if (antes.rowCount > 0 && antes.rows[0].estado !== nuevoEstado) {
+      await pool.query(
+        `INSERT INTO historial_tickets (ticket_id, usuario_id, tipo_cambio, valor_anterior, valor_nuevo, creado_en)
+         VALUES ($1, $2, $3, $4, $5, NOW())`,
+        [id, req.user.id, 'estado', antes.rows[0].estado, nuevoEstado]
+      );
     }
 
     res.json({
@@ -285,6 +436,12 @@ router.patch('/:id/asignado', authRequired, async (req, res) => {
     const { id } = req.params;
     const { asignado_a } = req.body;
 
+    const antes = await pool.query(`
+      SELECT t.asignado_a, u.nombre as nombre_usuario 
+      FROM tickets t 
+      LEFT JOIN usuarios u ON u.id = t.asignado_a 
+      WHERE t.id = $1`, [id]);
+
     const result = await pool.query(
       `UPDATE tickets
        SET asignado_a = $1, actualizado_en = NOW()
@@ -295,6 +452,24 @@ router.patch('/:id/asignado', authRequired, async (req, res) => {
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Ticket no encontrado' });
+    }
+
+    // Historial
+    if (antes.rowCount > 0) {
+       const valorAntes = antes.rows[0].nombre_usuario || 'Sin asignar';
+       let valorNuevo = 'Sin asignar';
+       if (asignado_a) {
+         const uRes = await pool.query('SELECT nombre FROM usuarios WHERE id = $1', [asignado_a]);
+         if (uRes.rowCount > 0) valorNuevo = uRes.rows[0].nombre;
+       }
+       
+       if (String(antes.rows[0].asignado_a) !== String(asignado_a || '')) {
+          await pool.query(
+            `INSERT INTO historial_tickets (ticket_id, usuario_id, tipo_cambio, valor_anterior, valor_nuevo, creado_en)
+             VALUES ($1, $2, $3, $4, $5, NOW())`,
+            [id, req.user.id, 'asignacion', valorAntes, valorNuevo]
+          );
+       }
     }
 
     res.json({

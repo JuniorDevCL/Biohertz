@@ -46,3 +46,15 @@ CREATE TABLE IF NOT EXISTS comentarios (
 CREATE INDEX IF NOT EXISTS idx_tickets_estado ON tickets(estado);
 CREATE INDEX IF NOT EXISTS idx_tickets_equipo ON tickets(equipo_id);
 CREATE INDEX IF NOT EXISTS idx_comentarios_ticket ON comentarios(ticket_id);
+
+CREATE TABLE IF NOT EXISTS historial_tickets (
+  id SERIAL PRIMARY KEY,
+  ticket_id INTEGER NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+  usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+  tipo_cambio VARCHAR(50) NOT NULL,
+  valor_anterior TEXT,
+  valor_nuevo TEXT,
+  creado_en TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_historial_ticket ON historial_tickets(ticket_id);

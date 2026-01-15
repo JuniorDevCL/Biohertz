@@ -20,6 +20,10 @@
                     <span class="text-sm font-semibold text-slate-100"><%= tickets && tickets.length ? tickets.length : 0 %></span>
                 </div>
             </div>
+            <a href="/tickets/export/csv" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl transition-colors flex items-center text-sm font-medium border border-slate-700" title="Descargar reporte en CSV">
+                <i class="ph ph-download-simple mr-2 text-base"></i>
+                CSV
+            </a>
             <button onclick="document.getElementById('new-ticket-modal').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-colors flex items-center text-sm font-medium shadow-sm shadow-blue-500/30">
                 <i class="ph ph-plus mr-2 text-base"></i>
                 Nuevo Ticket
@@ -174,6 +178,8 @@
 </div>
 
 <script>
+let currentTicketId = null;
+
 async function deleteTicket(id) {
     const confirmed = confirm('¿Seguro que deseas eliminar este ticket? Esta acción no se puede deshacer.');
     if (!confirmed) return;
@@ -191,6 +197,7 @@ async function deleteTicket(id) {
 }
 
 async function openTicketDetails(id) {
+    currentTicketId = id;
     try {
         const res = await fetch(`/tickets/${id}`);
         if (!res.ok) {
@@ -216,12 +223,137 @@ async function openTicketDetails(id) {
         const terminado = t.terminado_en ? new Date(t.terminado_en) : null;
         document.getElementById('ticket-details-fecha-creacion').textContent = creado ? creado.toLocaleString() : '-';
         document.getElementById('ticket-details-fecha-termino').textContent = terminado ? terminado.toLocaleString() : '-';
+        
+        // Cargar historial y comentarios
+        if (typeof loadTicketHistory === 'function') loadTicketHistory(id);
+        if (typeof loadTicketComments === 'function') loadTicketComments(id);
+
         document.getElementById('ticket-details-modal').classList.remove('hidden');
     } catch (e) {
         console.error(e);
         alert('Error de conexión');
     }
 }
+
+async function loadTicketHistory(id) {
+    const container = document.getElementById('ticket-history');
+    if (!container) return;
+    container.innerHTML = '<p class="text-xs text-slate-500">Cargando historial...</p>';
+    try {
+        const res = await fetch(`/tickets/${id}/historial`);
+        if (!res.ok) {
+            container.innerHTML = '<p class="text-xs text-red-400">No se pudo cargar el historial.</p>';
+            return;
+        }
+        const historial = await res.json();
+        if (!historial || historial.length === 0) {
+            container.innerHTML = '<p class="text-xs text-slate-500">Sin cambios registrados.</p>';
+            return;
+        }
+        container.innerHTML = '';
+        historial.forEach(h => {
+            const fecha = h.creado_en ? new Date(h.creado_en) : null;
+            const tipo = h.tipo_cambio === 'estado' ? 'Estado' : (h.tipo_cambio === 'asignacion' ? 'Asignación' : h.tipo_cambio);
+            const linea = document.createElement('div');
+            linea.className = 'text-xs text-slate-300 flex flex-col border border-slate-800 rounded-md px-2 py-1 bg-slate-900/60';
+            const header = document.createElement('div');
+            header.className = 'flex justify-between items-center mb-0.5';
+            const left = document.createElement('span');
+            left.className = 'font-medium text-slate-200';
+            left.textContent = tipo;
+            const right = document.createElement('span');
+            right.className = 'text-[11px] text-slate-500';
+            right.textContent = fecha ? fecha.toLocaleString() : '';
+            header.appendChild(left);
+            header.appendChild(right);
+            const detalle = document.createElement('div');
+            detalle.className = 'text-[11px] text-slate-300';
+            const usuario = h.usuario_nombre || 'Usuario';
+            const antes = h.valor_anterior || '-';
+            const despues = h.valor_nuevo || '-';
+            detalle.textContent = `${usuario}: ${antes} → ${despues}`;
+            linea.appendChild(header);
+            linea.appendChild(detalle);
+            container.appendChild(linea);
+        });
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-xs text-red-400">Error al cargar historial.</p>';
+    }
+}
+
+async function loadTicketComments(id) {
+    const container = document.getElementById('ticket-comments');
+    if (!container) return;
+    container.innerHTML = '<p class="text-xs text-slate-500">Cargando comentarios...</p>';
+    try {
+        const res = await fetch(`/tickets/${id}/comentarios`);
+        if (!res.ok) {
+            container.innerHTML = '<p class="text-xs text-red-400">No se pudieron cargar los comentarios.</p>';
+            return;
+        }
+        const comentarios = await res.json();
+        if (!comentarios || comentarios.length === 0) {
+            container.innerHTML = '<p class="text-xs text-slate-500">Sin comentarios aún.</p>';
+            return;
+        }
+        container.innerHTML = '';
+        comentarios.forEach(c => {
+            const item = document.createElement('div');
+            item.className = 'border border-slate-800 rounded-lg px-3 py-2 bg-slate-900/60';
+            const header = document.createElement('div');
+            header.className = 'flex justify-between items-center mb-1';
+            const autor = document.createElement('span');
+            autor.className = 'text-xs font-medium text-slate-200';
+            autor.textContent = c.autor_nombre || 'Usuario';
+            const fecha = document.createElement('span');
+            fecha.className = 'text-[11px] text-slate-500';
+            const f = c.creado_en ? new Date(c.creado_en) : null;
+            fecha.textContent = f ? f.toLocaleString() : '';
+            header.appendChild(autor);
+            header.appendChild(fecha);
+            const cuerpo = document.createElement('p');
+            cuerpo.className = 'text-xs text-slate-200 whitespace-pre-wrap';
+            cuerpo.textContent = c.contenido || '';
+            item.appendChild(header);
+            item.appendChild(cuerpo);
+            container.appendChild(item);
+        });
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-xs text-red-400">Error al cargar comentarios.</p>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('add-comment-form');
+    if (!form) return;
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const textarea = document.getElementById('comment-content');
+        if (!textarea || !currentTicketId) return;
+        const contenido = textarea.value.trim();
+        if (!contenido) return;
+        try {
+            const res = await fetch(`/tickets/${currentTicketId}/comentarios`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ contenido })
+            });
+            if (!res.ok) {
+                alert('Error al agregar comentario');
+                return;
+            }
+            textarea.value = '';
+            await loadTicketComments(currentTicketId);
+        } catch (e) {
+            console.error(e);
+            alert('Error de conexión');
+        }
+    });
+});
 </script>
 
 <div id="ticket-details-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center">
@@ -253,6 +385,22 @@ async function openTicketDetails(id) {
             <div class="pt-2">
                 <p class="font-semibold text-slate-400 mb-1">Descripción</p>
                 <p id="ticket-details-descripcion" class="text-slate-200 whitespace-pre-wrap text-sm"></p>
+            </div>
+            <div class="pt-4 border-t border-slate-800 mt-4">
+                <p class="font-semibold text-slate-400 mb-2 text-sm">Historial de cambios</p>
+                <div id="ticket-history" class="space-y-2 max-h-40 overflow-y-auto"></div>
+            </div>
+            <div class="pt-4 border-t border-slate-800 mt-4">
+                <p class="font-semibold text-slate-400 mb-2 text-sm">Comentarios</p>
+                <div id="ticket-comments" class="space-y-3 max-h-40 overflow-y-auto mb-3"></div>
+                <form id="add-comment-form" class="space-y-2">
+                    <textarea id="comment-content" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-xs" placeholder="Escribe un comentario"></textarea>
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium">
+                            Enviar comentario
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
         <div class="mt-6 flex justify-end">

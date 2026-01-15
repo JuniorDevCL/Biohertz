@@ -1,10 +1,10 @@
 {
   "seq": {
-    "usuarios": 34,
-    "tickets": 78,
-    "comentarios": 21,
-    "equipos": 83,
-    "clientes": 47
+    "usuarios": 59,
+    "tickets": 92,
+    "comentarios": 29,
+    "equipos": 94,
+    "clientes": 58
   },
   "usuarios": [
     {
@@ -34,6 +34,181 @@
       "email": "tester@biohertz.com",
       "password": "$2b$10$wPzWfryVMCajG1eyh0w9Vu6qDNU0XeyrMSKu0uw8.sumB.6.wBU4S",
       "rol": "admin"
+    },
+    {
+      "id": 34,
+      "nombre": "Admin User",
+      "email": "admin@biohertz.com",
+      "password": "$2b$10$Wb6Bbx01tujimwjFj0T0VemQCErRsFHdbswV.qHTSF8aiV0puiaaO",
+      "rol": "admin"
+    },
+    {
+      "id": 35,
+      "nombre": "Tech A",
+      "email": "techa@biohertz.com",
+      "password": "$2b$10$6kO9hql3UWaQwt98DzzXheyM4uNpqWspBqbMyUuyu/IPnBTaoudEe",
+      "rol": "user"
+    },
+    {
+      "id": 36,
+      "nombre": "Tech B",
+      "email": "techb@biohertz.com",
+      "password": "$2b$10$vt5nlf/e3f0DP1PcY2bHIOWFsL2mXHP80610VHs/zN/FrQHZIkkHS",
+      "rol": "user"
+    },
+    {
+      "id": 37,
+      "nombre": "Admin User",
+      "email": "admin@biohertz.com",
+      "password": "$2b$10$gxyGWTDxlFgqTF0DK897Leo9w3TawSbfgp9gb3e4dp5pPCJ7tUDSS",
+      "rol": "admin"
+    },
+    {
+      "id": 38,
+      "nombre": "Tech A",
+      "email": "techa@biohertz.com",
+      "password": "$2b$10$Fo/kE1RiZ7l0v64GV.eMgeLef22uj7XpKwc1zscncTlnN9l.uoqRG",
+      "rol": "user"
+    },
+    {
+      "id": 39,
+      "nombre": "Tech B",
+      "email": "techb@biohertz.com",
+      "password": "$2b$10$Gx/7xQAYN7Z6oHxNxV4I1uPQRvCduA2yC5Pq3d8ztOh7xkFNeJVie",
+      "rol": "user"
+    },
+    {
+      "id": 40,
+      "nombre": "Admin User",
+      "email": "admin@biohertz.com",
+      "password": "$2b$10$Lcb/u9AX0c.QIhBMyXs8UOh41KMp8j.WjQVnhm892KYMJrWFw5iUG",
+      "rol": "admin"
+    },
+    {
+      "id": 41,
+      "nombre": "Tech A",
+      "email": "techa@biohertz.com",
+      "password": "$2b$10$L9C8w/hAegKW7xAAvIL8G.otPsNnAnYvwQ3a0rk/zDqeU1AC90PC.",
+      "rol": "user"
+    },
+    {
+      "id": 42,
+      "nombre": "Tech B",
+      "email": "techb@biohertz.com",
+      "password": "$2b$10$2zuz5RGTxr9JGgw8ilcB8.GjkDDTiaDM6WpsX42RuSS3iY.MpJGqm",
+      "rol": "user"
+    },
+    {
+      "id": 43,
+      "nombre": "Admin User",
+      "email": "admin_full@biohertz.com",
+      "password": "$2b$10$52orP/qT9s.dDIRT7Ojeu.inWG5YF01xMOJcNSrY9heO70YXt8BIi",
+      "rol": "admin"
+    },
+    {
+      "id": 44,
+      "nombre": "Tech A",
+      "email": "techa_full@biohertz.com",
+      "password": "$2b$10$FG7Z0v4FF4AcQd8tOTN53e5vW9OhDD.5uG7/TqFv3WTAadI9x9pcq",
+      "rol": "user"
+    },
+    {
+      "id": 45,
+      "nombre": "Admin User",
+      "email": "admin_full@biohertz.com",
+      "password": "$2b$10$bY9F8uMGUV.A2InEKZdLD.X1FJVvmLIV4hNIV31rvJC5vOfbigtmm",
+      "rol": "admin"
+    },
+    {
+      "id": 46,
+      "nombre": "Tech A",
+      "email": "techa_full@biohertz.com",
+      "password": "$2b$10$P57YBUCqyfnyQxpqa/wXSOVscJq3BSspNteyTn1rM0q8SNoLAekGq",
+      "rol": "user"
+    },
+    {
+      "id": 47,
+      "nombre": "Admin User",
+      "email": "admin_full@biohertz.com",
+      "password": "$2b$10$WXNxFHIvVO8GeOnljlQHbuswuZ8bvcJ/bMj5WpU..X6AI9SDhx55O",
+      "rol": "admin"
+    },
+    {
+      "id": 48,
+      "nombre": "Tech A",
+      "email": "techa_full@biohertz.com",
+      "password": "$2b$10$76cBprr9/XEbR6M4I0OAU.f9ZwwakQyje86m3/Mngr3RkvVumstiu",
+      "rol": "user"
+    },
+    {
+      "id": 49,
+      "nombre": "Admin User",
+      "email": "admin_full@biohertz.com",
+      "password": "$2b$10$YcYXCFsKzYOdTg53Bl1utuW9yr68ceR71Bxb4xWr8WPVYOEsDMC2a",
+      "rol": "admin"
+    },
+    {
+      "id": 50,
+      "nombre": "Tech A",
+      "email": "techa_full@biohertz.com",
+      "password": "$2b$10$r0DfV/204H7sQqyYvPECEOvP4wzM0mM5sYeGRCLX3wRUtl/ilSZ/i",
+      "rol": "user"
+    },
+    {
+      "id": 51,
+      "nombre": "Admin User",
+      "email": "admin_full@biohertz.com",
+      "password": "$2b$10$TaCyDqRdmWvSC.jTHVmyhuT.9d.yGRPL/NDNE/pknQrwmYf76jsn.",
+      "rol": "admin"
+    },
+    {
+      "id": 52,
+      "nombre": "Tech A",
+      "email": "techa_full@biohertz.com",
+      "password": "$2b$10$8NAswurukqBngCR7Op//z.R5CU8uAHID23t3hlQjaL02i72JISpRW",
+      "rol": "user"
+    },
+    {
+      "id": 53,
+      "nombre": "Admin User",
+      "email": "admin_full@biohertz.com",
+      "password": "$2b$10$o9YlACJAgLhbhJB4bWv.xesSPYRtqeSeWoy4fwdOYZCGxp9JjNRpK",
+      "rol": "admin"
+    },
+    {
+      "id": 54,
+      "nombre": "Tech A",
+      "email": "techa_full@biohertz.com",
+      "password": "$2b$10$0LJs4qg5uqFjoh8WG0emyOBOaohDWhfgm7ATiIFtOqKvloDP2mAo.",
+      "rol": "user"
+    },
+    {
+      "id": 55,
+      "nombre": "Admin User",
+      "email": "admin_full@biohertz.com",
+      "password": "$2b$10$oJRghBxaofWoih14d9nGm.p2qKgi1fWVCeyeJIaQk542HbmVXVp5m",
+      "rol": "admin"
+    },
+    {
+      "id": 56,
+      "nombre": "Tech A",
+      "email": "techa_full@biohertz.com",
+      "password": "$2b$10$EuFu9tr4J3/M.RmYekEBXu6NsIkwRHgkiCq58yZb9734e6DLAilby",
+      "rol": "user"
+    },
+    {
+      "id": 57,
+      "nombre": "Admin User",
+      "email": "admin_full@biohertz.com",
+      "password": "$2b$10$CdAGcQDRdZHlk5oGuZjMv.NKKRyxtb7iyWi9R1/9ie9JTFAkKMCrC",
+      "rol": "admin"
+    },
+    {
+      "id": 58,
+      "nombre": "Tech A",
+      "email": "techa_full@biohertz.com",
+      "password": "$2b$10$0uyHJY6mpbfBVKnbNKqPJ.H4iJJQYlyZ02DFrBal4Fxl8AyNBZA1O",
+      "rol": "user"
     }
   ],
   "tickets": [
@@ -608,6 +783,216 @@
       "estado": "terminado",
       "creado_en": "2025-11-29T17:01:05.688Z",
       "actualizado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 78,
+      "titulo": "Maintenance for Tech A",
+      "descripcion": "Routine check",
+      "creado_por": 34,
+      "asignado_a": 35,
+      "equipo_id": null,
+      "cliente_id": null,
+      "tipo": "mantencion",
+      "codigo": "M-001",
+      "estado": "pendiente",
+      "creado_en": "2026-01-15T06:17:29.645Z",
+      "actualizado_en": "2026-01-15T06:17:29.645Z",
+      "terminado_en": null
+    },
+    {
+      "id": 79,
+      "titulo": "Repair for Tech B",
+      "descripcion": "Fix broken screen",
+      "creado_por": 34,
+      "asignado_a": 36,
+      "equipo_id": null,
+      "cliente_id": null,
+      "tipo": "visita_tecnica",
+      "codigo": "V-001",
+      "estado": "pendiente",
+      "creado_en": "2026-01-15T06:17:29.652Z",
+      "actualizado_en": "2026-01-15T06:17:29.652Z",
+      "terminado_en": null
+    },
+    {
+      "id": 80,
+      "titulo": "Maintenance for Tech A",
+      "descripcion": "Routine check",
+      "creado_por": 34,
+      "asignado_a": 35,
+      "equipo_id": null,
+      "cliente_id": null,
+      "tipo": "mantencion",
+      "codigo": "M-002",
+      "estado": "pendiente",
+      "creado_en": "2026-01-15T06:18:08.787Z",
+      "actualizado_en": "2026-01-15T06:18:08.787Z",
+      "terminado_en": null
+    },
+    {
+      "id": 81,
+      "titulo": "Repair for Tech B",
+      "descripcion": "Fix broken screen",
+      "creado_por": 34,
+      "asignado_a": 36,
+      "equipo_id": null,
+      "cliente_id": null,
+      "tipo": "visita_tecnica",
+      "codigo": "V-002",
+      "estado": "pendiente",
+      "creado_en": "2026-01-15T06:18:08.790Z",
+      "actualizado_en": "2026-01-15T06:18:08.790Z",
+      "terminado_en": null
+    },
+    {
+      "id": 82,
+      "titulo": "Maintenance for Tech A",
+      "descripcion": "Routine check",
+      "creado_por": 34,
+      "asignado_a": 35,
+      "equipo_id": null,
+      "cliente_id": null,
+      "tipo": "mantencion",
+      "codigo": "M-003",
+      "estado": "pendiente",
+      "creado_en": "2026-01-15T06:19:06.751Z",
+      "actualizado_en": "2026-01-15T06:19:06.751Z",
+      "terminado_en": null
+    },
+    {
+      "id": 83,
+      "titulo": "Repair for Tech B",
+      "descripcion": "Fix broken screen",
+      "creado_por": 34,
+      "asignado_a": 36,
+      "equipo_id": null,
+      "cliente_id": null,
+      "tipo": "visita_tecnica",
+      "codigo": "V-003",
+      "estado": "pendiente",
+      "creado_en": "2026-01-15T06:19:06.754Z",
+      "actualizado_en": "2026-01-15T06:19:06.754Z",
+      "terminado_en": null
+    },
+    {
+      "id": 84,
+      "titulo": "Ticket Integral",
+      "descripcion": "Probando todo",
+      "creado_por": 43,
+      "asignado_a": 44,
+      "equipo_id": null,
+      "cliente_id": 50,
+      "tipo": "visita_tecnica",
+      "codigo": "V-004",
+      "estado": "pendiente",
+      "creado_en": "2026-01-15T06:36:58.356Z",
+      "actualizado_en": "2026-01-15T06:36:58.361Z",
+      "terminado_en": null
+    },
+    {
+      "id": 85,
+      "titulo": "Ticket Integral",
+      "descripcion": "Probando todo",
+      "creado_por": 43,
+      "asignado_a": 44,
+      "equipo_id": null,
+      "cliente_id": 51,
+      "tipo": "visita_tecnica",
+      "codigo": "V-005",
+      "estado": "en_proceso",
+      "creado_en": "2026-01-15T06:38:07.511Z",
+      "actualizado_en": "2026-01-15T06:38:07.522Z",
+      "terminado_en": null
+    },
+    {
+      "id": 86,
+      "titulo": "Ticket Integral",
+      "descripcion": "Probando todo",
+      "creado_por": 43,
+      "asignado_a": 44,
+      "equipo_id": null,
+      "cliente_id": 52,
+      "tipo": "visita_tecnica",
+      "codigo": "V-006",
+      "estado": "en_proceso",
+      "creado_en": "2026-01-15T06:38:49.429Z",
+      "actualizado_en": "2026-01-15T06:38:49.446Z",
+      "terminado_en": null
+    },
+    {
+      "id": 87,
+      "titulo": "Ticket Integral",
+      "descripcion": "Probando todo",
+      "creado_por": 43,
+      "asignado_a": 44,
+      "equipo_id": null,
+      "cliente_id": 53,
+      "tipo": "visita_tecnica",
+      "codigo": "V-007",
+      "estado": "en_proceso",
+      "creado_en": "2026-01-15T06:40:23.573Z",
+      "actualizado_en": "2026-01-15T06:40:23.582Z",
+      "terminado_en": null
+    },
+    {
+      "id": 88,
+      "titulo": "Ticket Integral",
+      "descripcion": "Probando todo",
+      "creado_por": 43,
+      "asignado_a": null,
+      "equipo_id": null,
+      "cliente_id": 54,
+      "tipo": "visita_tecnica",
+      "codigo": "V-008",
+      "estado": "pendiente",
+      "creado_en": "2026-01-15T06:43:08.151Z",
+      "actualizado_en": "2026-01-15T06:43:08.151Z",
+      "terminado_en": null
+    },
+    {
+      "id": 89,
+      "titulo": "Ticket Integral",
+      "descripcion": "Probando todo",
+      "creado_por": 43,
+      "asignado_a": 44,
+      "equipo_id": null,
+      "cliente_id": 55,
+      "tipo": "visita_tecnica",
+      "codigo": "V-009",
+      "estado": "en_proceso",
+      "creado_en": "2026-01-15T06:44:43.808Z",
+      "actualizado_en": "2026-01-15T06:44:43.817Z",
+      "terminado_en": null
+    },
+    {
+      "id": 90,
+      "titulo": "Ticket Integral",
+      "descripcion": "Probando todo",
+      "creado_por": 43,
+      "asignado_a": 44,
+      "equipo_id": null,
+      "cliente_id": 56,
+      "tipo": "visita_tecnica",
+      "codigo": "V-010",
+      "estado": "en_proceso",
+      "creado_en": "2026-01-15T06:47:14.321Z",
+      "actualizado_en": "2026-01-15T06:47:14.331Z",
+      "terminado_en": null
+    },
+    {
+      "id": 91,
+      "titulo": "Ticket Integral",
+      "descripcion": "Probando todo",
+      "creado_por": 43,
+      "asignado_a": 44,
+      "equipo_id": null,
+      "cliente_id": 57,
+      "tipo": "visita_tecnica",
+      "codigo": "V-011",
+      "estado": "en_proceso",
+      "creado_en": "2026-01-15T06:48:15.963Z",
+      "actualizado_en": "2026-01-15T06:48:15.974Z",
+      "terminado_en": null
     }
   ],
   "comentarios": [
@@ -687,6 +1072,62 @@
       "autor_id": 4,
       "contenido": "Revisión completada.",
       "creado_en": "2025-12-26T04:17:20.163Z"
+    },
+    {
+      "id": 21,
+      "ticket_id": 84,
+      "autor_id": 44,
+      "contenido": "Probando comentarios",
+      "creado_en": "2026-01-15T06:36:58.372Z"
+    },
+    {
+      "id": 22,
+      "ticket_id": 85,
+      "autor_id": 44,
+      "contenido": "Probando comentarios",
+      "creado_en": "2026-01-15T06:38:07.530Z"
+    },
+    {
+      "id": 23,
+      "ticket_id": 86,
+      "autor_id": 44,
+      "contenido": "Probando comentarios",
+      "creado_en": "2026-01-15T06:38:49.462Z"
+    },
+    {
+      "id": 24,
+      "ticket_id": 87,
+      "autor_id": 44,
+      "contenido": "Probando comentarios",
+      "creado_en": "2026-01-15T06:40:23.590Z"
+    },
+    {
+      "id": 25,
+      "ticket_id": null,
+      "autor_id": 44,
+      "contenido": "Probando comentarios",
+      "creado_en": "2026-01-15T06:43:08.190Z"
+    },
+    {
+      "id": 26,
+      "ticket_id": 89,
+      "autor_id": 44,
+      "contenido": "Probando comentarios",
+      "creado_en": "2026-01-15T06:44:43.824Z"
+    },
+    {
+      "id": 27,
+      "ticket_id": 90,
+      "autor_id": 44,
+      "contenido": "Probando comentarios",
+      "creado_en": "2026-01-15T06:47:14.339Z"
+    },
+    {
+      "id": 28,
+      "ticket_id": 91,
+      "autor_id": 44,
+      "contenido": "Probando comentarios",
+      "creado_en": "2026-01-15T06:48:15.982Z"
     }
   ],
   "equipos": [
@@ -1346,6 +1787,182 @@
       "cliente_id": 32,
       "estado": "activo",
       "creado_en": "2025-12-26T05:58:06.709Z"
+    },
+    {
+      "id": 83,
+      "nombre": "Test Equipment",
+      "marca": "MarcaX",
+      "modelo": "ModeloY",
+      "numero_serie": "SN-123",
+      "ubicacion": "Bodega",
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": "Gimnasio Power",
+      "cliente_id": 47,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2026-01-15T06:17:29.630Z",
+      "actualizado_en": "2026-01-15T06:17:29.630Z"
+    },
+    {
+      "id": 84,
+      "nombre": "Test Equipment",
+      "marca": "MarcaX",
+      "modelo": "ModeloY",
+      "numero_serie": "SN-123",
+      "ubicacion": "Bodega",
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": "Test Client Ltd",
+      "cliente_id": 48,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2026-01-15T06:18:08.774Z",
+      "actualizado_en": "2026-01-15T06:18:08.774Z"
+    },
+    {
+      "id": 85,
+      "nombre": "Test Equipment",
+      "marca": "MarcaX",
+      "modelo": "ModeloY",
+      "numero_serie": "SN-123",
+      "ubicacion": "Bodega",
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": "Test Client Ltd",
+      "cliente_id": 49,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2026-01-15T06:19:06.748Z",
+      "actualizado_en": "2026-01-15T06:19:06.748Z"
+    },
+    {
+      "id": 86,
+      "nombre": "Full Test Machine",
+      "marca": null,
+      "modelo": null,
+      "numero_serie": null,
+      "ubicacion": null,
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": "Full Test Client",
+      "cliente_id": 50,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2026-01-15T06:36:58.341Z",
+      "actualizado_en": "2026-01-15T06:36:58.341Z"
+    },
+    {
+      "id": 87,
+      "nombre": "Full Test Machine",
+      "marca": null,
+      "modelo": null,
+      "numero_serie": null,
+      "ubicacion": null,
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": "Full Test Client",
+      "cliente_id": 51,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2026-01-15T06:38:07.497Z",
+      "actualizado_en": "2026-01-15T06:38:07.497Z"
+    },
+    {
+      "id": 88,
+      "nombre": "Full Test Machine",
+      "marca": null,
+      "modelo": null,
+      "numero_serie": null,
+      "ubicacion": null,
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": "Full Test Client",
+      "cliente_id": 52,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2026-01-15T06:38:49.390Z",
+      "actualizado_en": "2026-01-15T06:38:49.390Z"
+    },
+    {
+      "id": 89,
+      "nombre": "Full Test Machine",
+      "marca": null,
+      "modelo": null,
+      "numero_serie": null,
+      "ubicacion": null,
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": "Full Test Client",
+      "cliente_id": 53,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2026-01-15T06:40:23.557Z",
+      "actualizado_en": "2026-01-15T06:40:23.557Z"
+    },
+    {
+      "id": 90,
+      "nombre": "Full Test Machine",
+      "marca": null,
+      "modelo": null,
+      "numero_serie": null,
+      "ubicacion": null,
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": "Full Test Client",
+      "cliente_id": 54,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2026-01-15T06:43:08.134Z",
+      "actualizado_en": "2026-01-15T06:43:08.134Z"
+    },
+    {
+      "id": 91,
+      "nombre": "Full Test Machine",
+      "marca": null,
+      "modelo": null,
+      "numero_serie": null,
+      "ubicacion": null,
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": "Full Test Client",
+      "cliente_id": 55,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2026-01-15T06:44:43.792Z",
+      "actualizado_en": "2026-01-15T06:44:43.792Z"
+    },
+    {
+      "id": 92,
+      "nombre": "Full Test Machine",
+      "marca": null,
+      "modelo": null,
+      "numero_serie": null,
+      "ubicacion": null,
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": "Full Test Client",
+      "cliente_id": 56,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2026-01-15T06:47:14.304Z",
+      "actualizado_en": "2026-01-15T06:47:14.304Z"
+    },
+    {
+      "id": 93,
+      "nombre": "Full Test Machine",
+      "marca": null,
+      "modelo": null,
+      "numero_serie": null,
+      "ubicacion": null,
+      "estado": "activo",
+      "aplicacion": null,
+      "cliente": "Full Test Client",
+      "cliente_id": 57,
+      "anio_venta": null,
+      "mantenciones": [],
+      "creado_en": "2026-01-15T06:48:15.951Z",
+      "actualizado_en": "2026-01-15T06:48:15.951Z"
     }
   ],
   "clientes": [
@@ -1507,6 +2124,116 @@
       "email": "contacto@gimnasiopower.com",
       "telefono": "555-2252",
       "creado_en": "2025-12-26T05:58:06.704Z"
+    },
+    {
+      "id": 47,
+      "nombre": "Test Client Ltd",
+      "empresa": null,
+      "email": "contact@client.com",
+      "telefono": "123456789",
+      "ubicacion": null,
+      "creado_en": "2026-01-15T06:17:29.626Z",
+      "actualizado_en": "2026-01-15T06:17:29.626Z"
+    },
+    {
+      "id": 48,
+      "nombre": "Test Client Ltd",
+      "empresa": null,
+      "email": "contact@client.com",
+      "telefono": "123456789",
+      "ubicacion": null,
+      "creado_en": "2026-01-15T06:18:08.771Z",
+      "actualizado_en": "2026-01-15T06:18:08.771Z"
+    },
+    {
+      "id": 49,
+      "nombre": "Test Client Ltd",
+      "empresa": null,
+      "email": "contact@client.com",
+      "telefono": "123456789",
+      "ubicacion": null,
+      "creado_en": "2026-01-15T06:19:06.746Z",
+      "actualizado_en": "2026-01-15T06:19:06.746Z"
+    },
+    {
+      "id": 50,
+      "nombre": "Full Test Client",
+      "empresa": "Full Corp",
+      "email": "full@test.com",
+      "telefono": null,
+      "ubicacion": null,
+      "creado_en": "2026-01-15T06:36:58.336Z",
+      "actualizado_en": "2026-01-15T06:36:58.336Z"
+    },
+    {
+      "id": 51,
+      "nombre": "Full Test Client",
+      "empresa": "Full Corp",
+      "email": "full@test.com",
+      "telefono": null,
+      "ubicacion": null,
+      "creado_en": "2026-01-15T06:38:07.492Z",
+      "actualizado_en": "2026-01-15T06:38:07.492Z"
+    },
+    {
+      "id": 52,
+      "nombre": "Full Test Client",
+      "empresa": "Full Corp",
+      "email": "full@test.com",
+      "telefono": null,
+      "ubicacion": null,
+      "creado_en": "2026-01-15T06:38:49.386Z",
+      "actualizado_en": "2026-01-15T06:38:49.386Z"
+    },
+    {
+      "id": 53,
+      "nombre": "Full Test Client",
+      "empresa": "Full Corp",
+      "email": "full@test.com",
+      "telefono": null,
+      "ubicacion": null,
+      "creado_en": "2026-01-15T06:40:23.553Z",
+      "actualizado_en": "2026-01-15T06:40:23.553Z"
+    },
+    {
+      "id": 54,
+      "nombre": "Full Test Client",
+      "empresa": "Full Corp",
+      "email": "full@test.com",
+      "telefono": null,
+      "ubicacion": null,
+      "creado_en": "2026-01-15T06:43:08.130Z",
+      "actualizado_en": "2026-01-15T06:43:08.130Z"
+    },
+    {
+      "id": 55,
+      "nombre": "Full Test Client",
+      "empresa": "Full Corp",
+      "email": "full@test.com",
+      "telefono": null,
+      "ubicacion": null,
+      "creado_en": "2026-01-15T06:44:43.788Z",
+      "actualizado_en": "2026-01-15T06:44:43.788Z"
+    },
+    {
+      "id": 56,
+      "nombre": "Full Test Client",
+      "empresa": "Full Corp",
+      "email": "full@test.com",
+      "telefono": null,
+      "ubicacion": null,
+      "creado_en": "2026-01-15T06:47:14.299Z",
+      "actualizado_en": "2026-01-15T06:47:14.299Z"
+    },
+    {
+      "id": 57,
+      "nombre": "Full Test Client",
+      "empresa": "Full Corp",
+      "email": "full@test.com",
+      "telefono": null,
+      "ubicacion": null,
+      "creado_en": "2026-01-15T06:48:15.947Z",
+      "actualizado_en": "2026-01-15T06:48:15.947Z"
     }
   ]
 }
