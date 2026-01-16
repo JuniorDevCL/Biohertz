@@ -43,23 +43,23 @@
         </div>
 
         <nav class="flex-1 px-4 space-y-2 mt-4">
-            <a href="/dashboard" class="sidebar-link hover:text-blue-400">
+            <a href="/dashboard" class="sidebar-link hover:text-orange-400">
                 <i class="ph ph-squares-four"></i>
                 <span>Dashboard</span>
             </a>
-            <a href="/tickets" class="sidebar-link hover:text-blue-400">
+            <a href="/tickets" class="sidebar-link hover:text-orange-400">
                 <i class="ph ph-ticket"></i>
                 <span>Tickets</span>
             </a>
-            <a href="/clientes" class="sidebar-link hover:text-blue-400">
+            <a href="/clientes" class="sidebar-link hover:text-orange-400">
                 <i class="ph ph-users"></i>
                 <span>Clientes</span>
             </a>
-            <a href="/equipos" class="sidebar-link hover:text-blue-400">
+            <a href="/equipos" class="sidebar-link hover:text-orange-400">
                 <i class="ph ph-desktop"></i>
                 <span>Equipos</span>
             </a>
-            <a href="/calendario" class="sidebar-link hover:text-blue-400">
+            <a href="/calendario" class="sidebar-link hover:text-orange-400">
                 <i class="ph ph-calendar-blank"></i>
                 <span>Calendario</span>
             </a>
@@ -67,7 +67,7 @@
 
         <div class="p-4 border-t border-slate-800">
             <div class="flex items-center gap-3 px-2 py-2">
-                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">
+                <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-xs font-bold">
                     <%= typeof user !== 'undefined' ? user.nombre.charAt(0).toUpperCase() : 'U' %>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -136,8 +136,8 @@
         const currentPath = window.location.pathname;
         document.querySelectorAll('.sidebar-link').forEach(link => {
             if (link.getAttribute('href') === currentPath) {
-                link.classList.add('active', 'bg-slate-800', 'text-blue-400');
-                link.querySelector('i').classList.add('text-blue-400');
+                link.classList.add('active', 'bg-slate-800', 'text-orange-400');
+                link.querySelector('i').classList.add('text-orange-400');
             }
         });
     </script>
