@@ -91,7 +91,13 @@
                                                 Eliminar
                                             </button>
                                         <% } %>
-                                        <button type="button" onclick="openMantencionModal('<%= equipo.id %>', <%- JSON.stringify(equipo.nombre || '') %>)" class="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-200 text-xs font-medium border border-emerald-500/40 transition-colors" title="Registrar mantención">
+                                        <button 
+                                            type="button" 
+                                            data-equipo-id="<%= equipo.id %>" 
+                                            data-equipo-nombre="<%- equipo.nombre || '' %>" 
+                                            onclick="openMantencionDesdeBoton(this)" 
+                                            class="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-200 text-xs font-medium border border-emerald-500/40 transition-colors" 
+                                            title="Registrar mantención">
                                             <i class="ph ph-wrench text-sm mr-1.5"></i>
                                             Mantención
                                         </button>
@@ -335,6 +341,13 @@
 </div>
 
 <script>
+function openMantencionDesdeBoton(btn) {
+    if (!btn) return;
+    const id = btn.dataset.equipoId || '';
+    const nombre = btn.dataset.equipoNombre || '';
+    openMantencionModal(id, nombre);
+}
+
 function openMantencionModal(id, nombre) {
     const modal = document.getElementById('mantencion-modal');
     const idInput = document.getElementById('mantencion-equipo-id');
