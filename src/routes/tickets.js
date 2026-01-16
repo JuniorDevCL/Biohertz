@@ -169,7 +169,7 @@ router.patch('/:id/status', authRequired, async (req, res) => {
 router.get('/', authRequired, async (req, res) => {
   try {
     await ensureSchema();
-    const { estado, asignado_a, equipo_id, q, limit: limitStr, offset: offsetStr } = req.query;
+    const { estado, asignado_a, equipo_id, q, tipo, limit: limitStr, offset: offsetStr } = req.query;
     const where = [];
     const values = [];
 
@@ -184,6 +184,10 @@ router.get('/', authRequired, async (req, res) => {
     if (equipo_id) {
       values.push(Number(equipo_id));
       where.push(`t.equipo_id = $${values.length}`);
+    }
+    if (tipo) {
+      values.push(String(tipo).trim());
+      where.push(`t.tipo = $${values.length}`);
     }
     if (q) {
       values.push(`%${q}%`);
@@ -224,6 +228,8 @@ router.get('/', authRequired, async (req, res) => {
       clientes: clientesRes.rows,
       usuarios: usuariosRes.rows,
       totalTickets,
+      query: q || '',
+      queryTipo: tipo || '',
       title: 'Tickets - BIOHERTS',
       user: req.user || req.session.user || { nombre: 'Usuario' }
     });

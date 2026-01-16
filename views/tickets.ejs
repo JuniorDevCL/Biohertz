@@ -32,6 +32,29 @@
     </div>
 
     <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-6">
+        <form action="/tickets" method="GET" class="mb-4 flex flex-wrap items-center gap-3">
+            <div class="flex-1 min-w-[200px]">
+                <input 
+                    type="text" 
+                    name="q" 
+                    value="<%= typeof query !== 'undefined' ? query : '' %>" 
+                    placeholder="Buscar por título o descripción" 
+                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            </div>
+            <div>
+                <select name="tipo" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    <option value="">Todos los tipos</option>
+                    <option value="mantencion" <%= queryTipo === 'mantencion' ? 'selected' : '' %>>Mantención (M)</option>
+                    <option value="visita_tecnica" <%= queryTipo === 'visita_tecnica' ? 'selected' : '' %>>Visita técnica (V)</option>
+                    <option value="garantia" <%= queryTipo === 'garantia' ? 'selected' : '' %>>Garantía (G)</option>
+                </select>
+            </div>
+            <div>
+                <button type="submit" class="bg-slate-800 hover:bg-slate-700 text-slate-100 px-4 py-2 rounded-lg text-sm border border-slate-700">
+                    Filtrar
+                </button>
+            </div>
+        </form>
         <% if (typeof tickets !== 'undefined' && tickets && tickets.length > 0) { %>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
