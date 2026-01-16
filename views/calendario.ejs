@@ -123,6 +123,16 @@ const calendarEventsByDate = {};
 const calendarEventsById = {};
 const calendarCanEditEvents = true;
 
+const calendarOpenTickets = <%- JSON.stringify(typeof openTickets !== 'undefined' ? openTickets : []) %>;
+const calendarTicketsByTipo = {};
+const calendarTicketsById = {};
+calendarOpenTickets.forEach(t => {
+    const tipo = t.tipo || 'otros';
+    if (!calendarTicketsByTipo[tipo]) calendarTicketsByTipo[tipo] = [];
+    calendarTicketsByTipo[tipo].push(t);
+    calendarTicketsById[String(t.id)] = t;
+});
+
 <% weeks.forEach(function(week) { %>
     <% week.forEach(function(day) { if (day) { %>
         calendarEventsByDate["<%= day.dateKey %>"] = <%- JSON.stringify(day.events || []) %>;
@@ -136,6 +146,62 @@ Object.keys(calendarEventsByDate).forEach(function (key) {
             if (ev && typeof ev.id !== 'undefined') {
                 calendarEventsById[String(ev.id)] = ev;
             }
+        });
+    }
+});
+
+function fillTicketSelect(selectEl, tipo, selectedId) {
+    if (!selectEl) return;
+    selectEl.innerHTML = '';
+    if (!tipo) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Selecciona tipo primero';
+        selectEl.appendChild(opt);
+        selectEl.disabled = true;
+        return;
+    }
+    const list = calendarTicketsByTipo[tipo] || [];
+    if (!list.length) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Sin tickets abiertos para este tipo';
+        selectEl.appendChild(opt);
+        selectEl.disabled = true;
+        return;
+    }
+    selectEl.disabled = false;
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Selecciona ticket';
+    selectEl.appendChild(placeholder);
+    list.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = (t.codigo ? t.codigo + ' - ' : '') + (t.titulo || '');
+        if (selectedId && String(selectedId) === String(t.id)) {
+            opt.selected = true;
+        }
+        selectEl.appendChild(opt);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const newTipo = document.getElementById('new-event-ticket-tipo');
+    const newTicket = document.getElementById('new-event-ticket-id');
+    if (newTipo && newTicket) {
+        newTipo.addEventListener('change', function () {
+            fillTicketSelect(newTicket, newTipo.value || '', null);
+        });
+        fillTicketSelect(newTicket, newTipo.value || '', null);
+    }
+
+    const editTipo = document.getElementById('edit-event-ticket-tipo');
+    const editTicket = document.getElementById('edit-event-ticket-id');
+    if (editTipo && editTicket) {
+        editTipo.addEventListener('change', function () {
+            const current = editTicket.value || null;
+            fillTicketSelect(editTicket, editTipo.value || '', current);
         });
     }
 });
@@ -251,7 +317,23 @@ function openEditEvent(id) {
     document.getElementById('edit-event-hora-fin').value = ev.hora_fin ? String(ev.hora_fin).slice(0, 5) : '';
     document.getElementById('edit-event-descripcion').value = ev.descripcion || '';
     document.getElementById('edit-event-tipo').value = ev.tipo || '';
-    document.getElementById('edit-event-ticket-id').value = ev.ticket_id || '';
+
+    const editTipo = document.getElementById('edit-event-ticket-tipo');
+    const editTicket = document.getElementById('edit-event-ticket-id');
+    if (editTipo && editTicket) {
+        const related = ev.ticket_id ? calendarTicketsById[String(ev.ticket_id)] : null;
+        const tipoTicket = related && related.tipo ? related.tipo : '';
+        editTipo.value = tipoTicket || '';
+        fillTicketSelect(editTicket, tipoTicket || '', ev.ticket_id || null);
+        if (!related && ev.ticket_id) {
+            const opt = document.createElement('option');
+            opt.value = ev.ticket_id;
+            opt.textContent = 'Ticket #' + ev.ticket_id;
+            opt.selected = true;
+            editTicket.appendChild(opt);
+            editTicket.disabled = false;
+        }
+    }
 
     document.getElementById('edit-event-modal').classList.remove('hidden');
 }
@@ -367,8 +449,22 @@ async function deleteEvent(id) {
                 <textarea name="descripcion" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500"></textarea>
             </div>
             <div>
-                <label class="block text-slate-400 text-sm mb-2">ID Ticket (Opcional)</label>
-                <input type="number" name="ticket_id" min="1" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                <label class="block text-slate-400 text-sm mb-2">Ticket asociado (Opcional)</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <select id="new-event-ticket-tipo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:outline-none focus:border-blue-500">
+                            <option value="">Sin ticket</option>
+                            <option value="mantencion">Mantención (M)</option>
+                            <option value="visita_tecnica">Visita Técnica (V)</option>
+                            <option value="garantia">Garantía (G)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select id="new-event-ticket-id" name="ticket_id" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:outline-none focus:border-blue-500">
+                            <option value="">Selecciona tipo primero</option>
+                        </select>
+                    </div>
+                </div>
             </div>
             <div class="flex justify-end gap-3 mt-4">
                 <button type="button" onclick="document.getElementById('new-event-modal').classList.add('hidden')" class="px-4 py-2 text-slate-300 hover:text-white text-sm">
@@ -421,8 +517,22 @@ async function deleteEvent(id) {
                 <textarea id="edit-event-descripcion" name="descripcion" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500"></textarea>
             </div>
             <div>
-                <label class="block text-slate-400 text-sm mb-2">ID Ticket (Opcional)</label>
-                <input type="number" id="edit-event-ticket-id" name="ticket_id" min="1" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                <label class="block text-slate-400 text-sm mb-2">Ticket asociado (Opcional)</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <select id="edit-event-ticket-tipo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:outline-none focus:border-blue-500">
+                            <option value="">Sin ticket</option>
+                            <option value="mantencion">Mantención (M)</option>
+                            <option value="visita_tecnica">Visita Técnica (V)</option>
+                            <option value="garantia">Garantía (G)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select id="edit-event-ticket-id" name="ticket_id" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:outline-none focus:border-blue-500">
+                            <option value="">Selecciona tipo primero</option>
+                        </select>
+                    </div>
+                </div>
             </div>
             <div class="flex justify-end gap-3 mt-4">
                 <button type="button" onclick="document.getElementById('edit-event-modal').classList.add('hidden')" class="px-4 py-2 text-slate-300 hover:text-white text-sm">

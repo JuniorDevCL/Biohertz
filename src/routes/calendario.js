@@ -118,6 +118,13 @@ router.get('/', authRequired, async (req, res) => {
     );
 
     const events = eventsRes.rows;
+    const openTicketsRes = await pool.query(
+      `SELECT id, codigo, titulo, tipo, estado
+       FROM tickets
+       WHERE estado IS NULL OR estado NOT IN ('hecho', 'terminado')
+       ORDER BY creado_en DESC`
+    );
+    const openTickets = openTicketsRes.rows;
     const weeks = buildCalendarWeeks(year, month, events);
 
     const monthNames = [
@@ -153,7 +160,8 @@ router.get('/', authRequired, async (req, res) => {
       prevMonth,
       prevYear,
       nextMonth,
-      nextYear
+      nextYear,
+      openTickets
     });
   } catch (err) {
     console.error('Error al renderizar calendario:', err);

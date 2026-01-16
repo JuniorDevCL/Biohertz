@@ -136,3 +136,10 @@
     @apply h-8 w-8 rounded-full bg-blue-600/30 text-blue-300 flex items-center justify-center text-xs font-bold;
   }
 }
+
+@layer base {
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+}

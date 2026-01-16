@@ -554,6 +554,11 @@ video {
   display: none;
 }
 
+input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
 .\!container {
   width: 100% !important;
 }
