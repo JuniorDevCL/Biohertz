@@ -91,10 +91,10 @@
                                                 Eliminar
                                             </button>
                                         <% } %>
-                                        <a href="/equipos/<%= equipo.id %>" class="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-600/60 transition-colors" title="Ver detalle">
+                                        <button type="button" onclick="openDetalleEquipo('<%= equipo.id %>')" class="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-600/60 transition-colors" title="Ver detalle">
                                             <i class="ph ph-eye text-sm mr-1.5"></i>
                                             Ver detalle
-                                        </a>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -220,7 +220,147 @@
     </div>
 </div>
 
+<div id="detalle-equipo-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+    <div class="bg-slate-900 p-6 rounded-xl w-full max-w-xl shadow-2xl border border-slate-700 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <p class="text-xs uppercase tracking-wide text-slate-500">Detalle de equipo</p>
+                <h3 id="detalle-equipo-nombre" class="text-xl font-bold text-white mt-1"></h3>
+            </div>
+            <button type="button" onclick="document.getElementById('detalle-equipo-modal').classList.add('hidden')" class="text-slate-400 hover:text-white">
+                <i class="ph ph-x text-lg"></i>
+            </button>
+        </div>
+        <div class="space-y-4 text-sm">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-xs text-slate-500 mb-1">Marca / Modelo</p>
+                    <p id="detalle-equipo-marca" class="text-slate-200"></p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 mb-1">Número de serie</p>
+                    <p id="detalle-equipo-serie" class="text-slate-200"></p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 mb-1">Ubicación</p>
+                    <p id="detalle-equipo-ubicacion" class="text-slate-200"></p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 mb-1">Cliente</p>
+                    <p id="detalle-equipo-cliente" class="text-slate-200"></p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 mb-1">Aplicación</p>
+                    <p id="detalle-equipo-aplicacion" class="text-slate-200"></p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 mb-1">Año de venta</p>
+                    <p id="detalle-equipo-anio" class="text-slate-200"></p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 mb-1">Estado</p>
+                    <span id="detalle-equipo-estado" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"></span>
+                </div>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500 mb-2">Mantenciones registradas</p>
+                <div id="detalle-equipo-mantenciones" class="space-y-2 text-xs">
+                </div>
+            </div>
+            <div class="text-xs text-slate-500 mt-2">
+                <span id="detalle-equipo-creado"></span>
+            </div>
+        </div>
+        <div class="mt-6 flex justify-end">
+            <button type="button" onclick="document.getElementById('detalle-equipo-modal').classList.add('hidden')" class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
+async function openDetalleEquipo(id) {
+    try {
+        const res = await fetch(`/equipos/${id}`, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        if (!res.ok) {
+            alert('Error al cargar el equipo');
+            return;
+        }
+        const e = await res.json();
+
+        const nombreEl = document.getElementById('detalle-equipo-nombre');
+        const marcaEl = document.getElementById('detalle-equipo-marca');
+        const serieEl = document.getElementById('detalle-equipo-serie');
+        const ubicacionEl = document.getElementById('detalle-equipo-ubicacion');
+        const clienteEl = document.getElementById('detalle-equipo-cliente');
+        const aplicacionEl = document.getElementById('detalle-equipo-aplicacion');
+        const anioEl = document.getElementById('detalle-equipo-anio');
+        const estadoEl = document.getElementById('detalle-equipo-estado');
+        const mantencionesEl = document.getElementById('detalle-equipo-mantenciones');
+        const creadoEl = document.getElementById('detalle-equipo-creado');
+
+        if (!nombreEl) return;
+
+        nombreEl.textContent = e.nombre || '';
+        marcaEl.textContent = [e.marca || '', e.modelo || ''].filter(Boolean).join(' - ') || '-';
+        serieEl.textContent = e.numero_serie || '-';
+        ubicacionEl.textContent = e.ubicacion || '-';
+        clienteEl.textContent = e.cliente || 'Sin asignar';
+        aplicacionEl.textContent = e.aplicacion || '-';
+        anioEl.textContent = e.anio_venta || '-';
+
+        const estado = e.estado || 'desconocido';
+        let estadoClass = 'bg-slate-700 text-slate-200 border border-slate-600';
+        if (estado === 'operativo') {
+            estadoClass = 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/40';
+        } else if (estado === 'en_reparacion') {
+            estadoClass = 'bg-amber-500/20 text-amber-200 border border-amber-400/60';
+        } else if (estado === 'baja') {
+            estadoClass = 'bg-red-600/20 text-red-300 border border-red-500/40';
+        }
+        estadoEl.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ' + estadoClass;
+        estadoEl.textContent = estado;
+
+        mantencionesEl.innerHTML = '';
+        const list = Array.isArray(e.mantenciones) ? e.mantenciones : [];
+        if (list.length === 0) {
+            mantencionesEl.innerHTML = '<p class="text-slate-500">No hay mantenciones registradas.</p>';
+        } else {
+            list.forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'bg-slate-800/70 border border-slate-700 rounded-lg px-3 py-2';
+                const fecha = m.fecha || '';
+                const trabajo = m.trabajo || '';
+                const nota = m.nota || '';
+                div.innerHTML =
+                    '<div class="flex justify-between items-center gap-2 mb-1">' +
+                        '<span class="text-[11px] font-medium text-slate-200">' + (trabajo || 'Trabajo') + '</span>' +
+                        '<span class="text-[10px] text-slate-400">' + (fecha || '') + '</span>' +
+                    '</div>' +
+                    (nota ? '<div class="text-[11px] text-slate-400 whitespace-pre-wrap">' + nota + '</div>' : '');
+                mantencionesEl.appendChild(div);
+            });
+        }
+
+        const creadoEn = e.creado_en ? new Date(e.creado_en) : null;
+        const actualizadoEn = e.actualizado_en ? new Date(e.actualizado_en) : null;
+        const partes = [];
+        if (creadoEn) partes.push('Creado el ' + creadoEn.toLocaleString('es-CL'));
+        if (actualizadoEn) partes.push('Actualizado el ' + actualizadoEn.toLocaleString('es-CL'));
+        creadoEl.textContent = partes.join(' · ');
+
+        document.getElementById('detalle-equipo-modal').classList.remove('hidden');
+    } catch (err) {
+        console.error(err);
+        alert('Error de conexión');
+    }
+}
+
 async function openEditEquipo(id) {
     try {
         const res = await fetch(`/equipos/${id}`);
