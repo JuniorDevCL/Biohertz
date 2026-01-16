@@ -1,8 +1,39 @@
 import { Router } from 'express';
 import pool from '../db.js';
 import authRequired from '../middleware/authRequired.js';
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
 
 const router = Router();
+
+const mantencionesDir = path.join(process.cwd(), 'public', 'mantenciones');
+try {
+  fs.mkdirSync(mantencionesDir, { recursive: true });
+} catch {}
+
+const mantencionesStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, mantencionesDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '';
+    const base = path.basename(file.originalname, ext).replace(/\s+/g, '-').toLowerCase();
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, `eq${req.params?.id || 'x'}-${base}-${unique}${ext}`);
+  }
+});
+
+const mantencionesUpload = multer({
+  storage: mantencionesStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter(req, file, cb) {
+    if (file.mimetype !== 'application/pdf' && file.mimetype !== 'image/png') {
+      return cb(new Error('Solo se permiten archivos PNG o PDF'));
+    }
+    cb(null, true);
+  }
+});
 
 let extendedReady = false;
 async function ensureExtendedSchema() {
@@ -263,15 +294,31 @@ router.get('/:id/mantenciones', authRequired, async (req, res) => {
   }
 });
 
-router.post('/:id/mantenciones', authRequired, async (req, res) => {
+router.post('/:id/mantenciones', authRequired, mantencionesUpload.single('archivo'), async (req, res) => {
   try {
     await ensureExtendedSchema();
     const { id } = req.params;
-    const { fecha, trabajo, nota } = req.body;
+    const { fecha, hora, trabajo, nota, realizado_por } = req.body;
+    const file = req.file || null;
     const r = await pool.query('SELECT mantenciones FROM equipos WHERE id = $1', [id]);
     if (r.rowCount === 0) return res.status(404).json({ error: 'Equipo no encontrado' });
     const list = Array.isArray(r.rows[0].mantenciones) ? r.rows[0].mantenciones : [];
-    const entry = { id: Date.now(), fecha: fecha || null, trabajo: trabajo || '', nota: nota || '' };
+    const archivo = file
+      ? {
+          nombre: file.originalname,
+          ruta: `/mantenciones/${file.filename}`,
+          tipo: file.mimetype
+        }
+      : null;
+    const entry = {
+      id: Date.now(),
+      fecha: fecha || null,
+      hora: hora || null,
+      trabajo: trabajo || '',
+      nota: nota || '',
+      realizado_por: realizado_por || (req.user && req.user.nombre) || null,
+      archivo
+    };
     const next = [...list, entry];
     const u = await pool.query('UPDATE equipos SET mantenciones = $1::jsonb, actualizado_en = NOW() WHERE id = $2 RETURNING mantenciones', [JSON.stringify(next), id]);
     res.status(201).json(u.rows[0].mantenciones);

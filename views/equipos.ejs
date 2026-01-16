@@ -91,6 +91,10 @@
                                                 Eliminar
                                             </button>
                                         <% } %>
+                                        <button type="button" onclick="openMantencionModal('<%= equipo.id %>', <%- JSON.stringify(equipo.nombre || '') %>)" class="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-200 text-xs font-medium border border-emerald-500/40 transition-colors" title="Registrar mantención">
+                                            <i class="ph ph-wrench text-sm mr-1.5"></i>
+                                            Mantención
+                                        </button>
                                         <button type="button" onclick="openDetalleEquipo('<%= equipo.id %>')" class="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-600/60 transition-colors" title="Ver detalle">
                                             <i class="ph ph-eye text-sm mr-1.5"></i>
                                             Ver detalle
@@ -220,6 +224,57 @@
     </div>
 </div>
 
+<div id="mantencion-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+    <div class="bg-slate-900 p-6 rounded-xl w-full max-w-md shadow-2xl border border-slate-700 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <p class="text-xs uppercase tracking-wide text-slate-500">Registrar mantención</p>
+                <h3 id="mantencion-equipo-nombre" class="text-xl font-bold text-white mt-1"></h3>
+            </div>
+            <button type="button" onclick="closeMantencionModal()" class="text-slate-400 hover:text-white">
+                <i class="ph ph-x text-lg"></i>
+            </button>
+        </div>
+        <form id="mantencion-form" onsubmit="submitMantencion(event)" enctype="multipart/form-data" class="space-y-4 text-sm">
+            <input type="hidden" id="mantencion-equipo-id" name="equipo_id">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-slate-400 text-xs mb-1">Fecha</label>
+                    <input type="date" name="fecha" required class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-xs mb-1">Hora</label>
+                    <input type="time" name="hora" required class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+            <div>
+                <label class="block text-slate-400 text-xs mb-1">Realizado por</label>
+                <input type="text" name="realizado_por" placeholder="Nombre de quien realiza la mantención" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-slate-400 text-xs mb-1">Trabajo realizado</label>
+                <textarea name="trabajo" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+            <div>
+                <label class="block text-slate-400 text-xs mb-1">Notas adicionales</label>
+                <textarea name="nota" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+            <div>
+                <label class="block text-slate-400 text-xs mb-1">Archivo de respaldo (PNG o PDF)</label>
+                <input type="file" name="archivo" accept=".png,.pdf" class="w-full text-xs text-slate-300">
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeMantencionModal()" class="px-4 py-2 text-slate-300 hover:text-white text-xs">
+                    Cancelar
+                </button>
+                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-xs font-medium">
+                    Guardar mantención
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div id="detalle-equipo-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
     <div class="bg-slate-900 p-6 rounded-xl w-full max-w-xl shadow-2xl border border-slate-700 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-4">
@@ -280,6 +335,64 @@
 </div>
 
 <script>
+function openMantencionModal(id, nombre) {
+    const modal = document.getElementById('mantencion-modal');
+    const idInput = document.getElementById('mantencion-equipo-id');
+    const nombreEl = document.getElementById('mantencion-equipo-nombre');
+    if (!modal || !idInput) return;
+    idInput.value = id || '';
+    if (nombreEl) {
+        nombreEl.textContent = nombre || '';
+    }
+    modal.classList.remove('hidden');
+}
+
+function closeMantencionModal() {
+    const modal = document.getElementById('mantencion-modal');
+    const form = document.getElementById('mantencion-form');
+    if (form) {
+        form.reset();
+    }
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+async function submitMantencion(ev) {
+    ev.preventDefault();
+    const form = ev.target;
+    const idInput = document.getElementById('mantencion-equipo-id');
+    const id = idInput ? idInput.value : '';
+    if (!id) {
+        alert('ID de equipo no válido');
+        return;
+    }
+    const formData = new FormData(form);
+    try {
+        const res = await fetch(`/equipos/${id}/mantenciones`, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json'
+            },
+            body: formData
+        });
+        if (res.ok) {
+            closeMantencionModal();
+            window.location.reload();
+        } else {
+            let msg = 'Error ' + res.status;
+            try {
+                const err = await res.json();
+                if (err && err.error) msg += ': ' + err.error;
+            } catch (_) {}
+            alert(msg);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error de conexión');
+    }
+}
+
 async function openDetalleEquipo(id) {
     try {
         const res = await fetch(`/equipos/${id}`, {
@@ -335,14 +448,38 @@ async function openDetalleEquipo(id) {
                 const div = document.createElement('div');
                 div.className = 'bg-slate-800/70 border border-slate-700 rounded-lg px-3 py-2';
                 const fecha = m.fecha || '';
+                const hora = m.hora || '';
                 const trabajo = m.trabajo || '';
                 const nota = m.nota || '';
+                const realizado = m.realizado_por || '';
+                const archivo = m.archivo || null;
+                let fechaHoraTexto = '';
+                if (fecha && hora) {
+                    fechaHoraTexto = fecha + ' ' + hora;
+                } else if (fecha) {
+                    fechaHoraTexto = fecha;
+                } else if (hora) {
+                    fechaHoraTexto = hora;
+                }
+                let archivoHtml = '';
+                if (archivo && archivo.ruta) {
+                    archivoHtml =
+                        '<div class="mt-1">' +
+                            '<a href="' + archivo.ruta + '" target="_blank" class="text-[10px] text-blue-400 hover:text-blue-300 underline">Ver archivo</a>' +
+                        '</div>';
+                }
                 div.innerHTML =
-                    '<div class="flex justify-between items-center gap-2 mb-1">' +
-                        '<span class="text-[11px] font-medium text-slate-200">' + (trabajo || 'Trabajo') + '</span>' +
-                        '<span class="text-[10px] text-slate-400">' + (fecha || '') + '</span>' +
+                    '<div class="flex justify-between items-start gap-2 mb-1">' +
+                        '<div class="flex-1 min-w-0">' +
+                            '<div class="text-[11px] font-medium text-slate-200 truncate">' + (trabajo || 'Mantención') + '</div>' +
+                            (realizado ? '<div class="text-[10px] text-slate-400">Realizado por: ' + realizado + '</div>' : '') +
+                        '</div>' +
+                        '<div class="text-right flex-shrink-0">' +
+                            (fechaHoraTexto ? '<div class="text-[10px] text-slate-400">' + fechaHoraTexto + '</div>' : '') +
+                            archivoHtml +
+                        '</div>' +
                     '</div>' +
-                    (nota ? '<div class="text-[11px] text-slate-400 whitespace-pre-wrap">' + nota + '</div>' : '');
+                    (nota ? '<div class="text-[11px] text-slate-400 whitespace-pre-wrap mt-1">' + nota + '</div>' : '');
                 mantencionesEl.appendChild(div);
             });
         }
