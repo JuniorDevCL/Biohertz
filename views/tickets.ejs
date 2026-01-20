@@ -327,6 +327,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (exact) {
                             if (inputNombre) inputNombre.value = exact.nombre || '';
                             if (inputModelo) inputModelo.value = exact.modelo || '';
+                            if (inputMarca) inputMarca.value = exact.marca || '';
+                            if (inputUbicacion) inputUbicacion.value = exact.ubicacion || '';
                             if (msgSerie) {
                                 msgSerie.textContent = 'Equipo encontrado. Datos cargados.';
                                 msgSerie.className = 'text-[10px] mt-1 h-4 text-emerald-400';
@@ -764,7 +766,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <div id="ticket-details-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center">
-    <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-lg p-6 shadow-2xl">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-4xl p-6 shadow-2xl">
         <div class="flex justify-between items-start mb-4">
             <div>
                 <h3 id="ticket-details-title" class="text-xl font-bold text-white"></h3>

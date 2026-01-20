@@ -70,7 +70,7 @@ async function ensureSchema() {
 router.post('/', authRequired, async (req, res) => {
   try {
     await ensureSchema();
-    const { titulo, descripcion, asignado_a, equipo_id, cliente_id, tipo, garantia, notificar_a, lugar_instalacion, telefono_contacto, numero_serie, equipo_nombre, equipo_modelo } = req.body;
+    const { titulo, descripcion, asignado_a, equipo_id, cliente_id, tipo, garantia, notificar_a, lugar_instalacion, telefono_contacto, numero_serie, equipo_nombre, equipo_modelo, equipo_marca, equipo_ubicacion } = req.body;
 
     const cleanTitulo = String(titulo || '').trim();
 
@@ -93,6 +93,8 @@ router.post('/', authRequired, async (req, res) => {
             // Equipo no existe, crearlo
             const cleanNombreEquipo = String(equipo_nombre || `Equipo ${cleanSerie}`).trim();
             const cleanModelo = String(equipo_modelo || '').trim();
+            const cleanMarca = String(equipo_marca || '').trim();
+            const cleanUbicacion = String(equipo_ubicacion || '').trim();
             const cid = (cliente_id && cliente_id !== 'STOCK') ? parseInt(cliente_id) : null;
             
             // Intentar obtener nombre del cliente para desnormalización en equipos (campo 'cliente')
@@ -105,10 +107,10 @@ router.post('/', authRequired, async (req, res) => {
             }
 
             const newEq = await pool.query(
-                `INSERT INTO equipos (nombre, modelo, numero_serie, cliente_id, cliente, creado_en, actualizado_en, estado)
-                 VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), 'activo')
+                `INSERT INTO equipos (nombre, modelo, numero_serie, cliente_id, cliente, creado_en, actualizado_en, estado, marca, ubicacion)
+                 VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), 'activo', $6, $7)
                  RETURNING id`,
-                [cleanNombreEquipo, cleanModelo, cleanSerie, cid, clienteNombre]
+                [cleanNombreEquipo, cleanModelo, cleanSerie, cid, clienteNombre, cleanMarca, cleanUbicacion]
             );
             finalEquipoId = newEq.rows[0].id;
             
