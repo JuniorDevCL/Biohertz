@@ -489,6 +489,9 @@ router.patch('/:id/estado', authRequired, async (req, res) => {
     await ensureSchema();
     const { id } = req.params;
     const { estado, comentario } = req.body;
+    
+    console.log(`[PATCH Estado] ID: ${id}, Estado: ${estado}, Comentario: "${comentario}"`);
+
     const nuevoEstado = String(estado || '').trim();
 
     // Lista ampliada de estados validos

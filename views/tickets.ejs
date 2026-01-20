@@ -97,13 +97,14 @@
                                             </span>
                                             <% if (ticket.tipo) { %>
                                                 <span class="text-[11px] text-slate-400">
-                                                    <%= ticket.tipo === 'mantencion'
-                                                        ? 'Mantención (M)'
-                                                        : (ticket.tipo === 'visita_tecnica'
-                                                            ? 'Visita técnica (V)'
-                                                            : (ticket.tipo === 'garantia'
-                                                                ? 'Garantía (G)'
-                                                                : ticket.tipo)) %>
+                                                    <%= ticket.tipo === 'mantencion_preventiva' ? 'M. Preventiva (MP)' : 
+                                                        (ticket.tipo === 'mantencion_correctiva' ? 'M. Correctiva (MC)' : 
+                                                        (ticket.tipo === 'visita_tecnica' ? 'Visita Técnica (VT)' : ticket.tipo)) %>
+                                                </span>
+                                            <% } %>
+                                            <% if (ticket.garantia) { %>
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30 ml-1">
+                                                    GARANTÍA
                                                 </span>
                                             <% } %>
                                         </div>
@@ -167,13 +168,37 @@
                 <label class="block text-slate-400 text-sm mb-2">Título</label>
                 <input type="text" name="titulo" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
             </div>
+            <div class="mb-4 grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Tipo de ticket</label>
+                    <select name="tipo" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                        <option value="mantencion_preventiva">Mantención Preventiva (MP)</option>
+                        <option value="mantencion_correctiva">Mantención Correctiva (MC)</option>
+                        <option value="visita_tecnica">Visita Técnica (VT)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">¿Garantía?</label>
+                    <select name="garantia" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                        <option value="no">No</option>
+                        <option value="si">Sí</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Tipo de ticket</label>
-                <select name="tipo" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
-                    <option value="mantencion">Mantención (M)</option>
-                    <option value="visita_tecnica">Visita técnica (V)</option>
-                    <option value="garantia">Garantía (G)</option>
-                </select>
+                <label class="block text-slate-400 text-sm mb-2">Notificar a (Correos)</label>
+                <div class="bg-slate-900 border border-slate-700 rounded p-2 max-h-32 overflow-y-auto">
+                    <% if (typeof usuarios !== 'undefined') { %>
+                        <% usuarios.forEach(u => { %>
+                            <div class="flex items-center gap-2 mb-1 last:mb-0">
+                                <input type="checkbox" name="notificar_a" value="<%= u.id %>" id="notify_<%= u.id %>" class="rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500">
+                                <label for="notify_<%= u.id %>" class="text-sm text-slate-300 cursor-pointer select-none"><%= u.nombre %> (<%= u.email %>)</label>
+                            </div>
+                        <% }); %>
+                    <% } %>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Selecciona los usuarios que recibirán una notificación por correo.</p>
             </div>
             
             <div class="mb-4">
