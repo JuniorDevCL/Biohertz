@@ -480,25 +480,64 @@ async function loadTicketHistory(id) {
         container.innerHTML = '';
         historial.forEach(h => {
             const fecha = h.creado_en ? new Date(h.creado_en) : null;
-            const tipo = h.tipo_cambio === 'estado' ? 'Estado' : (h.tipo_cambio === 'asignacion' ? 'Asignación' : h.tipo_cambio);
+            const usuario = h.usuario_nombre || 'Usuario';
+            
             const linea = document.createElement('div');
-            linea.className = 'text-xs text-slate-300 flex flex-col border border-slate-800 rounded-md px-2 py-1 bg-slate-900/60';
+            linea.className = 'text-xs text-slate-300 flex flex-col border border-slate-800 rounded-md px-3 py-2 bg-slate-900/60 mb-2 last:mb-0';
+            
             const header = document.createElement('div');
-            header.className = 'flex justify-between items-center mb-0.5';
-            const left = document.createElement('span');
-            left.className = 'font-medium text-slate-200';
-            left.textContent = tipo;
+            header.className = 'flex justify-between items-center mb-1';
+            
+            const left = document.createElement('div');
+            left.className = 'flex items-center gap-2';
+            
+            const userSpan = document.createElement('span');
+            userSpan.className = 'font-medium text-slate-200';
+            userSpan.textContent = usuario;
+            left.appendChild(userSpan);
+
+            if (h.tipo_item === 'comentario') {
+                 const badge = document.createElement('span');
+                 badge.className = 'px-1.5 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20';
+                 badge.textContent = 'COMENTARIO';
+                 left.appendChild(badge);
+                 
+                 if (h.fase) {
+                    const phaseInfo = TICKET_PHASES.find(p => p.id === h.fase);
+                    if (phaseInfo) {
+                        const phaseBadge = document.createElement('span');
+                        phaseBadge.className = `px-1.5 py-0.5 rounded text-[10px] border ${phaseInfo.style.badge}`;
+                        phaseBadge.textContent = phaseInfo.label;
+                        left.appendChild(phaseBadge);
+                    }
+                 }
+            } else {
+                const tipoLabel = h.tipo_cambio === 'estado' ? 'CAMBIO DE ESTADO' : (h.tipo_cambio === 'asignacion' ? 'ASIGNACIÓN' : h.tipo_cambio.toUpperCase());
+                const badge = document.createElement('span');
+                badge.className = 'px-1.5 py-0.5 rounded text-[10px] bg-slate-700 text-slate-300 border border-slate-600';
+                badge.textContent = tipoLabel;
+                left.appendChild(badge);
+            }
+            
+            header.appendChild(left);
+            
             const right = document.createElement('span');
             right.className = 'text-[11px] text-slate-500';
             right.textContent = fecha ? fecha.toLocaleString() : '';
-            header.appendChild(left);
             header.appendChild(right);
+            
             const detalle = document.createElement('div');
-            detalle.className = 'text-[11px] text-slate-300';
-            const usuario = h.usuario_nombre || 'Usuario';
-            const antes = h.valor_anterior || '-';
-            const despues = h.valor_nuevo || '-';
-            detalle.textContent = `${usuario}: ${antes} → ${despues}`;
+            detalle.className = 'text-xs text-slate-300 mt-1 pl-1 border-l-2 border-slate-700';
+            
+            if (h.tipo_item === 'comentario') {
+                detalle.className = 'text-xs text-slate-200 mt-1 whitespace-pre-wrap bg-slate-950/50 p-2 rounded border border-slate-800/50';
+                detalle.textContent = h.valor_nuevo || ''; // En query mapeamos contenido a valor_nuevo
+            } else {
+                const antes = h.valor_anterior || '-';
+                const despues = h.valor_nuevo || '-';
+                detalle.innerHTML = `<span class="text-slate-500">${antes}</span> <i class="ph ph-arrow-right mx-1 text-slate-600"></i> <span class="text-slate-200 font-medium">${despues}</span>`;
+            }
+            
             linea.appendChild(header);
             linea.appendChild(detalle);
             container.appendChild(linea);
