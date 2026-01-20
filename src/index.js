@@ -24,7 +24,7 @@ const app = express();
 
 // --- FIX IMPORTANTE: PERMISO PARA TAILWIND ---
 app.use((req, res, next) => {
-    res.setHeader("Content-Security-Policy", "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com");
+    res.setHeader("Content-Security-Policy", "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com");
     next();
 });
 // ---------------------------------------------

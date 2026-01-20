@@ -44,7 +44,8 @@ async function ensureSchema() {
         'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS cliente_id INTEGER',
         'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS terminado_en TIMESTAMP',
         'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS tipo VARCHAR(50)',
-        'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS codigo VARCHAR(50)'
+        'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS codigo VARCHAR(50)',
+        'ALTER TABLE comentarios ADD COLUMN IF NOT EXISTS fase VARCHAR(50)'
       ];
 
       for (const sql of alters) {
