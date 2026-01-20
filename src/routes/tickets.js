@@ -169,7 +169,7 @@ router.patch('/:id/status', authRequired, async (req, res) => {
 router.get('/', authRequired, async (req, res) => {
   try {
     await ensureSchema();
-    const { estado, asignado_a, equipo_id, q, tipo, limit: limitStr, offset: offsetStr } = req.query;
+    const { estado, asignado_a, equipo_id, q, tipo, estado_view, limit: limitStr, offset: offsetStr } = req.query;
     const where = [];
     const values = [];
 
@@ -188,6 +188,11 @@ router.get('/', authRequired, async (req, res) => {
     if (tipo) {
       values.push(String(tipo).trim());
       where.push(`t.tipo = $${values.length}`);
+    }
+    if (estado_view === 'activos') {
+      where.push(`(t.estado IS NULL OR t.estado NOT IN ('hecho','terminado'))`);
+    } else if (estado_view === 'resueltos') {
+      where.push(`t.estado IN ('hecho','terminado')`);
     }
     if (q) {
       values.push(`%${q}%`);
@@ -230,6 +235,7 @@ router.get('/', authRequired, async (req, res) => {
       totalTickets,
       query: q || '',
       queryTipo: tipo || '',
+      estadoView: estado_view || '',
       title: 'Tickets - BIOHERTS',
       user: req.user || req.session.user || { nombre: 'Usuario' }
     });
@@ -574,7 +580,7 @@ router.patch('/:id', authRequired, async (req, res) => {
 router.post('/:id/comentarios', authRequired, async (req, res) => {
   try {
     const { id } = req.params;
-    const { contenido } = req.body;
+    const { contenido, fase } = req.body;
 
     if (!contenido) {
       return res.status(400).json({ error: 'Contenido requerido' });
@@ -586,10 +592,10 @@ router.post('/:id/comentarios', authRequired, async (req, res) => {
     }
 
     const insert = await pool.query(
-      `INSERT INTO comentarios (ticket_id, autor_id, contenido, creado_en)
-       VALUES ($1, $2, $3, NOW())
+      `INSERT INTO comentarios (ticket_id, autor_id, contenido, fase, creado_en)
+       VALUES ($1, $2, $3, $4, NOW())
        RETURNING *`,
-      [id, req.user.id, contenido]
+      [id, req.user.id, contenido, fase || null]
     );
 
     const autorRes = await pool.query('SELECT nombre FROM usuarios WHERE id = $1', [req.user.id]);

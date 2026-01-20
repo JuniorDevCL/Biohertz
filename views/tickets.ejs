@@ -50,6 +50,13 @@
                 </select>
             </div>
             <div>
+                <select name="estado_view" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    <option value="">Todos los estados</option>
+                    <option value="activos" <%= estadoView === 'activos' ? 'selected' : '' %>>Activos</option>
+                    <option value="resueltos" <%= estadoView === 'resueltos' ? 'selected' : '' %>>Resueltos</option>
+                </select>
+            </div>
+            <div>
                 <button type="submit" class="bg-slate-800 hover:bg-slate-700 text-slate-100 px-4 py-2 rounded-lg text-sm border border-slate-700">
                     Filtrar
                 </button>
@@ -103,9 +110,14 @@
                                     </button>
                                 </td>
                                 <td class="py-3 px-4">
-                                    <span class="px-2 py-1 rounded text-xs font-medium <%= ticket.estado === 'pendiente' ? 'bg-orange-500/20 text-orange-400' : (ticket.estado === 'en_proceso' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400') %>">
-                                        <%= ticket.estado %>
-                                    </span>
+                                    <div class="flex flex-col gap-1">
+                                        <span class="px-2 py-1 rounded text-xs font-medium <%= ticket.estado === 'pendiente' ? 'bg-orange-500/20 text-orange-400' : (ticket.estado === 'en_proceso' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400') %>">
+                                            <%= ticket.estado %>
+                                        </span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border <%= (ticket.estado === 'hecho' || ticket.estado === 'terminado') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40' : 'bg-amber-500/10 text-amber-400 border-amber-500/40' %>">
+                                            <%= (ticket.estado === 'hecho' || ticket.estado === 'terminado') ? 'Resuelto' : 'Activo' %>
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="py-3 px-4 text-slate-300"><%= ticket.creado_por_nombre || 'Desconocido' %></td>
                                 <td class="py-3 px-4 text-slate-300"><%= ticket.asignado_a_nombre || 'Desconocido' %></td>
@@ -202,6 +214,119 @@
 
 <script>
 let currentTicketId = null;
+let currentTicketStatus = null;
+
+const TICKET_PHASES = [
+    { id: 'ingresado', label: 'Ingresado', color: 'slate', icon: 'ph-file-text' },
+    { id: 'diagnostico', label: 'Diagnóstico', color: 'blue', icon: 'ph-stethoscope' },
+    { id: 'presupuesto', label: 'Presupuesto', color: 'amber', icon: 'ph-currency-dollar' },
+    { id: 'reparacion', label: 'Reparación', color: 'orange', icon: 'ph-wrench' },
+    { id: 'observacion', label: 'Observación', color: 'purple', icon: 'ph-eye' },
+    { id: 'terminado', label: 'Terminado', color: 'emerald', icon: 'ph-check-circle' }
+];
+
+async function updateTicketStatus(newStatus) {
+    if (!currentTicketId) return;
+    if (!confirm(`¿Cambiar estado a "${newStatus.toUpperCase()}"?`)) return;
+
+    try {
+        const res = await fetch(`/tickets/${currentTicketId}/estado`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: newStatus })
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            currentTicketStatus = data.ticket.estado;
+            renderPipeline(currentTicketStatus);
+            document.getElementById('ticket-details-estado').textContent = currentTicketStatus;
+            
+            // Recargar historial para ver el cambio
+            loadTicketHistory(currentTicketId);
+            
+            // Si estamos en la lista principal, quizás deberíamos recargarla, 
+            // pero por ahora solo actualizamos el modal.
+        } else {
+            alert('Error al actualizar estado');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Error de conexión');
+    }
+}
+
+function renderPipeline(currentStatus) {
+    const container = document.getElementById('ticket-pipeline');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // Mapeo simple para estados antiguos
+    let statusToUse = currentStatus;
+    if (currentStatus === 'pendiente') statusToUse = 'ingresado';
+    if (currentStatus === 'en_proceso') statusToUse = 'reparacion';
+    if (currentStatus === 'hecho') statusToUse = 'terminado';
+
+    const currentIndex = TICKET_PHASES.findIndex(p => p.id === statusToUse);
+    // Si no coincide (ej. estado legacy raro), default a 0
+    const activeIndex = currentIndex === -1 ? 0 : currentIndex;
+
+    TICKET_PHASES.forEach((phase, index) => {
+        const isCompleted = index < activeIndex;
+        const isActive = index === activeIndex;
+        
+        const step = document.createElement('div');
+        step.className = `flex flex-col items-center gap-1 relative z-10 cursor-pointer group`;
+        step.onclick = () => updateTicketStatus(phase.id);
+
+        // Linea conectora (excepto para el ultimo)
+        if (index < TICKET_PHASES.length - 1) {
+            const line = document.createElement('div');
+            // La linea va despues del circulo, posicion absoluta
+            // Pero es mas facil ponerla como elemento separado o background.
+            // Usemos un pseudo-elemento o un div separado si fuera grid.
+            // Aquí en flex es tricky. Vamos a simplificar: 
+            // El contenedor flex-between separa los items. 
+            // Podemos dibujar una linea detras.
+        }
+
+        let circleClass = '';
+        let iconClass = '';
+        let textClass = '';
+
+        if (isActive) {
+            circleClass = `w-8 h-8 rounded-full flex items-center justify-center bg-${phase.color}-500 text-white shadow-lg shadow-${phase.color}-500/30 ring-2 ring-${phase.color}-500 ring-offset-2 ring-offset-slate-900 transition-all transform scale-110`;
+            iconClass = `ph ${phase.icon} text-lg`;
+            textClass = `text-[10px] font-bold text-${phase.color}-400 mt-1 uppercase tracking-wide`;
+        } else if (isCompleted) {
+            circleClass = `w-8 h-8 rounded-full flex items-center justify-center bg-slate-800 text-${phase.color}-400 border border-${phase.color}-500/50 hover:bg-slate-700 transition-colors`;
+            iconClass = `ph ${phase.icon} text-lg`;
+            textClass = `text-[10px] font-medium text-slate-400 mt-1 group-hover:text-slate-300`;
+        } else {
+            // Future
+            circleClass = `w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/50 text-slate-600 border border-slate-700 hover:border-slate-600 hover:text-slate-500 transition-colors`;
+            iconClass = `ph ${phase.icon} text-lg`;
+            textClass = `text-[10px] font-medium text-slate-600 mt-1`;
+        }
+
+        step.innerHTML = `
+            <div class="${circleClass}">
+                <i class="${iconClass}"></i>
+            </div>
+            <span class="${textClass}">${phase.label}</span>
+        `;
+        
+        container.appendChild(step);
+    });
+    
+    // Dibujar linea de fondo (simple hack)
+    // Esto requiere que el container tenga relative
+    const line = document.createElement('div');
+    line.className = 'absolute top-4 left-0 w-full h-0.5 bg-slate-800 -z-0';
+    // container.appendChild(line); // Esto se superpone mal si no ajustamos padding.
+    // Mejor dejamos los items sueltos por ahora o usamos un diseño mas simple.
+    // O mejor, aplicamos un border-top a un contenedor wrapper.
+}
 
 async function deleteTicket(id) {
     const confirmed = confirm('¿Seguro que deseas eliminar este ticket? Esta acción no se puede deshacer.');
@@ -325,17 +450,36 @@ async function loadTicketComments(id) {
         comentarios.forEach(c => {
             const item = document.createElement('div');
             item.className = 'border border-slate-800 rounded-lg px-3 py-2 bg-slate-900/60';
+            
             const header = document.createElement('div');
             header.className = 'flex justify-between items-center mb-1';
+            
+            const leftHeader = document.createElement('div');
+            leftHeader.className = 'flex items-center gap-2';
+            
             const autor = document.createElement('span');
             autor.className = 'text-xs font-medium text-slate-200';
             autor.textContent = c.autor_nombre || 'Usuario';
+            leftHeader.appendChild(autor);
+
+            if (c.fase) {
+                const badge = document.createElement('span');
+                // Encontrar info de fase para color
+                const phaseInfo = TICKET_PHASES.find(p => p.id === c.fase);
+                const badgeClass = phaseInfo ? phaseInfo.style.badge : 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+                badge.className = `text-[10px] px-1.5 py-0.5 rounded-full border uppercase tracking-wider ${badgeClass}`;
+                badge.textContent = phaseInfo ? phaseInfo.label : c.fase;
+                leftHeader.appendChild(badge);
+            }
+
             const fecha = document.createElement('span');
             fecha.className = 'text-[11px] text-slate-500';
             const f = c.creado_en ? new Date(c.creado_en) : null;
             fecha.textContent = f ? f.toLocaleString() : '';
-            header.appendChild(autor);
+            
+            header.appendChild(leftHeader);
             header.appendChild(fecha);
+            
             const cuerpo = document.createElement('p');
             cuerpo.className = 'text-xs text-slate-200 whitespace-pre-wrap';
             cuerpo.textContent = c.contenido || '';
@@ -364,7 +508,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ contenido })
+                body: JSON.stringify({ 
+                    contenido,
+                    fase: currentTicketStatus // Enviar la fase actual
+                })
             });
             if (!res.ok) {
                 alert('Error al agregar comentario');
@@ -399,6 +546,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <i class="ph ph-x text-lg"></i>
             </button>
         </div>
+
+        <!-- Pipeline de Fases -->
+        <div class="mb-6 overflow-x-auto pb-2">
+            <div id="ticket-pipeline" class="flex items-center justify-between min-w-[500px] px-2">
+                <!-- Se llena dinámicamente con JS -->
+            </div>
+        </div>
+
         <div class="space-y-2 text-sm text-slate-200">
             <p><span class="font-semibold text-slate-400">Creado por:</span> <span id="ticket-details-creado"></span></p>
             <p><span class="font-semibold text-slate-400">Asignado a:</span> <span id="ticket-details-asignado"></span></p>
