@@ -44,9 +44,9 @@
             <div>
                 <select name="tipo" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
                     <option value="">Todos los tipos</option>
-                    <option value="mantencion" <%= queryTipo === 'mantencion' ? 'selected' : '' %>>Mantención (M)</option>
-                    <option value="visita_tecnica" <%= queryTipo === 'visita_tecnica' ? 'selected' : '' %>>Visita técnica (V)</option>
-                    <option value="garantia" <%= queryTipo === 'garantia' ? 'selected' : '' %>>Garantía (G)</option>
+                    <option value="mantencion_preventiva" <%= queryTipo === 'mantencion_preventiva' ? 'selected' : '' %>>M. Preventiva (MP)</option>
+                    <option value="mantencion_correctiva" <%= queryTipo === 'mantencion_correctiva' ? 'selected' : '' %>>M. Correctiva (MC)</option>
+                    <option value="visita_tecnica" <%= queryTipo === 'visita_tecnica' ? 'selected' : '' %>>Visita técnica (VT)</option>
                 </select>
             </div>
             <div>
@@ -189,7 +189,7 @@
             </div>
 
             <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Asignar a (Notificación por correo)</label>
+                <label class="block text-slate-400 text-sm mb-2">Asignar a (Responsable principal)</label>
                 <select name="asignado_a" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                     <option value="">Seleccionar Usuario</option>
                     <% if (typeof usuarios !== 'undefined') { %>
@@ -198,6 +198,25 @@
                         <% }); %>
                     <% } %>
                 </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-slate-400 text-sm mb-2">Notificar también a (Correos)</label>
+                <div class="bg-slate-900 border border-slate-700 rounded p-3 max-h-32 overflow-y-auto custom-scrollbar">
+                    <% if (typeof usuarios !== 'undefined') { %>
+                        <% usuarios.forEach(u => { %>
+                            <label class="flex items-center gap-2 mb-2 last:mb-0 cursor-pointer hover:bg-slate-800 p-1 rounded transition-colors">
+                                <input type="checkbox" name="notificar_a" value="<%= u.id %>" class="rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900">
+                                <div class="flex flex-col">
+                                    <span class="text-sm text-slate-300"><%= u.nombre %></span>
+                                    <span class="text-xs text-slate-500"><%= u.email %></span>
+                                </div>
+                            </label>
+                        <% }); %>
+                    <% } else { %>
+                        <p class="text-sm text-slate-500">No hay usuarios disponibles.</p>
+                    <% } %>
+                </div>
             </div>
 
             <div class="mb-4">

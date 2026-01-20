@@ -14,7 +14,13 @@ export const enviarNotificacionTicket = async (emailDestino, tituloTicket) => {
   sendSmtpEmail.subject = "¡Nuevo Ticket Asignado! - Biohertz";
   sendSmtpEmail.htmlContent = `<html><body><p>Hola,</p><p>Se te ha asignado un nuevo trabajo: "<strong>${tituloTicket}</strong>".</p><p>Por favor revisa el sistema de tickets para más detalles.</p><p>Saludos,<br>Equipo BIOHERTZ</p></body></html>`;
   sendSmtpEmail.sender = { "name": "Biohertz Sistema", "email": process.env.EMAIL_SENDER }; // Tu correo Gmail o verificado en Brevo
-  sendSmtpEmail.to = [{ "email": emailDestino }];
+  
+  // Soporte para múltiples destinatarios
+  if (Array.isArray(emailDestino)) {
+      sendSmtpEmail.to = emailDestino.map(email => ({ "email": email }));
+  } else {
+      sendSmtpEmail.to = [{ "email": emailDestino }];
+  }
 
   try {
     const data = await apiInstance.sendTransacEmail(sendSmtpEmail);

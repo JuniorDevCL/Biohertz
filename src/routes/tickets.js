@@ -44,9 +44,10 @@ async function ensureSchema() {
         'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS cliente_id INTEGER',
         'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS terminado_en TIMESTAMP',
         'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS tipo VARCHAR(50)',
-        'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS codigo VARCHAR(50)',
-        'ALTER TABLE comentarios ADD COLUMN IF NOT EXISTS fase VARCHAR(50)'
-      ];
+          'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS codigo VARCHAR(50)',
+          'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS garantia BOOLEAN DEFAULT FALSE',
+          'ALTER TABLE comentarios ADD COLUMN IF NOT EXISTS fase VARCHAR(50)'
+        ];
 
       for (const sql of alters) {
         await pool.query(sql);
@@ -67,7 +68,7 @@ async function ensureSchema() {
 router.post('/', authRequired, async (req, res) => {
   try {
     await ensureSchema();
-    const { titulo, descripcion, asignado_a, equipo_id, cliente_id, tipo } = req.body;
+    const { titulo, descripcion, asignado_a, equipo_id, cliente_id, tipo, garantia, notificar_a } = req.body;
 
     const cleanTitulo = String(titulo || '').trim();
 
@@ -77,26 +78,31 @@ router.post('/', authRequired, async (req, res) => {
 
     let rawTipo = String(tipo || '').trim().toLowerCase();
     let tipoNormalizado;
-    if (rawTipo === 'mantencion' || rawTipo === 'm') {
-      tipoNormalizado = 'mantencion';
-    } else if (rawTipo === 'visita_tecnica' || rawTipo === 'visita tecnica' || rawTipo === 'v') {
+    
+    // Nuevos tipos: mantencion_preventiva (MP), mantencion_correctiva (MC), visita_tecnica (VT)
+    if (rawTipo === 'mp' || rawTipo === 'mantencion_preventiva') {
+      tipoNormalizado = 'mantencion_preventiva';
+    } else if (rawTipo === 'mc' || rawTipo === 'mantencion_correctiva') {
+      tipoNormalizado = 'mantencion_correctiva';
+    } else if (rawTipo === 'vt' || rawTipo === 'visita_tecnica' || rawTipo === 'visita tecnica') {
       tipoNormalizado = 'visita_tecnica';
-    } else if (rawTipo === 'garantia' || rawTipo === 'g') {
-      tipoNormalizado = 'garantia';
     } else {
-      tipoNormalizado = 'mantencion';
+      // Fallback a mantención preventiva por defecto si no coincide
+      tipoNormalizado = 'mantencion_preventiva';
     }
 
     let prefijo;
-    if (tipoNormalizado === 'mantencion') {
-      prefijo = 'M';
+    if (tipoNormalizado === 'mantencion_preventiva') {
+      prefijo = 'MP';
+    } else if (tipoNormalizado === 'mantencion_correctiva') {
+      prefijo = 'MC';
     } else if (tipoNormalizado === 'visita_tecnica') {
-      prefijo = 'V';
-    } else if (tipoNormalizado === 'garantia') {
-      prefijo = 'G';
+      prefijo = 'VT';
     } else {
-      prefijo = 'T';
+      prefijo = 'TK';
     }
+
+    const isGarantia = garantia === 'si' || garantia === 'on' || garantia === true || garantia === 'true';
 
     const countRes = await pool.query(
       'SELECT COUNT(*) FROM tickets WHERE tipo = $1',
@@ -107,22 +113,48 @@ router.post('/', authRequired, async (req, res) => {
     const codigo = `${prefijo}-${String(nextNumber).padStart(3, '0')}`;
 
     const result = await pool.query(
-      `INSERT INTO tickets (titulo, descripcion, creado_por, asignado_a, equipo_id, cliente_id, tipo, codigo, estado, creado_en, actualizado_en)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pendiente', NOW(), NOW())
+      `INSERT INTO tickets (titulo, descripcion, creado_por, asignado_a, equipo_id, cliente_id, tipo, codigo, garantia, estado, creado_en, actualizado_en)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pendiente', NOW(), NOW())
        RETURNING *`,
-      [cleanTitulo, descripcion || null, req.user.id, asignado_a || null, equipo_id || null, cliente_id || null, tipoNormalizado, codigo]
+      [cleanTitulo, descripcion || null, req.user.id, asignado_a || null, equipo_id || null, cliente_id || null, tipoNormalizado, codigo, isGarantia]
     );
 
     const io = req.app.get('io');
     io?.emit('ticket:created', result.rows[0]);
 
+    // Manejo de notificaciones (asignado_a y notificar_a)
+    const destinatarios = new Set();
+
+    // 1. Notificar al asignado (si existe)
     if (asignado_a) {
-      const ures = await pool.query('SELECT nombre, email FROM usuarios WHERE id = $1', [asignado_a]);
+      const ures = await pool.query('SELECT email FROM usuarios WHERE id = $1', [asignado_a]);
       if (ures.rowCount > 0) {
-        console.log('Ticket asignado a:', ures.rows[0].email);
-        enviarNotificacionTicket(ures.rows[0].email, titulo)
-          .catch(e => console.error('Error enviando notificación en segundo plano:', e));
+        destinatarios.add(ures.rows[0].email);
       }
+    }
+
+    // 2. Notificar a lista adicional
+    if (notificar_a) {
+      const ids = Array.isArray(notificar_a) ? notificar_a : [notificar_a];
+      if (ids.length > 0) {
+        // Filtrar IDs vacíos y convertir a números
+        const cleanIds = ids.map(id => parseInt(id)).filter(id => !isNaN(id));
+        
+        if (cleanIds.length > 0) {
+          const uresAdicionales = await pool.query(
+            'SELECT email FROM usuarios WHERE id = ANY($1::int[])',
+            [cleanIds]
+          );
+          uresAdicionales.rows.forEach(row => destinatarios.add(row.email));
+        }
+      }
+    }
+
+    if (destinatarios.size > 0) {
+      const listaEmails = Array.from(destinatarios);
+      console.log('Enviando notificaciones a:', listaEmails);
+      enviarNotificacionTicket(listaEmails, titulo)
+        .catch(e => console.error('Error enviando notificación en segundo plano:', e));
     }
 
     const accept = String(req.headers.accept || '');
