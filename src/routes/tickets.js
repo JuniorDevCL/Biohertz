@@ -44,10 +44,12 @@ async function ensureSchema() {
         'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS cliente_id INTEGER',
         'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS terminado_en TIMESTAMP',
         'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS tipo VARCHAR(50)',
-          'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS codigo VARCHAR(50)',
-          'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS garantia BOOLEAN DEFAULT FALSE',
-          'ALTER TABLE comentarios ADD COLUMN IF NOT EXISTS fase VARCHAR(50)'
-        ];
+        'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS codigo VARCHAR(50)',
+        'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS garantia BOOLEAN DEFAULT FALSE',
+        'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS lugar_instalacion VARCHAR(255)',
+        'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS telefono_contacto VARCHAR(100)',
+        'ALTER TABLE comentarios ADD COLUMN IF NOT EXISTS fase VARCHAR(50)'
+      ];
 
       for (const sql of alters) {
         await pool.query(sql);
@@ -68,12 +70,52 @@ async function ensureSchema() {
 router.post('/', authRequired, async (req, res) => {
   try {
     await ensureSchema();
-    const { titulo, descripcion, asignado_a, equipo_id, cliente_id, tipo, garantia, notificar_a } = req.body;
+    const { titulo, descripcion, asignado_a, equipo_id, cliente_id, tipo, garantia, notificar_a, lugar_instalacion, telefono_contacto, numero_serie, equipo_nombre, equipo_modelo } = req.body;
 
     const cleanTitulo = String(titulo || '').trim();
 
     if (!cleanTitulo) {
       return res.status(400).json({ error: 'El título es obligatorio' });
+    }
+
+    let finalEquipoId = equipo_id ? parseInt(equipo_id) : null;
+    const cleanSerie = String(numero_serie || '').trim();
+    
+    // Lógica inteligente de equipos (Si se proporciona serie)
+    if (cleanSerie) {
+        // Buscar si existe equipo con esa serie
+        const eqRes = await pool.query('SELECT id, nombre FROM equipos WHERE numero_serie = $1', [cleanSerie]);
+        
+        if (eqRes.rowCount > 0) {
+            // Equipo existe, usar su ID
+            finalEquipoId = eqRes.rows[0].id;
+        } else {
+            // Equipo no existe, crearlo
+            const cleanNombreEquipo = String(equipo_nombre || `Equipo ${cleanSerie}`).trim();
+            const cleanModelo = String(equipo_modelo || '').trim();
+            const cid = (cliente_id && cliente_id !== 'STOCK') ? parseInt(cliente_id) : null;
+            
+            // Intentar obtener nombre del cliente para desnormalización en equipos (campo 'cliente')
+            let clienteNombre = null;
+            if (cid) {
+                try {
+                    const cRes = await pool.query('SELECT nombre FROM clientes WHERE id = $1', [cid]);
+                    if (cRes.rowCount > 0) clienteNombre = cRes.rows[0].nombre;
+                } catch(e) {}
+            }
+
+            const newEq = await pool.query(
+                `INSERT INTO equipos (nombre, modelo, numero_serie, cliente_id, cliente, creado_en, actualizado_en, estado)
+                 VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), 'activo')
+                 RETURNING id`,
+                [cleanNombreEquipo, cleanModelo, cleanSerie, cid, clienteNombre]
+            );
+            finalEquipoId = newEq.rows[0].id;
+            
+            // Emitir evento de creación de equipo si es necesario
+            const io = req.app.get('io');
+            io?.emit('equipo:created', { id: finalEquipoId, nombre: cleanNombreEquipo, numero_serie: cleanSerie });
+        }
     }
 
     let rawTipo = String(tipo || '').trim().toLowerCase();
@@ -113,10 +155,10 @@ router.post('/', authRequired, async (req, res) => {
     const codigo = `${prefijo}-${String(nextNumber).padStart(3, '0')}`;
 
     const result = await pool.query(
-      `INSERT INTO tickets (titulo, descripcion, creado_por, asignado_a, equipo_id, cliente_id, tipo, codigo, garantia, estado, creado_en, actualizado_en)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pendiente', NOW(), NOW())
+      `INSERT INTO tickets (titulo, descripcion, creado_por, asignado_a, equipo_id, cliente_id, tipo, codigo, garantia, lugar_instalacion, telefono_contacto, estado, creado_en, actualizado_en)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pendiente', NOW(), NOW())
        RETURNING *`,
-      [cleanTitulo, descripcion || null, req.user.id, asignado_a || null, equipo_id || null, cliente_id || null, tipoNormalizado, codigo, isGarantia]
+      [cleanTitulo, descripcion || null, req.user.id, asignado_a || null, finalEquipoId, cliente_id || null, tipoNormalizado, codigo, isGarantia, lugar_instalacion || null, telefono_contacto || null]
     );
 
     const io = req.app.get('io');

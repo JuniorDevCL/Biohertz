@@ -186,6 +186,45 @@
                 </div>
             </div>
 
+            <div class="mb-4 grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Lugar de instalación</label>
+                    <input type="text" name="lugar_instalacion" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Número de teléfono</label>
+                    <input type="text" name="telefono_contacto" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                </div>
+            </div>
+
+            <div class="mb-4 border border-slate-700 rounded-lg p-3 bg-slate-800/50">
+                <h4 class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                    <i class="ph ph-desktop"></i> Datos del Equipo
+                </h4>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-slate-400 text-xs mb-1">Número de serie (Buscar/Crear)</label>
+                        <div class="relative">
+                            <input type="text" name="numero_serie" id="input_serie" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm" placeholder="Ingrese serie para buscar o crear...">
+                            <div id="serie_loading" class="hidden absolute right-3 top-2.5 text-blue-400">
+                                <i class="ph ph-spinner animate-spin"></i>
+                            </div>
+                        </div>
+                        <p id="serie_msg" class="text-[10px] mt-1 h-4"></p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-slate-400 text-xs mb-1">Nombre del equipo</label>
+                            <input type="text" name="equipo_nombre" id="input_equipo_nombre" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 text-xs mb-1">Modelo</label>
+                            <input type="text" name="equipo_modelo" id="input_equipo_modelo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="mb-4">
                 <label class="block text-slate-400 text-sm mb-2">Notificar a (Correos)</label>
                 <div class="bg-slate-900 border border-slate-700 rounded p-2 max-h-32 overflow-y-auto">
@@ -226,25 +265,6 @@
             </div>
 
             <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Notificar también a (Correos)</label>
-                <div class="bg-slate-900 border border-slate-700 rounded p-3 max-h-32 overflow-y-auto custom-scrollbar">
-                    <% if (typeof usuarios !== 'undefined') { %>
-                        <% usuarios.forEach(u => { %>
-                            <label class="flex items-center gap-2 mb-2 last:mb-0 cursor-pointer hover:bg-slate-800 p-1 rounded transition-colors">
-                                <input type="checkbox" name="notificar_a" value="<%= u.id %>" class="rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900">
-                                <div class="flex flex-col">
-                                    <span class="text-sm text-slate-300"><%= u.nombre %></span>
-                                    <span class="text-xs text-slate-500"><%= u.email %></span>
-                                </div>
-                            </label>
-                        <% }); %>
-                    <% } else { %>
-                        <p class="text-sm text-slate-500">No hay usuarios disponibles.</p>
-                    <% } %>
-                </div>
-            </div>
-
-            <div class="mb-4">
                 <label class="block text-slate-400 text-sm mb-2">Descripción</label>
                 <textarea name="descripcion" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500"></textarea>
             </div>
@@ -259,6 +279,78 @@
 <script>
 let currentTicketId = null;
 let currentTicketStatus = null;
+
+// Auto-open modal if query param exists
+if (new URLSearchParams(window.location.search).get('new')) {
+    const modal = document.getElementById('new-ticket-modal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+// Equipment search logic
+document.addEventListener('DOMContentLoaded', () => {
+    const inputSerie = document.getElementById('input_serie');
+    const inputNombre = document.getElementById('input_equipo_nombre');
+    const inputModelo = document.getElementById('input_equipo_modelo');
+    const msgSerie = document.getElementById('serie_msg');
+    const loadingSerie = document.getElementById('serie_loading');
+    let searchTimeout;
+
+    if (inputSerie) {
+        inputSerie.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            clearTimeout(searchTimeout);
+            
+            if (val.length < 3) {
+                if (msgSerie) msgSerie.textContent = '';
+                if (loadingSerie) loadingSerie.classList.add('hidden');
+                return;
+            }
+
+            if (loadingSerie) loadingSerie.classList.remove('hidden');
+            if (msgSerie) {
+                msgSerie.textContent = 'Buscando...';
+                msgSerie.className = 'text-[10px] mt-1 h-4 text-blue-400';
+            }
+
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch(`/equipos?serie=${encodeURIComponent(val)}`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        const equipos = data.equipos || [];
+                        // Find exact match (case insensitive)
+                        const exact = equipos.find(eq => eq.numero_serie && eq.numero_serie.toLowerCase() === val.toLowerCase());
+                        
+                        if (exact) {
+                            if (inputNombre) inputNombre.value = exact.nombre || '';
+                            if (inputModelo) inputModelo.value = exact.modelo || '';
+                            if (msgSerie) {
+                                msgSerie.textContent = 'Equipo encontrado. Datos cargados.';
+                                msgSerie.className = 'text-[10px] mt-1 h-4 text-emerald-400';
+                            }
+                        } else {
+                            // Don't clear inputs, user might be typing a new equipment's data
+                            if (msgSerie) {
+                                msgSerie.textContent = 'Equipo no encontrado. Se creará uno nuevo.';
+                                msgSerie.className = 'text-[10px] mt-1 h-4 text-orange-400';
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error(err);
+                    if (msgSerie) {
+                        msgSerie.textContent = 'Error buscando equipo.';
+                        msgSerie.className = 'text-[10px] mt-1 h-4 text-red-400';
+                    }
+                } finally {
+                    if (loadingSerie) loadingSerie.classList.add('hidden');
+                }
+            }, 500);
+        });
+    }
+});
 
 const TICKET_PHASES = [
     { 
