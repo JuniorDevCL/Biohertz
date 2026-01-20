@@ -287,13 +287,19 @@ const TICKET_PHASES = [
 
 async function updateTicketStatus(newStatus) {
     if (!currentTicketId) return;
-    if (!confirm(`¿Cambiar estado a "${newStatus.toUpperCase()}"?`)) return;
+    
+    // Pedir comentario opcional
+    const comentario = prompt(`¿Cambiar estado a "${newStatus.toUpperCase()}"?\n\nIngresa un comentario (opcional):`);
+    if (comentario === null) return; // Cancelado por el usuario
 
     try {
         const res = await fetch(`/tickets/${currentTicketId}/estado`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estado: newStatus })
+            body: JSON.stringify({ 
+                estado: newStatus,
+                comentario: comentario 
+            })
         });
         
         if (res.ok) {
@@ -304,6 +310,11 @@ async function updateTicketStatus(newStatus) {
             
             // Recargar historial para ver el cambio
             loadTicketHistory(currentTicketId);
+            
+            // Si hubo comentario, recargar comentarios
+            if (comentario && comentario.trim()) {
+                loadTicketComments(currentTicketId);
+            }
         } else {
             alert('Error al actualizar estado');
         }

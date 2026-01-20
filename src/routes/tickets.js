@@ -436,7 +436,7 @@ router.patch('/:id/estado', authRequired, async (req, res) => {
   try {
     await ensureSchema();
     const { id } = req.params;
-    const { estado } = req.body;
+    const { estado, comentario } = req.body;
     const nuevoEstado = String(estado || '').trim();
 
     // Lista ampliada de estados validos
@@ -463,6 +463,15 @@ router.patch('/:id/estado', authRequired, async (req, res) => {
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Ticket no encontrado' });
+    }
+
+    // Insertar comentario si existe
+    if (comentario && String(comentario).trim()) {
+        await pool.query(
+          `INSERT INTO comentarios (ticket_id, autor_id, contenido, fase, creado_en)
+           VALUES ($1, $2, $3, $4, NOW())`,
+          [id, req.user.id, String(comentario).trim(), nuevoEstado]
+        );
     }
 
     // Historial
