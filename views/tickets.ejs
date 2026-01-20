@@ -161,88 +161,28 @@
 
 <!-- Modal Nuevo Ticket -->
 <div id="new-ticket-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
-    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-md shadow-2xl border border-slate-700">
-        <h3 class="text-xl font-bold text-white mb-4">Nuevo Ticket</h3>
-        <form action="/tickets" method="POST">
-            <div class="mb-4">
+    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-4xl shadow-2xl border border-slate-700">
+        <h3 class="text-xl font-bold text-white mb-6">Nuevo Ticket</h3>
+        <form action="/tickets" method="POST" class="grid grid-cols-12 gap-4">
+            
+            <!-- Row 1: Titulo (8) + Tipo (4) -->
+            <div class="col-span-8">
                 <label class="block text-slate-400 text-sm mb-2">Título</label>
                 <input type="text" name="titulo" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
             </div>
-            <div class="mb-4 grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-slate-400 text-sm mb-2">Tipo de ticket</label>
-                    <select name="tipo" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
-                        <option value="mantencion_preventiva">Mantención Preventiva (MP)</option>
-                        <option value="mantencion_correctiva">Mantención Correctiva (MC)</option>
-                        <option value="visita_tecnica">Visita Técnica (VT)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-slate-400 text-sm mb-2">¿Garantía?</label>
-                    <select name="garantia" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
-                        <option value="no">No</option>
-                        <option value="si">Sí</option>
-                    </select>
-                </div>
+            <div class="col-span-4">
+                <label class="block text-slate-400 text-sm mb-2">Tipo de ticket</label>
+                <select name="tipo" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                    <option value="mantencion_preventiva">Mantención Preventiva (MP)</option>
+                    <option value="mantencion_correctiva">Mantención Correctiva (MC)</option>
+                    <option value="visita_tecnica">Visita Técnica (VT)</option>
+                </select>
             </div>
 
-            <div class="mb-4 grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-slate-400 text-sm mb-2">Lugar de instalación</label>
-                    <input type="text" name="lugar_instalacion" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
-                </div>
-                <div>
-                    <label class="block text-slate-400 text-sm mb-2">Número de teléfono</label>
-                    <input type="text" name="telefono_contacto" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
-                </div>
-            </div>
-
-            <div class="mb-4 border border-slate-700 rounded-lg p-3 bg-slate-800/50">
-                <h4 class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
-                    <i class="ph ph-desktop"></i> Datos del Equipo
-                </h4>
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-slate-400 text-xs mb-1">Número de serie (Buscar/Crear)</label>
-                        <div class="relative">
-                            <input type="text" name="numero_serie" id="input_serie" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm" placeholder="Ingrese serie para buscar o crear...">
-                            <div id="serie_loading" class="hidden absolute right-3 top-2.5 text-blue-400">
-                                <i class="ph ph-spinner animate-spin"></i>
-                            </div>
-                        </div>
-                        <p id="serie_msg" class="text-[10px] mt-1 h-4"></p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-slate-400 text-xs mb-1">Nombre del equipo</label>
-                            <input type="text" name="equipo_nombre" id="input_equipo_nombre" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-slate-400 text-xs mb-1">Modelo</label>
-                            <input type="text" name="equipo_modelo" id="input_equipo_modelo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Notificar a (Correos)</label>
-                <div class="bg-slate-900 border border-slate-700 rounded p-2 max-h-32 overflow-y-auto">
-                    <% if (typeof usuarios !== 'undefined') { %>
-                        <% usuarios.forEach(u => { %>
-                            <div class="flex items-center gap-2 mb-1 last:mb-0">
-                                <input type="checkbox" name="notificar_a" value="<%= u.id %>" id="notify_<%= u.id %>" class="rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500">
-                                <label for="notify_<%= u.id %>" class="text-sm text-slate-300 cursor-pointer select-none"><%= u.nombre %> (<%= u.email %>)</label>
-                            </div>
-                        <% }); %>
-                    <% } %>
-                </div>
-                <p class="text-xs text-slate-500 mt-1">Selecciona los usuarios que recibirán una notificación por correo.</p>
-            </div>
-            
-            <div class="mb-4">
+            <!-- Row 2: Cliente (4) + Asignado (4) + Garantia (4) -->
+            <div class="col-span-4">
                 <label class="block text-slate-400 text-sm mb-2">Cliente (Opcional)</label>
-                <select name="cliente_id" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                <select name="cliente_id" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
                     <option value="">Seleccionar Cliente</option>
                     <% if (typeof clientes !== 'undefined') { %>
                         <% clientes.forEach(c => { %>
@@ -251,10 +191,9 @@
                     <% } %>
                 </select>
             </div>
-
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Asignar a (Responsable principal)</label>
-                <select name="asignado_a" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+            <div class="col-span-4">
+                <label class="block text-slate-400 text-sm mb-2">Asignar a</label>
+                <select name="asignado_a" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
                     <option value="">Seleccionar Usuario</option>
                     <% if (typeof usuarios !== 'undefined') { %>
                         <% usuarios.forEach(u => { %>
@@ -263,14 +202,76 @@
                     <% } %>
                 </select>
             </div>
-
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Descripción</label>
-                <textarea name="descripcion" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500"></textarea>
+            <div class="col-span-4">
+                <label class="block text-slate-400 text-sm mb-2">¿Garantía?</label>
+                <select name="garantia" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                    <option value="no">No</option>
+                    <option value="si">Sí</option>
+                </select>
             </div>
-            <div class="flex justify-end gap-3 mt-6">
+
+            <!-- Row 3: Lugar (6) + Telefono (6) -->
+            <div class="col-span-6">
+                <label class="block text-slate-400 text-sm mb-2">Lugar de instalación</label>
+                <input type="text" name="lugar_instalacion" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+            </div>
+            <div class="col-span-6">
+                <label class="block text-slate-400 text-sm mb-2">Número de teléfono</label>
+                <input type="text" name="telefono_contacto" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+            </div>
+
+            <!-- Row 4: Equipo (12) -->
+            <div class="col-span-12 border border-slate-700 rounded-lg p-3 bg-slate-800/50">
+                <h4 class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                    <i class="ph ph-desktop"></i> Datos del Equipo
+                </h4>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-slate-400 text-xs mb-1">Número de serie</label>
+                        <div class="relative">
+                            <input type="text" name="numero_serie" id="input_serie" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm" placeholder="Buscar/Crear...">
+                            <div id="serie_loading" class="hidden absolute right-3 top-2.5 text-blue-400">
+                                <i class="ph ph-spinner animate-spin"></i>
+                            </div>
+                        </div>
+                        <p id="serie_msg" class="text-[10px] mt-1 h-4"></p>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs mb-1">Nombre del equipo</label>
+                        <input type="text" name="equipo_nombre" id="input_equipo_nombre" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs mb-1">Modelo</label>
+                        <input type="text" name="equipo_modelo" id="input_equipo_modelo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 5: Descripcion (8) + Notificaciones (4) -->
+            <div class="col-span-8">
+                <label class="block text-slate-400 text-sm mb-2">Descripción</label>
+                <textarea name="descripcion" rows="5" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+
+            <div class="col-span-4 flex flex-col">
+                <label class="block text-slate-400 text-sm mb-2">Notificar a otros (Copia)</label>
+                <div class="bg-slate-900 border border-slate-700 rounded p-2 flex-1 overflow-y-auto max-h-[132px]">
+                    <% if (typeof usuarios !== 'undefined') { %>
+                        <% usuarios.forEach(u => { %>
+                            <div class="flex items-center gap-2 mb-1 last:mb-0">
+                                <input type="checkbox" name="notificar_a" value="<%= u.id %>" id="notify_<%= u.id %>" class="rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500">
+                                <label for="notify_<%= u.id %>" class="text-sm text-slate-300 cursor-pointer select-none truncate"><%= u.nombre %></label>
+                            </div>
+                        <% }); %>
+                    <% } %>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1 leading-tight">El responsable se notifica automático.</p>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="col-span-12 flex justify-end gap-3 mt-2 border-t border-slate-700/50 pt-4">
                 <button type="button" onclick="document.getElementById('new-ticket-modal').classList.add('hidden')" class="px-4 py-2 text-slate-300 hover:text-white">Cancelar</button>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Crear</button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium shadow-lg shadow-blue-500/20">Crear Ticket</button>
             </div>
         </form>
     </div>

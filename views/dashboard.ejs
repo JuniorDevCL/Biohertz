@@ -422,9 +422,19 @@ async function openTicketDetails(id) {
         const t = await res.json();
         document.getElementById('ticket-details-title').textContent = t.titulo || '';
         
+        // Actualizar estado global y renderizar pipeline
         currentTicketStatus = t.estado || 'ingresado';
         document.getElementById('ticket-details-estado').textContent = currentTicketStatus;
         renderPipeline(currentTicketStatus);
+
+        document.getElementById('ticket-details-codigo').textContent = t.codigo || '-';
+        
+        const tipoMap = {
+            mantencion_preventiva: 'M. Preventiva (MP)',
+            mantencion_correctiva: 'M. Correctiva (MC)',
+            visita_tecnica: 'Visita Técnica (VT)'
+        };
+        document.getElementById('ticket-details-tipo').textContent = tipoMap[t.tipo] || (t.tipo || '-');
 
         document.getElementById('ticket-details-creado').textContent = t.creado_por_nombre || 'Desconocido';
         document.getElementById('ticket-details-asignado').textContent = t.asignado_a_nombre || 'Sin asignar';
@@ -435,76 +445,259 @@ async function openTicketDetails(id) {
         const terminado = t.terminado_en ? new Date(t.terminado_en) : null;
         document.getElementById('ticket-details-fecha-creacion').textContent = creado ? creado.toLocaleString() : '-';
         document.getElementById('ticket-details-fecha-termino').textContent = terminado ? terminado.toLocaleString() : '-';
+        
+        // Cargar historial y comentarios
+        if (typeof loadTicketHistory === 'function') loadTicketHistory(id);
+        if (typeof loadTicketComments === 'function') loadTicketComments(id);
+
         document.getElementById('ticket-details-modal').classList.remove('hidden');
     } catch (e) {
         console.error(e);
         alert('Error de conexión');
     }
 }
+
+async function loadTicketHistory(id) {
+    const container = document.getElementById('ticket-history');
+    if (!container) return;
+    container.innerHTML = '<p class="text-xs text-slate-500">Cargando historial...</p>';
+    try {
+        const res = await fetch(`/tickets/${id}/historial`);
+        if (!res.ok) {
+            container.innerHTML = '<p class="text-xs text-red-400">No se pudo cargar el historial.</p>';
+            return;
+        }
+        const historial = await res.json();
+        if (!historial || historial.length === 0) {
+            container.innerHTML = '<p class="text-xs text-slate-500">Sin cambios registrados.</p>';
+            return;
+        }
+        container.innerHTML = '';
+        historial.forEach(h => {
+            const fecha = h.creado_en ? new Date(h.creado_en) : null;
+            const usuario = h.usuario_nombre || 'Usuario';
+            
+            const linea = document.createElement('div');
+            linea.className = 'text-xs text-slate-300 flex flex-col border border-slate-800 rounded-md px-3 py-2 bg-slate-900/60 mb-2 last:mb-0';
+            
+            const header = document.createElement('div');
+            header.className = 'flex justify-between items-center mb-1';
+            
+            const left = document.createElement('div');
+            left.className = 'flex items-center gap-2';
+            
+            const userSpan = document.createElement('span');
+            userSpan.className = 'font-medium text-slate-200';
+            userSpan.textContent = usuario;
+            left.appendChild(userSpan);
+
+            if (h.tipo_item === 'comentario') {
+                 const badge = document.createElement('span');
+                 badge.className = 'px-1.5 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20';
+                 badge.textContent = 'COMENTARIO';
+                 left.appendChild(badge);
+                 
+                 if (h.fase) {
+                    const phaseInfo = TICKET_PHASES.find(p => p.id === h.fase);
+                    if (phaseInfo) {
+                        const phaseBadge = document.createElement('span');
+                        phaseBadge.className = `px-1.5 py-0.5 rounded text-[10px] border ${phaseInfo.style.badge}`;
+                        phaseBadge.textContent = phaseInfo.label;
+                        left.appendChild(phaseBadge);
+                    }
+                 }
+            } else {
+                const tipoLabel = h.tipo_cambio === 'estado' ? 'CAMBIO DE ESTADO' : (h.tipo_cambio === 'asignacion' ? 'ASIGNACIÓN' : h.tipo_cambio.toUpperCase());
+                const badge = document.createElement('span');
+                badge.className = 'px-1.5 py-0.5 rounded text-[10px] bg-slate-700 text-slate-300 border border-slate-600';
+                badge.textContent = tipoLabel;
+                left.appendChild(badge);
+            }
+            
+            header.appendChild(left);
+            
+            const right = document.createElement('span');
+            right.className = 'text-[11px] text-slate-500';
+            right.textContent = fecha ? fecha.toLocaleString() : '';
+            header.appendChild(right);
+            
+            const detalle = document.createElement('div');
+            detalle.className = 'text-xs text-slate-300 mt-1 pl-1 border-l-2 border-slate-700';
+            
+            if (h.tipo_item === 'comentario') {
+                detalle.className = 'text-xs text-slate-200 mt-1 whitespace-pre-wrap bg-slate-950/50 p-2 rounded border border-slate-800/50';
+                detalle.textContent = h.valor_nuevo || ''; // En query mapeamos contenido a valor_nuevo
+            } else {
+                const antes = h.valor_anterior || '-';
+                const despues = h.valor_nuevo || '-';
+                detalle.innerHTML = `<span class="text-slate-500">${antes}</span> <i class="ph ph-arrow-right mx-1 text-slate-600"></i> <span class="text-slate-200 font-medium">${despues}</span>`;
+            }
+            
+            linea.appendChild(header);
+            linea.appendChild(detalle);
+            container.appendChild(linea);
+        });
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-xs text-red-400">Error al cargar historial.</p>';
+    }
+}
+
+async function loadTicketComments(id) {
+    const container = document.getElementById('ticket-comments');
+    if (!container) return;
+    container.innerHTML = '<p class="text-xs text-slate-500">Cargando comentarios...</p>';
+    try {
+        const res = await fetch(`/tickets/${id}/comentarios`);
+        if (!res.ok) {
+            console.error('Error fetching comments:', res.status, res.statusText);
+            container.innerHTML = '<p class="text-xs text-red-400">No se pudieron cargar los comentarios.</p>';
+            return;
+        }
+        const comentarios = await res.json();
+        if (!comentarios || comentarios.length === 0) {
+            container.innerHTML = '<p class="text-xs text-slate-500 italic">No hay comentarios.</p>';
+            return;
+        }
+        container.innerHTML = '';
+        comentarios.forEach(c => {
+            const item = document.createElement('div');
+            item.className = 'border border-slate-800 rounded-lg px-3 py-2 bg-slate-900/60';
+            
+            const header = document.createElement('div');
+            header.className = 'flex justify-between items-center mb-1';
+            
+            const leftHeader = document.createElement('div');
+            leftHeader.className = 'flex items-center gap-2';
+            
+            const autor = document.createElement('span');
+            autor.className = 'text-xs font-medium text-slate-200';
+            autor.textContent = c.autor_nombre || 'Usuario';
+            leftHeader.appendChild(autor);
+
+            if (c.fase) {
+                const badge = document.createElement('span');
+                // Encontrar info de fase para color
+                const phaseInfo = TICKET_PHASES.find(p => p.id === c.fase);
+                const badgeClass = phaseInfo ? phaseInfo.style.badge : 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+                badge.className = `text-[10px] px-1.5 py-0.5 rounded-full border uppercase tracking-wider ${badgeClass}`;
+                badge.textContent = phaseInfo ? phaseInfo.label : c.fase;
+                leftHeader.appendChild(badge);
+            }
+
+            const fecha = document.createElement('span');
+            fecha.className = 'text-[11px] text-slate-500';
+            const f = c.creado_en ? new Date(c.creado_en) : null;
+            fecha.textContent = f ? f.toLocaleString() : '';
+            
+            header.appendChild(leftHeader);
+            header.appendChild(fecha);
+            
+            const cuerpo = document.createElement('p');
+            cuerpo.className = 'text-xs text-slate-200 whitespace-pre-wrap';
+            cuerpo.textContent = c.contenido || '';
+            item.appendChild(header);
+            item.appendChild(cuerpo);
+            container.appendChild(item);
+        });
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-xs text-red-400">Error al cargar comentarios.</p>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('add-comment-form');
+    if (!form) return;
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const textarea = document.getElementById('comment-content');
+        if (!textarea || !currentTicketId) return;
+        const contenido = textarea.value.trim();
+        if (!contenido) return;
+        try {
+            const res = await fetch(`/tickets/${currentTicketId}/comentarios`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    contenido,
+                    fase: currentTicketStatus // Enviar la fase actual
+                })
+            });
+            if (!res.ok) {
+                alert('Error al agregar comentario');
+                return;
+            }
+            textarea.value = '';
+            await loadTicketComments(currentTicketId);
+        } catch (e) {
+            console.error(e);
+            alert('Error de conexión');
+        }
+    });
+});
 </script>
 
-<!-- Ticket Details Modal (Same as before but with updated styling if needed) -->
-<div id="ticket-details-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
-        <div class="p-6 border-b border-slate-800 flex justify-between items-start bg-slate-800/50 rounded-t-2xl">
+<!-- Ticket Details Modal -->
+<div id="ticket-details-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-lg p-6 shadow-2xl">
+        <div class="flex justify-between items-start mb-4">
             <div>
                 <h3 id="ticket-details-title" class="text-xl font-bold text-white"></h3>
-                <div class="flex items-center gap-2 mt-2">
-                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Estado:</span>
-                    <span id="ticket-details-estado" class="text-xs font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700 uppercase"></span>
-                </div>
+                <p class="text-xs text-slate-400 mt-1">
+                    Estado: <span id="ticket-details-estado" class="font-medium"></span>
+                </p>
+                <p class="text-xs text-slate-400 mt-1">
+                    Código: <span id="ticket-details-codigo" class="font-medium"></span>
+                </p>
+                <p class="text-xs text-slate-400 mt-1">
+                    Tipo: <span id="ticket-details-tipo" class="font-medium"></span>
+                </p>
             </div>
-            <button type="button" class="text-slate-400 hover:text-white transition-colors bg-slate-800 p-2 rounded-lg hover:bg-slate-700" onclick="document.getElementById('ticket-details-modal').classList.add('hidden')">
+            <button type="button" class="text-slate-400 hover:text-white" onclick="document.getElementById('ticket-details-modal').classList.add('hidden')">
                 <i class="ph ph-x text-lg"></i>
             </button>
         </div>
-        
+
         <!-- Pipeline de Fases -->
-        <div class="px-6 pt-4 overflow-x-auto pb-2">
+        <div class="mb-6 overflow-x-auto pb-2">
             <div id="ticket-pipeline" class="flex items-center justify-between min-w-[500px] px-2">
                 <!-- Se llena dinámicamente con JS -->
             </div>
         </div>
-        
-        <div class="p-6 overflow-y-auto space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
-                    <p class="text-xs text-slate-500 mb-1">Cliente</p>
-                    <p id="ticket-details-cliente" class="text-sm font-medium text-slate-200"></p>
-                </div>
-                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
-                    <p class="text-xs text-slate-500 mb-1">Equipo</p>
-                    <p id="ticket-details-equipo" class="text-sm font-medium text-slate-200"></p>
-                </div>
-                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
-                    <p class="text-xs text-slate-500 mb-1">Asignado a</p>
-                    <p id="ticket-details-asignado" class="text-sm font-medium text-slate-200"></p>
-                </div>
-                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
-                    <p class="text-xs text-slate-500 mb-1">Creado por</p>
-                    <p id="ticket-details-creado" class="text-sm font-medium text-slate-200"></p>
-                </div>
-            </div>
 
-            <div class="bg-slate-800/30 p-4 rounded-xl border border-slate-700/30">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Descripción</p>
-                <p id="ticket-details-descripcion" class="text-slate-300 text-sm whitespace-pre-wrap leading-relaxed"></p>
+        <div class="space-y-2 text-sm text-slate-200">
+            <p><span class="font-semibold text-slate-400">Creado por:</span> <span id="ticket-details-creado"></span></p>
+            <p><span class="font-semibold text-slate-400">Asignado a:</span> <span id="ticket-details-asignado"></span></p>
+            <p><span class="font-semibold text-slate-400">Cliente:</span> <span id="ticket-details-cliente"></span></p>
+            <p><span class="font-semibold text-slate-400">Equipo:</span> <span id="ticket-details-equipo"></span></p>
+            <p><span class="font-semibold text-slate-400">Fecha creación:</span> <span id="ticket-details-fecha-creacion"></span></p>
+            <p><span class="font-semibold text-slate-400">Fecha término:</span> <span id="ticket-details-fecha-termino"></span></p>
+            <div class="pt-2">
+                <p class="font-semibold text-slate-400 mb-1">Descripción</p>
+                <p id="ticket-details-descripcion" class="text-slate-200 whitespace-pre-wrap text-sm"></p>
             </div>
-
-            <div class="flex gap-4 text-xs text-slate-500 border-t border-slate-800 pt-4">
-                <div>
-                    <span class="block mb-0.5">Creado:</span>
-                    <span id="ticket-details-fecha-creacion" class="text-slate-400"></span>
-                </div>
-                <div>
-                    <span class="block mb-0.5">Terminado:</span>
-                    <span id="ticket-details-fecha-termino" class="text-slate-400"></span>
-                </div>
+            <div class="pt-4 border-t border-slate-800 mt-4">
+                <p class="font-semibold text-slate-400 mb-2 text-sm">Historial de cambios</p>
+                <div id="ticket-history" class="space-y-2 max-h-40 overflow-y-auto"></div>
+            </div>
+            <div class="pt-4 border-t border-slate-800 mt-4">
+                <p class="font-semibold text-slate-400 mb-2 text-sm">Comentarios</p>
+                <div id="ticket-comments" class="space-y-3 max-h-40 overflow-y-auto mb-3"></div>
+                <form id="add-comment-form" class="space-y-2">
+                    <textarea id="comment-content" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-xs" placeholder="Escribe un comentario"></textarea>
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium">
+                            Enviar comentario
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-
-        <div class="p-4 border-t border-slate-800 bg-slate-800/30 rounded-b-2xl flex justify-end">
-            <button type="button" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium transition-colors border border-slate-700" onclick="document.getElementById('ticket-details-modal').classList.add('hidden')">
+        <div class="mt-6 flex justify-end">
+            <button type="button" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm" onclick="document.getElementById('ticket-details-modal').classList.add('hidden')">
                 Cerrar
             </button>
         </div>

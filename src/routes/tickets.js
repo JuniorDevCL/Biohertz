@@ -428,67 +428,12 @@ router.get('/:id/historial', authRequired, async (req, res) => {
       `SELECT h.id, h.ticket_id, h.usuario_id, h.tipo_cambio, h.valor_anterior, h.valor_nuevo, h.creado_en, u.nombre as usuario_nombre, 'cambio' as tipo_item
        FROM historial_tickets h
        LEFT JOIN usuarios u ON u.id = h.usuario_id
-       WHERE h.ticket_id = $1`,
+       WHERE h.ticket_id = $1
+       ORDER BY h.creado_en DESC`,
       [id]
     );
 
-    // Obtener comentarios
-    const comentariosRes = await pool.query(
-      `SELECT c.id, c.ticket_id, c.autor_id as usuario_id, 'comentario' as tipo_cambio, NULL as valor_anterior, c.contenido as valor_nuevo, c.creado_en, u.nombre as usuario_nombre, 'comentario' as tipo_item, c.fase
-       FROM comentarios c
-       LEFT JOIN usuarios u ON u.id = c.autor_id
-       WHERE c.ticket_id = $1`,
-      [id]
-    );
-
-    // Combinar y ordenar
-    let combinado = [...historialRes.rows, ...comentariosRes.rows];
-    combinado.sort((a, b) => new Date(b.creado_en) - new Date(a.creado_en));
-
-    if (combinado.length === 0) {
-      const ticketRes = await pool.query(
-        `SELECT t.*, 
-                cu.nombre as creado_por_nombre,
-                au.nombre as asignado_a_nombre
-         FROM tickets t
-         LEFT JOIN usuarios cu ON cu.id = t.creado_por
-         LEFT JOIN usuarios au ON ua.id = t.asignado_a
-         WHERE t.id = $1`,
-        [id]
-      );
-      if (ticketRes.rowCount > 0) {
-        const t = ticketRes.rows[0];
-        const baseFecha = t.actualizado_en || t.creado_en || new Date();
-        combinado = [
-          {
-            id: null,
-            ticket_id: t.id,
-            usuario_id: t.creado_por,
-            usuario_nombre: t.creado_por_nombre || null,
-            tipo_cambio: 'estado',
-            valor_anterior: 'pendiente',
-            valor_nuevo: t.estado,
-            creado_en: baseFecha,
-            tipo_item: 'cambio'
-          }
-        ];
-        if (t.asignado_a) {
-             combinado.push({
-                id: null,
-                ticket_id: t.id,
-                usuario_id: t.creado_por,
-                usuario_nombre: t.creado_por_nombre || null,
-                tipo_cambio: 'asignacion',
-                valor_anterior: 'Sin asignar',
-                valor_nuevo: t.asignado_a_nombre || 'Sin asignar',
-                creado_en: baseFecha,
-                tipo_item: 'cambio'
-             });
-        }
-      }
-    }
-    
-    res.json(combinado);
+    res.json(historialRes.rows);
   } catch (err) {
     console.error('Error al obtener historial:', err);
     res.status(500).json({ error: 'Error al obtener historial' });
@@ -562,21 +507,17 @@ router.patch('/:id/estado', authRequired, async (req, res) => {
       return res.status(404).json({ error: 'Ticket no encontrado' });
     }
 
-    // Insertar comentario si existe
-    if (comentario && String(comentario).trim()) {
-        await pool.query(
-          `INSERT INTO comentarios (ticket_id, autor_id, contenido, fase, creado_en)
-           VALUES ($1, $2, $3, $4, NOW())`,
-          [id, req.user.id, String(comentario).trim(), nuevoEstado]
-        );
-    }
-
-    // Historial
+    // Historial (incluyendo comentario si existe)
     if (antes.rowCount > 0 && antes.rows[0].estado !== nuevoEstado) {
+      let valorNuevo = nuevoEstado;
+      if (comentario && String(comentario).trim()) {
+        valorNuevo += ` (Nota: ${String(comentario).trim()})`;
+      }
+
       await pool.query(
         `INSERT INTO historial_tickets (ticket_id, usuario_id, tipo_cambio, valor_anterior, valor_nuevo, creado_en)
          VALUES ($1, $2, $3, $4, $5, NOW())`,
-        [id, req.user.id, 'estado', antes.rows[0].estado, nuevoEstado]
+        [id, req.user.id, 'estado', antes.rows[0].estado, valorNuevo]
       );
     }
 
