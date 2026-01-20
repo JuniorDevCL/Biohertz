@@ -439,7 +439,13 @@ router.patch('/:id/estado', authRequired, async (req, res) => {
     const { estado } = req.body;
     const nuevoEstado = String(estado || '').trim();
 
-    if (!['pendiente', 'hecho', 'en_proceso'].includes(nuevoEstado)) {
+    // Lista ampliada de estados validos
+    const estadosValidos = [
+      'pendiente', 'hecho', 'en_proceso', // Legacy
+      'ingresado', 'diagnostico', 'presupuesto', 'reparacion', 'observacion', 'terminado' // Nuevas fases
+    ];
+
+    if (!estadosValidos.includes(nuevoEstado)) {
       return res.status(400).json({ error: 'Estado inválido' });
     }
 
@@ -449,7 +455,7 @@ router.patch('/:id/estado', authRequired, async (req, res) => {
       `UPDATE tickets
        SET estado = $1, 
            actualizado_en = NOW(),
-           terminado_en = CASE WHEN $1::varchar = 'hecho' THEN NOW() ELSE terminado_en END
+           terminado_en = CASE WHEN $1::varchar IN ('hecho', 'terminado') THEN NOW() ELSE terminado_en END
        WHERE id = $2
        RETURNING *`,
       [nuevoEstado, id]
