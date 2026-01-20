@@ -215,6 +215,167 @@
 
 <!-- Scripts reused from previous version -->
 <script>
+let currentTicketId = null;
+let currentTicketStatus = null;
+
+const TICKET_PHASES = [
+    { 
+        id: 'ingresado', 
+        label: 'Ingresado', 
+        icon: 'ph-file-text',
+        style: {
+            active: 'bg-slate-500 ring-slate-500 shadow-slate-500/30',
+            completed: 'text-slate-400 border-slate-500/50',
+            text: 'text-slate-400',
+            badge: 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+        }
+    },
+    { 
+        id: 'diagnostico', 
+        label: 'Diagnóstico', 
+        icon: 'ph-stethoscope',
+        style: {
+            active: 'bg-blue-500 ring-blue-500 shadow-blue-500/30',
+            completed: 'text-blue-400 border-blue-500/50',
+            text: 'text-blue-400',
+            badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+        }
+    },
+    { 
+        id: 'presupuesto', 
+        label: 'Presupuesto', 
+        icon: 'ph-currency-dollar',
+        style: {
+            active: 'bg-amber-500 ring-amber-500 shadow-amber-500/30',
+            completed: 'text-amber-400 border-amber-500/50',
+            text: 'text-amber-400',
+            badge: 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+        }
+    },
+    { 
+        id: 'reparacion', 
+        label: 'Reparación', 
+        icon: 'ph-wrench',
+        style: {
+            active: 'bg-orange-500 ring-orange-500 shadow-orange-500/30',
+            completed: 'text-orange-400 border-orange-500/50',
+            text: 'text-orange-400',
+            badge: 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+        }
+    },
+    { 
+        id: 'observacion', 
+        label: 'Observación', 
+        icon: 'ph-eye',
+        style: {
+            active: 'bg-purple-500 ring-purple-500 shadow-purple-500/30',
+            completed: 'text-purple-400 border-purple-500/50',
+            text: 'text-purple-400',
+            badge: 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+        }
+    },
+    { 
+        id: 'terminado', 
+        label: 'Terminado', 
+        icon: 'ph-check-circle',
+        style: {
+            active: 'bg-emerald-500 ring-emerald-500 shadow-emerald-500/30',
+            completed: 'text-emerald-400 border-emerald-500/50',
+            text: 'text-emerald-400',
+            badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+        }
+    }
+];
+
+async function updateTicketStatus(newStatus) {
+    if (!currentTicketId) return;
+    if (!confirm(`¿Cambiar estado a "${newStatus.toUpperCase()}"?`)) return;
+
+    try {
+        const res = await fetch(`/tickets/${currentTicketId}/estado`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: newStatus })
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            currentTicketStatus = data.ticket.estado;
+            renderPipeline(currentTicketStatus);
+            document.getElementById('ticket-details-estado').textContent = currentTicketStatus;
+            
+            // Recargar pagina si cambia a terminado para actualizar tabla
+            if (newStatus === 'terminado') {
+                window.location.reload();
+            }
+        } else {
+            alert('Error al actualizar estado');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Error de conexión');
+    }
+}
+
+function renderPipeline(currentStatus) {
+    const container = document.getElementById('ticket-pipeline');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // Mapeo simple para estados antiguos
+    let statusToUse = currentStatus;
+    if (currentStatus === 'pendiente') statusToUse = 'ingresado';
+    if (currentStatus === 'en_proceso') statusToUse = 'reparacion';
+    if (currentStatus === 'hecho') statusToUse = 'terminado';
+
+    const currentIndex = TICKET_PHASES.findIndex(p => p.id === statusToUse);
+    // Si no coincide (ej. estado legacy raro), default a 0
+    const activeIndex = currentIndex === -1 ? 0 : currentIndex;
+
+    TICKET_PHASES.forEach((phase, index) => {
+        const isCompleted = index < activeIndex;
+        const isActive = index === activeIndex;
+        
+        const step = document.createElement('div');
+        step.className = `flex flex-col items-center gap-1 relative z-10 cursor-pointer group`;
+        step.onclick = () => updateTicketStatus(phase.id);
+
+        let circleClass = '';
+        let iconClass = '';
+        let textClass = '';
+
+        if (isActive) {
+            circleClass = `w-8 h-8 rounded-full flex items-center justify-center text-white shadow-lg ring-2 ring-offset-2 ring-offset-slate-900 transition-all transform scale-110 ${phase.style.active}`;
+            iconClass = `ph ${phase.icon} text-lg`;
+            textClass = `text-[10px] font-bold mt-1 uppercase tracking-wide ${phase.style.text}`;
+        } else if (isCompleted) {
+            circleClass = `w-8 h-8 rounded-full flex items-center justify-center bg-slate-800 border hover:bg-slate-700 transition-colors ${phase.style.completed}`;
+            iconClass = `ph ${phase.icon} text-lg`;
+            textClass = `text-[10px] font-medium text-slate-400 mt-1 group-hover:text-slate-300`;
+        } else {
+            // Future
+            circleClass = `w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/50 text-slate-600 border border-slate-700 hover:border-slate-600 hover:text-slate-500 transition-colors`;
+            iconClass = `ph ${phase.icon} text-lg`;
+            textClass = `text-[10px] font-medium text-slate-600 mt-1`;
+        }
+
+        step.innerHTML = `
+            <div class="${circleClass}">
+                <i class="${iconClass}"></i>
+            </div>
+            <span class="${textClass}">${phase.label}</span>
+        `;
+        
+        container.appendChild(step);
+    });
+    
+    // Dibujar linea de fondo
+    const line = document.createElement('div');
+    line.className = 'absolute top-4 left-0 w-full h-0.5 bg-slate-800 -z-0';
+    container.style.position = 'relative'; // Asegurar posicionamiento
+    container.insertBefore(line, container.firstChild);
+}
+
 async function finishTicket(id) {
     if(!confirm('¿Marcar este ticket como terminado?')) return;
     try {
@@ -240,6 +401,7 @@ async function finishTicket(id) {
 }
 
 async function openTicketDetails(id) {
+    currentTicketId = id;
     try {
         const res = await fetch(`/tickets/${id}`);
         if (!res.ok) {
@@ -248,7 +410,11 @@ async function openTicketDetails(id) {
         }
         const t = await res.json();
         document.getElementById('ticket-details-title').textContent = t.titulo || '';
-        document.getElementById('ticket-details-estado').textContent = t.estado || '';
+        
+        currentTicketStatus = t.estado || 'ingresado';
+        document.getElementById('ticket-details-estado').textContent = currentTicketStatus;
+        renderPipeline(currentTicketStatus);
+
         document.getElementById('ticket-details-creado').textContent = t.creado_por_nombre || 'Desconocido';
         document.getElementById('ticket-details-asignado').textContent = t.asignado_a_nombre || 'Sin asignar';
         document.getElementById('ticket-details-cliente').textContent = t.cliente_nombre || '-';
@@ -280,6 +446,13 @@ async function openTicketDetails(id) {
             <button type="button" class="text-slate-400 hover:text-white transition-colors bg-slate-800 p-2 rounded-lg hover:bg-slate-700" onclick="document.getElementById('ticket-details-modal').classList.add('hidden')">
                 <i class="ph ph-x text-lg"></i>
             </button>
+        </div>
+        
+        <!-- Pipeline de Fases -->
+        <div class="px-6 pt-4 overflow-x-auto pb-2">
+            <div id="ticket-pipeline" class="flex items-center justify-between min-w-[500px] px-2">
+                <!-- Se llena dinámicamente con JS -->
+            </div>
         </div>
         
         <div class="p-6 overflow-y-auto space-y-4">

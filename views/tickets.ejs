@@ -217,12 +217,72 @@ let currentTicketId = null;
 let currentTicketStatus = null;
 
 const TICKET_PHASES = [
-    { id: 'ingresado', label: 'Ingresado', color: 'slate', icon: 'ph-file-text' },
-    { id: 'diagnostico', label: 'Diagnóstico', color: 'blue', icon: 'ph-stethoscope' },
-    { id: 'presupuesto', label: 'Presupuesto', color: 'amber', icon: 'ph-currency-dollar' },
-    { id: 'reparacion', label: 'Reparación', color: 'orange', icon: 'ph-wrench' },
-    { id: 'observacion', label: 'Observación', color: 'purple', icon: 'ph-eye' },
-    { id: 'terminado', label: 'Terminado', color: 'emerald', icon: 'ph-check-circle' }
+    { 
+        id: 'ingresado', 
+        label: 'Ingresado', 
+        icon: 'ph-file-text',
+        style: {
+            active: 'bg-slate-500 ring-slate-500 shadow-slate-500/30',
+            completed: 'text-slate-400 border-slate-500/50',
+            text: 'text-slate-400',
+            badge: 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+        }
+    },
+    { 
+        id: 'diagnostico', 
+        label: 'Diagnóstico', 
+        icon: 'ph-stethoscope',
+        style: {
+            active: 'bg-blue-500 ring-blue-500 shadow-blue-500/30',
+            completed: 'text-blue-400 border-blue-500/50',
+            text: 'text-blue-400',
+            badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+        }
+    },
+    { 
+        id: 'presupuesto', 
+        label: 'Presupuesto', 
+        icon: 'ph-currency-dollar',
+        style: {
+            active: 'bg-amber-500 ring-amber-500 shadow-amber-500/30',
+            completed: 'text-amber-400 border-amber-500/50',
+            text: 'text-amber-400',
+            badge: 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+        }
+    },
+    { 
+        id: 'reparacion', 
+        label: 'Reparación', 
+        icon: 'ph-wrench',
+        style: {
+            active: 'bg-orange-500 ring-orange-500 shadow-orange-500/30',
+            completed: 'text-orange-400 border-orange-500/50',
+            text: 'text-orange-400',
+            badge: 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+        }
+    },
+    { 
+        id: 'observacion', 
+        label: 'Observación', 
+        icon: 'ph-eye',
+        style: {
+            active: 'bg-purple-500 ring-purple-500 shadow-purple-500/30',
+            completed: 'text-purple-400 border-purple-500/50',
+            text: 'text-purple-400',
+            badge: 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+        }
+    },
+    { 
+        id: 'terminado', 
+        label: 'Terminado', 
+        icon: 'ph-check-circle',
+        style: {
+            active: 'bg-emerald-500 ring-emerald-500 shadow-emerald-500/30',
+            completed: 'text-emerald-400 border-emerald-500/50',
+            text: 'text-emerald-400',
+            badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+        }
+    }
 ];
 
 async function updateTicketStatus(newStatus) {
@@ -244,9 +304,6 @@ async function updateTicketStatus(newStatus) {
             
             // Recargar historial para ver el cambio
             loadTicketHistory(currentTicketId);
-            
-            // Si estamos en la lista principal, quizás deberíamos recargarla, 
-            // pero por ahora solo actualizamos el modal.
         } else {
             alert('Error al actualizar estado');
         }
@@ -279,27 +336,16 @@ function renderPipeline(currentStatus) {
         step.className = `flex flex-col items-center gap-1 relative z-10 cursor-pointer group`;
         step.onclick = () => updateTicketStatus(phase.id);
 
-        // Linea conectora (excepto para el ultimo)
-        if (index < TICKET_PHASES.length - 1) {
-            const line = document.createElement('div');
-            // La linea va despues del circulo, posicion absoluta
-            // Pero es mas facil ponerla como elemento separado o background.
-            // Usemos un pseudo-elemento o un div separado si fuera grid.
-            // Aquí en flex es tricky. Vamos a simplificar: 
-            // El contenedor flex-between separa los items. 
-            // Podemos dibujar una linea detras.
-        }
-
         let circleClass = '';
         let iconClass = '';
         let textClass = '';
 
         if (isActive) {
-            circleClass = `w-8 h-8 rounded-full flex items-center justify-center bg-${phase.color}-500 text-white shadow-lg shadow-${phase.color}-500/30 ring-2 ring-${phase.color}-500 ring-offset-2 ring-offset-slate-900 transition-all transform scale-110`;
+            circleClass = `w-8 h-8 rounded-full flex items-center justify-center text-white shadow-lg ring-2 ring-offset-2 ring-offset-slate-900 transition-all transform scale-110 ${phase.style.active}`;
             iconClass = `ph ${phase.icon} text-lg`;
-            textClass = `text-[10px] font-bold text-${phase.color}-400 mt-1 uppercase tracking-wide`;
+            textClass = `text-[10px] font-bold mt-1 uppercase tracking-wide ${phase.style.text}`;
         } else if (isCompleted) {
-            circleClass = `w-8 h-8 rounded-full flex items-center justify-center bg-slate-800 text-${phase.color}-400 border border-${phase.color}-500/50 hover:bg-slate-700 transition-colors`;
+            circleClass = `w-8 h-8 rounded-full flex items-center justify-center bg-slate-800 border hover:bg-slate-700 transition-colors ${phase.style.completed}`;
             iconClass = `ph ${phase.icon} text-lg`;
             textClass = `text-[10px] font-medium text-slate-400 mt-1 group-hover:text-slate-300`;
         } else {
@@ -319,13 +365,11 @@ function renderPipeline(currentStatus) {
         container.appendChild(step);
     });
     
-    // Dibujar linea de fondo (simple hack)
-    // Esto requiere que el container tenga relative
+    // Dibujar linea de fondo
     const line = document.createElement('div');
     line.className = 'absolute top-4 left-0 w-full h-0.5 bg-slate-800 -z-0';
-    // container.appendChild(line); // Esto se superpone mal si no ajustamos padding.
-    // Mejor dejamos los items sueltos por ahora o usamos un diseño mas simple.
-    // O mejor, aplicamos un border-top a un contenedor wrapper.
+    container.style.position = 'relative'; // Asegurar posicionamiento
+    container.insertBefore(line, container.firstChild);
 }
 
 async function deleteTicket(id) {
@@ -354,7 +398,12 @@ async function openTicketDetails(id) {
         }
         const t = await res.json();
         document.getElementById('ticket-details-title').textContent = t.titulo || '';
-        document.getElementById('ticket-details-estado').textContent = t.estado || '';
+        
+        // Actualizar estado global y renderizar pipeline
+        currentTicketStatus = t.estado || 'ingresado';
+        document.getElementById('ticket-details-estado').textContent = currentTicketStatus;
+        renderPipeline(currentTicketStatus);
+
         document.getElementById('ticket-details-codigo').textContent = t.codigo || '-';
         const tipoMap = {
             mantencion: 'Mantención (M)',
