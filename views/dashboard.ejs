@@ -496,7 +496,6 @@ async function openTicketDetails(id) {
         };
         document.getElementById('ticket-details-tipo').textContent = tipoMap[t.tipo] || (t.tipo || '-');
 
-        document.getElementById('ticket-details-creado').textContent = t.creado_por_nombre || 'Desconocido';
         document.getElementById('ticket-details-asignado').textContent = t.asignado_a_nombre || 'Sin asignar';
         document.getElementById('ticket-details-cliente').textContent = t.cliente_nombre || '-';
         document.getElementById('ticket-details-equipo').textContent = t.equipo_nombre || '-';
@@ -760,10 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p class="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Asignado a</p>
                             <p id="ticket-details-asignado" class="text-slate-200 font-medium"></p>
                         </div>
-                        <div>
-                            <p class="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Creado por</p>
-                            <p id="ticket-details-creado" class="text-slate-200 font-medium"></p>
-                        </div>
+
                         <div>
                             <p class="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Fecha Creación</p>
                             <p id="ticket-details-fecha-creacion" class="text-slate-200"></p>

@@ -328,6 +328,11 @@
                 <div id="detalle-equipo-mantenciones" class="space-y-2 text-xs">
                 </div>
             </div>
+            <div class="mt-4">
+                <p class="text-xs text-slate-500 mb-2">Tickets asociados</p>
+                <div id="detalle-equipo-tickets" class="space-y-2 text-xs">
+                </div>
+            </div>
             <div class="text-xs text-slate-500 mt-2">
                 <span id="detalle-equipo-creado"></span>
             </div>
@@ -495,6 +500,42 @@ async function openDetalleEquipo(id) {
                     (nota ? '<div class="text-[11px] text-slate-400 whitespace-pre-wrap mt-1">' + nota + '</div>' : '');
                 mantencionesEl.appendChild(div);
             });
+        }
+
+        const ticketsEl = document.getElementById('detalle-equipo-tickets');
+        if (ticketsEl) {
+            ticketsEl.innerHTML = '';
+            const tickets = Array.isArray(e.tickets) ? e.tickets : [];
+            if (tickets.length === 0) {
+                ticketsEl.innerHTML = '<p class="text-slate-500">No hay tickets asociados.</p>';
+            } else {
+                tickets.forEach(t => {
+                    const tDiv = document.createElement('div');
+                    tDiv.className = 'bg-slate-800/70 border border-slate-700 rounded-lg px-3 py-2 flex justify-between items-center gap-2';
+                    
+                    const estado = t.estado || 'pendiente';
+                    let badgeClass = 'bg-slate-700 text-slate-300 border border-slate-600';
+                    if (estado === 'pendiente' || estado === 'ingresado') badgeClass = 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30';
+                    else if (estado === 'en_proceso' || estado === 'diagnostico' || estado === 'reparacion') badgeClass = 'bg-blue-500/20 text-blue-300 border border-blue-500/30';
+                    else if (estado === 'hecho' || estado === 'terminado') badgeClass = 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+                    
+                    const fechaCreacion = t.creado_en ? new Date(t.creado_en).toLocaleDateString('es-CL') : '';
+                    
+                    tDiv.innerHTML = 
+                        '<div class="flex-1 min-w-0">' +
+                            '<div class="flex items-center gap-2 mb-0.5">' +
+                                '<span class="text-[10px] font-mono text-slate-500">#' + (t.codigo || t.id) + '</span>' +
+                                '<span class="text-[11px] font-medium text-slate-200 truncate">' + (t.titulo || 'Sin título') + '</span>' +
+                            '</div>' +
+                            '<div class="text-[10px] text-slate-400 truncate">' + (t.descripcion || '') + '</div>' +
+                        '</div>' +
+                        '<div class="flex flex-col items-end gap-1">' +
+                            '<span class="px-1.5 py-0.5 rounded text-[10px] border ' + badgeClass + '">' + estado + '</span>' +
+                            '<span class="text-[10px] text-slate-500">' + fechaCreacion + '</span>' +
+                        '</div>';
+                    ticketsEl.appendChild(tDiv);
+                });
+            }
         }
 
         const creadoEn = e.creado_en ? new Date(e.creado_en) : null;

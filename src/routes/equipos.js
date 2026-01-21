@@ -156,7 +156,24 @@ router.get('/:id', authRequired, async (req, res) => {
     const { id } = req.params;
     const result = await pool.query(`SELECT * FROM equipos WHERE id = $1`, [id]);
     if (result.rowCount === 0) return res.status(404).json({ error: 'Equipo no encontrado' });
-    res.json(result.rows[0]);
+    
+    const equipo = result.rows[0];
+
+    // Obtener tickets asociados
+    const ticketsRes = await pool.query(`
+      SELECT t.*, 
+             u.nombre AS creado_por_nombre, 
+             ua.nombre AS asignado_a_nombre
+      FROM tickets t
+      LEFT JOIN usuarios u ON u.id = t.creado_por
+      LEFT JOIN usuarios ua ON ua.id = t.asignado_a
+      WHERE t.equipo_id = $1
+      ORDER BY t.creado_en DESC
+    `, [id]);
+
+    equipo.tickets = ticketsRes.rows;
+
+    res.json(equipo);
   } catch (err) {
     console.error('Error al obtener equipo:', err);
     res.status(500).json({ error: 'Error al obtener equipo' });
