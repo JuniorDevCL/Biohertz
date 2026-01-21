@@ -195,8 +195,17 @@
                         <!-- Lista de eventos -->
                         <div class="p-2 flex-1 space-y-2">
                             <% if (dayEvents.length > 0) { %>
-                                <% dayEvents.forEach(event => { %>
-                                    <div class="p-2 rounded bg-slate-800 border border-slate-700 hover:border-orange-500/50 transition-colors group relative cursor-help" title="<%= event.descripcion || event.titulo %>">
+                                <% 
+                                // Función auxiliar para convertir hora HH:MM a minutos
+                                const getMins = (t) => {
+                                    if (!t) return 0;
+                                    const [h, m] = t.split(':').map(Number);
+                                    return h * 60 + m;
+                                };
+
+                                dayEvents.forEach((event, index) => { 
+                                %>
+                                    <div class="p-2 rounded bg-slate-800 border border-slate-700 hover:border-orange-500/50 transition-colors group relative cursor-help z-10" title="<%= event.descripcion || event.titulo %>">
                                         <div class="text-xs font-semibold text-slate-200 truncate <%= isPast ? 'line-through opacity-50' : '' %>">
                                             <%= event.titulo %>
                                         </div>
@@ -204,9 +213,45 @@
                                             <div class="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
                                                 <i class="ph ph-clock"></i>
                                                 <%= event.hora_inicio.slice(0,5) %>
+                                                <% if (event.hora_fin) { %> - <%= event.hora_fin.slice(0,5) %> <% } %>
                                             </div>
                                         <% } %>
                                     </div>
+
+                                    <% 
+                                    // Lógica para mostrar espacios de tiempo entre eventos
+                                    if (index < dayEvents.length - 1 && !isPast) {
+                                        const nextEvent = dayEvents[index + 1];
+                                        
+                                        const startMins = getMins(event.hora_inicio);
+                                        // Si no hay hora fin, asumimos 60 min de duración por defecto para calcular el espacio
+                                        const endMins = event.hora_fin ? getMins(event.hora_fin) : (startMins + 60);
+                                        const nextStartMins = getMins(nextEvent.hora_inicio);
+                                        
+                                        // Calcular horas completas en el intervalo
+                                        const firstHour = Math.ceil(endMins / 60);
+                                        const lastHour = Math.floor((nextStartMins - 1) / 60);
+                                        
+                                        // Solo mostrar si hay un hueco real (más de 15 min por ejemplo)
+                                        if (nextStartMins - endMins > 15) {
+                                            for (let h = firstHour; h <= lastHour; h++) {
+                                                const hourMins = h * 60;
+                                                // Asegurar que la hora está estrictamente entre el fin del actual y el inicio del siguiente
+                                                // Permitimos igual al fin si queremos marcar el inicio del tiempo libre
+                                                if (hourMins >= endMins && hourMins < nextStartMins) {
+                                                    const hourStr = `${h.toString().padStart(2, '0')}:00`;
+                                    %>
+                                                    <div class="flex items-center gap-2 py-1 opacity-50 select-none">
+                                                        <div class="h-px bg-slate-700 flex-1 border-t border-dashed border-slate-700"></div>
+                                                        <span class="text-[10px] font-mono text-slate-500"><%= hourStr %></span>
+                                                        <div class="h-px bg-slate-700 flex-1 border-t border-dashed border-slate-700"></div>
+                                                    </div>
+                                    <%
+                                                }
+                                            }
+                                        }
+                                    }
+                                    %>
                                 <% }); %>
                             <% } %>
                         </div>
