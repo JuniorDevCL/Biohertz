@@ -101,8 +101,8 @@ app.get('/dashboard', authRequired, async (req, res) => {
             `, [userId]),
             pool.query(`
                 SELECT * FROM eventos 
-                WHERE fecha = CURRENT_DATE 
-                ORDER BY hora_inicio ASC
+                WHERE fecha >= CURRENT_DATE AND fecha <= CURRENT_DATE + INTERVAL '7 days'
+                ORDER BY fecha ASC, hora_inicio ASC
             `)
         ]);
 
