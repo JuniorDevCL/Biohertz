@@ -451,6 +451,8 @@ router.get('/:id', authRequired, async (req, res) => {
               u.nombre AS creado_por_nombre, 
               ua.nombre AS asignado_a_nombre,
               e.nombre AS equipo_nombre,
+              e.marca AS equipo_marca,
+              e.ubicacion AS equipo_ubicacion,
               c.nombre AS cliente_nombre
        FROM tickets t
        LEFT JOIN usuarios u ON u.id = t.creado_por
