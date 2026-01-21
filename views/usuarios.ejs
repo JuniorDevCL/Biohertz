@@ -15,6 +15,7 @@
                         <th class="py-4 px-6">ID</th>
                         <th class="py-4 px-6">Nombre</th>
                         <th class="py-4 px-6">Email</th>
+                        <th class="py-4 px-6">Teléfono</th>
                         <th class="py-4 px-6">Rol</th>
                         <th class="py-4 px-6 text-right">Acciones</th>
                     </tr>
@@ -28,6 +29,9 @@
                             </td>
                             <td class="py-4 px-6 text-slate-400 text-sm">
                                 <%= u.email %>
+                            </td>
+                            <td class="py-4 px-6 text-slate-400 text-sm">
+                                <%= u.telefono || '-' %>
                             </td>
                             <td class="py-4 px-6">
                                 <span class="px-2.5 py-1 rounded-full text-xs font-medium 
@@ -79,6 +83,11 @@
             </div>
 
             <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">Teléfono</label>
+                <input type="text" id="edit-user-telefono" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500 transition-colors">
+            </div>
+
+            <div>
                 <label class="block text-xs font-medium text-slate-400 mb-1">Rol</label>
                 <select id="edit-user-rol" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500 transition-colors">
                     <option value="user">Usuario</option>
@@ -113,6 +122,7 @@ async function openEditUserModal(id) {
         document.getElementById('edit-user-id').value = user.id;
         document.getElementById('edit-user-nombre').value = user.nombre;
         document.getElementById('edit-user-email').value = user.email;
+        document.getElementById('edit-user-telefono').value = user.telefono || '';
         document.getElementById('edit-user-rol').value = user.rol;
         document.getElementById('edit-user-password').value = ''; // Reset password field
 
@@ -133,6 +143,7 @@ document.getElementById('edit-user-form').addEventListener('submit', async (e) =
     const id = document.getElementById('edit-user-id').value;
     const nombre = document.getElementById('edit-user-nombre').value;
     const email = document.getElementById('edit-user-email').value;
+    const telefono = document.getElementById('edit-user-telefono').value;
     const rol = document.getElementById('edit-user-rol').value;
     const password = document.getElementById('edit-user-password').value;
 
@@ -142,7 +153,7 @@ document.getElementById('edit-user-form').addEventListener('submit', async (e) =
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ nombre, email, rol, password })
+            body: JSON.stringify({ nombre, email, telefono, rol, password })
         });
 
         if (res.ok) {

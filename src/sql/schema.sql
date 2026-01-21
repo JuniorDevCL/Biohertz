@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(100) NOT NULL,
   email VARCHAR(150) UNIQUE NOT NULL,
+  telefono VARCHAR(50),
   password TEXT NOT NULL,
   rol VARCHAR(50) NOT NULL DEFAULT 'user'
 );

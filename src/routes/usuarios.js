@@ -20,7 +20,7 @@ router.use(adminOnly);
 // GET /usuarios - Listar todos los usuarios
 router.get('/', async (req, res) => {
     try {
-        const users = await pool.query('SELECT id, nombre, email, rol FROM usuarios ORDER BY id ASC');
+        const users = await pool.query('SELECT id, nombre, email, telefono, rol FROM usuarios ORDER BY id ASC');
         res.render('usuarios', { 
             users: users.rows,
             user: req.user,
@@ -36,7 +36,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const users = await pool.query('SELECT id, nombre, email, rol FROM usuarios WHERE id = $1', [id]);
+        const users = await pool.query('SELECT id, nombre, email, telefono, rol FROM usuarios WHERE id = $1', [id]);
         if (users.rows.length === 0) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
@@ -51,7 +51,7 @@ router.get('/:id', async (req, res) => {
 router.post('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, email, rol, password } = req.body;
+        const { nombre, email, telefono, rol, password } = req.body;
 
         if (!nombre || !email || !rol) {
             return res.status(400).json({ error: 'Faltan campos requeridos' });
@@ -61,14 +61,14 @@ router.post('/:id', async (req, res) => {
         if (password && password.trim() !== '') {
             const hashedPassword = await bcrypt.hash(password, 10);
             await pool.query(
-                'UPDATE usuarios SET nombre = $1, email = $2, rol = $3, password = $4 WHERE id = $5',
-                [nombre, email, rol, hashedPassword, id]
+                'UPDATE usuarios SET nombre = $1, email = $2, telefono = $3, rol = $4, password = $5 WHERE id = $6',
+                [nombre, email, telefono, rol, hashedPassword, id]
             );
         } else {
             // Sin actualizar password
             await pool.query(
-                'UPDATE usuarios SET nombre = $1, email = $2, rol = $3 WHERE id = $4',
-                [nombre, email, rol, id]
+                'UPDATE usuarios SET nombre = $1, email = $2, telefono = $3, rol = $4 WHERE id = $5',
+                [nombre, email, telefono, rol, id]
             );
         }
 

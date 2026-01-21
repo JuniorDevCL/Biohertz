@@ -9,7 +9,7 @@ import axios from 'axios';
 const router = Router();
 
 const allowedEmails = (process.env.ALLOWED_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-const HARDCODED_ALLOWED = ['admin@biohertz.com', 'tester@biohertz.com'];
+const HARDCODED_ALLOWED = ['admin@biohertz.com'];
 
 function isAllowed(email) {
   const emailNorm = String(email || '').toLowerCase();
