@@ -109,10 +109,18 @@ if (isOffline) {
         if (password) u.password = password;
         
         saveStore(store);
+         return { rows: [], rowCount: 1 };
+       }
+       if (s.startsWith('DELETE FROM usuarios')) {
+        const [id] = params;
+        const i = store.usuarios.findIndex(x => String(x.id) === String(id));
+        if (i === -1) return { rows: [], rowCount: 0 };
+        store.usuarios.splice(i, 1);
+        saveStore(store);
         return { rows: [], rowCount: 1 };
       }
-
-      if (s.startsWith('INSERT INTO tickets')) {
+  
+       if (s.startsWith('INSERT INTO tickets')) {
         const [titulo, descripcion, creado_por, asignado_a, equipo_id, cliente_id, tipo, codigo] = params;
         const id = store.seq.tickets++;
         const t = { 

@@ -36,9 +36,16 @@
                                 </span>
                             </td>
                             <td class="py-4 px-6 text-right">
-                                <button onclick="openEditUserModal('<%= u.id %>')" class="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border border-blue-500/20" title="Editar Usuario">
-                                    <i class="ph ph-pencil-simple text-lg"></i>
-                                </button>
+                                <div class="flex items-center justify-end gap-2">
+                                    <button onclick="openEditUserModal('<%= u.id %>')" class="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border border-blue-500/20" title="Editar Usuario">
+                                        <i class="ph ph-pencil-simple text-lg"></i>
+                                    </button>
+                                    <% if (user.id !== u.id && u.email !== 'alexis.cruces2122@gmail.com') { %>
+                                    <button onclick="deleteUser('<%= u.id %>')" class="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all border border-red-500/20" title="Eliminar Usuario">
+                                        <i class="ph ph-trash text-lg"></i>
+                                    </button>
+                                    <% } %>
+                                </div>
                             </td>
                         </tr>
                     <% }); %>
@@ -150,4 +157,24 @@ document.getElementById('edit-user-form').addEventListener('submit', async (e) =
         alert('Error de conexión');
     }
 });
+
+async function deleteUser(id) {
+    if (!confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.')) return;
+    
+    try {
+        const res = await fetch(`/usuarios/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (res.ok) {
+            window.location.reload();
+        } else {
+            const data = await res.json();
+            alert(data.error || 'Error al eliminar usuario');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Error de conexión');
+    }
+}
 </script>

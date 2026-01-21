@@ -79,4 +79,34 @@ router.post('/:id', async (req, res) => {
     }
 });
 
+// DELETE /usuarios/:id - Eliminar usuario
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Evitar auto-eliminación (o eliminación del admin principal hardcoded)
+        // Primero obtener el usuario a eliminar para ver si es el mismo que está logueado
+        // O simplemente comparar ID si lo tuviéramos en req.user
+        
+        if (String(id) === String(req.user.id)) {
+            return res.status(400).json({ error: 'No puedes eliminar tu propio usuario.' });
+        }
+
+        // También podemos proteger al admin principal por email
+        const targetUserRes = await pool.query('SELECT email FROM usuarios WHERE id = $1', [id]);
+        if (targetUserRes.rows.length > 0) {
+            const targetEmail = targetUserRes.rows[0].email;
+            if (targetEmail === 'alexis.cruces2122@gmail.com') {
+                return res.status(403).json({ error: 'No se puede eliminar al administrador principal.' });
+            }
+        }
+
+        await pool.query('DELETE FROM usuarios WHERE id = $1', [id]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error al eliminar usuario' });
+    }
+});
+
 export default router;
