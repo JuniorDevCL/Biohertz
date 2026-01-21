@@ -76,6 +76,41 @@ if (isOffline) {
         const rows = store.usuarios.map(u => ({ id: u.id, nombre: u.nombre, email: u.email })).sort((a, b) => String(a.nombre).localeCompare(String(b.nombre)));
         return { rows, rowCount: rows.length };
       }
+      if (s.startsWith('SELECT id, nombre, email, rol FROM usuarios ORDER BY id ASC')) {
+        const rows = store.usuarios.map(u => ({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol })).sort((a, b) => a.id - b.id);
+        return { rows, rowCount: rows.length };
+      }
+      if (s.startsWith('SELECT id, nombre, email, rol FROM usuarios WHERE id =')) {
+        const [id] = params;
+        const u = store.usuarios.find(x => String(x.id) === String(id));
+        return { rows: u ? [{ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol }] : [], rowCount: u ? 1 : 0 };
+      }
+      if (s.startsWith('UPDATE usuarios SET')) {
+        // Handle UPDATE usuarios SET nombre = $1, email = $2, rol = $3 [, password = $4] WHERE id = $N
+        // Params could be 4 or 5 depending on password update
+        // We need to parse params carefully or assume order from route
+        // Route 1: nombre, email, rol, hashedPassword, id
+        // Route 2: nombre, email, rol, id
+        
+        let id, nombre, email, rol, password;
+        
+        if (params.length === 5) {
+             [nombre, email, rol, password, id] = params;
+        } else {
+             [nombre, email, rol, id] = params;
+        }
+
+        const u = store.usuarios.find(x => String(x.id) === String(id));
+        if (!u) return { rows: [], rowCount: 0 };
+        
+        u.nombre = nombre;
+        u.email = email;
+        u.rol = rol;
+        if (password) u.password = password;
+        
+        saveStore(store);
+        return { rows: [], rowCount: 1 };
+      }
 
       if (s.startsWith('INSERT INTO tickets')) {
         const [titulo, descripcion, creado_por, asignado_a, equipo_id, cliente_id, tipo, codigo] = params;

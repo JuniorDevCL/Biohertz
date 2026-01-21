@@ -17,6 +17,7 @@ import { createServer } from 'http';
 import equiposRoutes from './routes/equipos.js';
 import clientesRoutes from './routes/clientes.js';
 import calendarioRoutes from './routes/calendario.js';
+import usuariosRoutes from './routes/usuarios.js';
 import pool from './db.js';
 
 const app = express();
@@ -141,6 +142,7 @@ app.use('/tickets', ticketsRoutes);
 app.use('/equipos', equiposRoutes);
 app.use('/clientes', clientesRoutes);
 app.use('/calendario', calendarioRoutes);
+app.use('/usuarios', usuariosRoutes);
 
 // Inicializar servidor HTTP
 const server = createServer(app);

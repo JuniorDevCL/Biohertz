@@ -1,0 +1,82 @@
+import express from 'express';
+import pool from '../db.js';
+import authRequired from '../middleware/authRequired.js';
+import bcrypt from 'bcryptjs';
+
+const router = express.Router();
+
+// Middleware de seguridad específico para este router
+// Solo permite acceso si el email es alexis.cruces2122@gmail.com
+const adminOnly = (req, res, next) => {
+    if (req.user && req.user.email === 'alexis.cruces2122@gmail.com') {
+        return next();
+    }
+    return res.status(403).send('Acceso denegado. Solo el administrador principal puede ver esto.');
+};
+
+router.use(authRequired);
+router.use(adminOnly);
+
+// GET /usuarios - Listar todos los usuarios
+router.get('/', async (req, res) => {
+    try {
+        const users = await pool.query('SELECT id, nombre, email, rol FROM usuarios ORDER BY id ASC');
+        res.render('usuarios', { 
+            users: users.rows,
+            user: req.user,
+            path: '/usuarios'
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error al cargar usuarios');
+    }
+});
+
+// GET /usuarios/:id - Obtener un usuario (JSON para modal)
+router.get('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const users = await pool.query('SELECT id, nombre, email, rol FROM usuarios WHERE id = $1', [id]);
+        if (users.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        res.json(users.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error interno' });
+    }
+});
+
+// POST /usuarios/:id - Actualizar usuario
+router.post('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre, email, rol, password } = req.body;
+
+        if (!nombre || !email || !rol) {
+            return res.status(400).json({ error: 'Faltan campos requeridos' });
+        }
+
+        // Si se envía password, encriptarla
+        if (password && password.trim() !== '') {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            await pool.query(
+                'UPDATE usuarios SET nombre = $1, email = $2, rol = $3, password = $4 WHERE id = $5',
+                [nombre, email, rol, hashedPassword, id]
+            );
+        } else {
+            // Sin actualizar password
+            await pool.query(
+                'UPDATE usuarios SET nombre = $1, email = $2, rol = $3 WHERE id = $4',
+                [nombre, email, rol, id]
+            );
+        }
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error al actualizar usuario' });
+    }
+});
+
+export default router;
