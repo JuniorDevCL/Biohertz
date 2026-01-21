@@ -130,6 +130,10 @@ router.post('/', authRequired, async (req, res) => {
       tipoNormalizado = 'mantencion_correctiva';
     } else if (rawTipo === 'vt' || rawTipo === 'visita_tecnica' || rawTipo === 'visita tecnica') {
       tipoNormalizado = 'visita_tecnica';
+    } else if (rawTipo === 'reparacion' || rawTipo === 'r') {
+      tipoNormalizado = 'reparacion';
+    } else if (rawTipo === 'otro' || rawTipo === 'o') {
+      tipoNormalizado = 'otro';
     } else {
       // Fallback a mantención preventiva por defecto si no coincide
       tipoNormalizado = 'mantencion_preventiva';
@@ -142,6 +146,10 @@ router.post('/', authRequired, async (req, res) => {
       prefijo = 'MC';
     } else if (tipoNormalizado === 'visita_tecnica') {
       prefijo = 'VT';
+    } else if (tipoNormalizado === 'reparacion') {
+      prefijo = 'R';
+    } else if (tipoNormalizado === 'otro') {
+      prefijo = 'O';
     } else {
       prefijo = 'TK';
     }

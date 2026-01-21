@@ -488,7 +488,11 @@ async function openTicketDetails(id) {
         const tipoMap = {
             mantencion_preventiva: 'M. Preventiva (MP)',
             mantencion_correctiva: 'M. Correctiva (MC)',
-            visita_tecnica: 'Visita Técnica (VT)'
+            visita_tecnica: 'Visita Técnica (VT)',
+            reparacion: 'Reparación (R)',
+            otro: 'Otro (O)',
+            mantencion: 'Mantención (Legacy)', 
+            garantia: 'Garantía (Legacy)'
         };
         document.getElementById('ticket-details-tipo').textContent = tipoMap[t.tipo] || (t.tipo || '-');
 

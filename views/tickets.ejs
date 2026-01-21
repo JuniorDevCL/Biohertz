@@ -47,6 +47,8 @@
                     <option value="mantencion_preventiva" <%= queryTipo === 'mantencion_preventiva' ? 'selected' : '' %>>M. Preventiva (MP)</option>
                     <option value="mantencion_correctiva" <%= queryTipo === 'mantencion_correctiva' ? 'selected' : '' %>>M. Correctiva (MC)</option>
                     <option value="visita_tecnica" <%= queryTipo === 'visita_tecnica' ? 'selected' : '' %>>Visita técnica (VT)</option>
+                    <option value="reparacion" <%= queryTipo === 'reparacion' ? 'selected' : '' %>>Reparación (R)</option>
+                    <option value="otro" <%= queryTipo === 'otro' ? 'selected' : '' %>>Otro (O)</option>
                 </select>
             </div>
             <div>
@@ -99,7 +101,9 @@
                                                 <span class="text-[11px] text-slate-400">
                                                     <%= ticket.tipo === 'mantencion_preventiva' ? 'M. Preventiva (MP)' : 
                                                         (ticket.tipo === 'mantencion_correctiva' ? 'M. Correctiva (MC)' : 
-                                                        (ticket.tipo === 'visita_tecnica' ? 'Visita Técnica (VT)' : ticket.tipo)) %>
+                                                        (ticket.tipo === 'visita_tecnica' ? 'Visita Técnica (VT)' : 
+                                                        (ticket.tipo === 'reparacion' ? 'Reparación (R)' : 
+                                                        (ticket.tipo === 'otro' ? 'Otro (O)' : ticket.tipo)))) %>
                                                 </span>
                                             <% } %>
                                             <% if (ticket.garantia) { %>
@@ -176,6 +180,8 @@
                     <option value="mantencion_preventiva">Mantención Preventiva (MP)</option>
                     <option value="mantencion_correctiva">Mantención Correctiva (MC)</option>
                     <option value="visita_tecnica">Visita Técnica (VT)</option>
+                    <option value="reparacion">Reparación (R)</option>
+                    <option value="otro">Otro (O)</option>
                 </select>
             </div>
 
@@ -566,9 +572,13 @@ async function openTicketDetails(id) {
 
         document.getElementById('ticket-details-codigo').textContent = t.codigo || '-';
         const tipoMap = {
-            mantencion: 'Mantención (M)',
-            visita_tecnica: 'Visita técnica (V)',
-            garantia: 'Garantía (G)',
+            mantencion_preventiva: 'M. Preventiva (MP)',
+            mantencion_correctiva: 'M. Correctiva (MC)',
+            visita_tecnica: 'Visita Técnica (VT)',
+            reparacion: 'Reparación (R)',
+            otro: 'Otro (O)',
+            mantencion: 'Mantención (Legacy)', 
+            garantia: 'Garantía (Legacy)'
         };
         document.getElementById('ticket-details-tipo').textContent = tipoMap[t.tipo] || (t.tipo || '-');
         document.getElementById('ticket-details-creado').textContent = t.creado_por_nombre || 'Desconocido';
@@ -601,7 +611,8 @@ async function loadTicketHistory(id) {
     try {
         const res = await fetch(`/tickets/${id}/historial`);
         if (!res.ok) {
-            container.innerHTML = '<p class="text-xs text-red-400">No se pudo cargar el historial.</p>';
+            console.error('Error fetching history:', res.status, res.statusText);
+            container.innerHTML = `<p class="text-xs text-red-400">No se pudo cargar el historial (${res.status}).</p>`;
             return;
         }
         const historial = await res.json();
@@ -688,7 +699,7 @@ async function loadTicketComments(id) {
         const res = await fetch(`/tickets/${id}/comentarios`);
         if (!res.ok) {
             console.error('Error fetching comments:', res.status, res.statusText);
-            container.innerHTML = '<p class="text-xs text-red-400">No se pudieron cargar los comentarios.</p>';
+            container.innerHTML = `<p class="text-xs text-red-400">No se pudieron cargar los comentarios (${res.status}).</p>`;
             return;
         }
         const comentarios = await res.json();

@@ -5,7 +5,8 @@ import pool from './db.js';
 // --- CONFIGURACIÓN DE LISTA BLANCA (Correos Permitidos) ---
 // Puedes agregar correos aquí manualmente o usar la variable de entorno ALLOWED_EMAILS
 const HARDCODED_ALLOWED = [
-
+  'alexis.cruces2122@gmail.com',
+  'leslie_vejares@hotmail.com'
 ];
 
 const envAllowed = (process.env.ALLOWED_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
