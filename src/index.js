@@ -101,7 +101,8 @@ app.get('/dashboard', authRequired, async (req, res) => {
             `, [userId]),
             pool.query(`
                 SELECT * FROM eventos 
-                WHERE fecha >= CURRENT_DATE AND fecha <= CURRENT_DATE + INTERVAL '7 days'
+                WHERE fecha >= DATE_TRUNC('week', CURRENT_DATE)::date 
+                  AND fecha < (DATE_TRUNC('week', CURRENT_DATE) + INTERVAL '1 week')::date
                 ORDER BY fecha ASC, hora_inicio ASC
             `)
         ]);

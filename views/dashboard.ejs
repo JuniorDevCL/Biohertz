@@ -127,53 +127,89 @@
                 </div>
                 
                 <div class="p-5">
-                    <% if (typeof events !== 'undefined' && events && events.length > 0) { %>
-                        <div class="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                            <% 
-                            let lastDate = '';
-                            events.forEach(event => { 
-                                // Ajustar fecha para mostrar
-                                const eventDateObj = new Date(event.fecha);
-                                // Corregir timezone si es necesario (asumiendo UTC en DB y mostrando local)
-                                // Pero normalmente new Date(string) ya lo maneja. Si viene de postgres date type, es local date string a veces.
-                                // Usaremos toLocaleDateString con opciones para formatear bonito
-                                const dateOptions = { weekday: 'long', day: 'numeric', month: 'long' };
-                                const eventDate = eventDateObj.toLocaleDateString('es-ES', dateOptions);
+                    <% 
+                    // Generar días de la semana actual
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+                    
+                    const d = today.getDay(); // 0=Dom, 1=Lun
+                    const diff = today.getDate() - d + (d === 0 ? -6 : 1);
+                    const monday = new Date(today);
+                    monday.setDate(diff);
+                    
+                    const weekDays = [];
+                    for(let i=0; i<7; i++) {
+                        const day = new Date(monday);
+                        day.setDate(monday.getDate() + i);
+                        weekDays.push(day);
+                    }
+                    %>
+
+                    <div class="space-y-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                        <% weekDays.forEach(day => { 
+                            const dayStr = day.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                            const isPast = day < today;
+                            const isToday = day.getTime() === today.getTime();
+                            
+                            // Filtrar eventos de este día
+                            // Nota: event.fecha puede venir como string o Date dependiendo del driver pg. Asumimos Date o string ISO.
+                            const dayEvents = (typeof events !== 'undefined' ? events : []).filter(e => {
+                                const eDate = new Date(e.fecha);
+                                return eDate.getDate() === day.getDate() && 
+                                       eDate.getMonth() === day.getMonth() && 
+                                       eDate.getFullYear() === day.getFullYear();
+                            });
+                            
+                            const dayStyle = isPast ? 'opacity-50 grayscale' : '';
+                            const headerColor = isToday ? 'text-orange-400' : (isPast ? 'text-slate-500 line-through decoration-slate-600' : 'text-slate-300');
+                        %>
+                            <div class="<%= dayStyle %>">
+                                <h4 class="text-xs font-bold uppercase tracking-wider mb-2 <%= headerColor %> border-b border-slate-800/50 pb-1">
+                                    <%= dayStr %> <%= isToday ? '(HOY)' : '' %>
+                                </h4>
                                 
-                                const isNewDate = lastDate !== eventDate;
-                                lastDate = eventDate;
-                            %>
-                                <% if (isNewDate) { %>
-                                    <div class="text-xs font-bold text-orange-400 uppercase tracking-wider mt-4 mb-2 first:mt-0 pt-2 first:pt-0 border-t border-slate-800/50 first:border-0 sticky top-0 bg-slate-900 py-1 z-10 shadow-sm shadow-black/20">
-                                        <%= eventDate %>
-                                    </div>
-                                <% } %>
-                                <div class="relative pl-4 border-l-2 border-slate-700 hover:border-orange-500 transition-colors py-1 group">
-                                    <div class="text-sm font-medium text-slate-200 group-hover:text-white transition-colors"><%= event.titulo %></div>
-                                    <div class="text-xs text-slate-500 mt-1 flex items-center gap-2">
-                                        <% if (event.hora_inicio) { %>
-                                            <span class="flex items-center gap-1 bg-slate-800/50 px-1.5 py-0.5 rounded text-slate-400">
-                                                <i class="ph ph-clock text-[10px]"></i> 
-                                                <%= event.hora_inicio.slice(0,5) %>
-                                                <% if (event.hora_fin) { %> - <%= event.hora_fin.slice(0,5) %> <% } %>
-                                            </span>
-                                        <% } else { %>
-                                            <span class="italic text-[10px]">Todo el día</span>
+                                <div class="space-y-2">
+                                    <% if (dayEvents.length > 0) { %>
+                                        <% dayEvents.forEach(event => { %>
+                                            <div class="relative pl-3 border-l-2 <%= isPast ? 'border-slate-700' : 'border-orange-500' %> py-1">
+                                                <div class="text-sm font-medium <%= isPast ? 'text-slate-400 line-through decoration-slate-600' : 'text-white' %>">
+                                                    <%= event.titulo %>
+                                                </div>
+                                                <div class="text-xs <%= isPast ? 'text-slate-500' : 'text-slate-400' %> flex items-center gap-2 mt-0.5">
+                                                    <% if (event.hora_inicio) { %>
+                                                        <span class="flex items-center gap-1 bg-slate-800/50 px-1.5 py-0.5 rounded">
+                                                            <i class="ph ph-clock text-[10px]"></i> 
+                                                            <%= event.hora_inicio.slice(0,5) %>
+                                                            <% if (event.hora_fin) { %> - <%= event.hora_fin.slice(0,5) %> <% } %>
+                                                        </span>
+                                                    <% } else { %>
+                                                        <span class="italic text-[10px]">Todo el día</span>
+                                                    <% } %>
+                                                </div>
+                                                <% if (event.descripcion) { %>
+                                                    <p class="text-[11px] text-slate-500 mt-1 line-clamp-1"><%= event.descripcion %></p>
+                                                <% } %>
+                                            </div>
+                                        <% }); %>
+                                        <!-- Indicador visual de resto del día libre si no es pasado -->
+                                        <% if (!isPast) { %>
+                                            <div class="pl-3 border-l-2 border-slate-800/30 py-1 opacity-60">
+                                                <p class="text-[10px] text-slate-500 italic flex items-center gap-1">
+                                                    <i class="ph ph-coffee"></i> Resto del día desocupado
+                                                </p>
+                                            </div>
                                         <% } %>
-                                    </div>
-                                    <% if (event.descripcion) { %>
-                                        <p class="text-xs text-slate-500 mt-1 line-clamp-1"><%= event.descripcion %></p>
+                                    <% } else { %>
+                                        <div class="pl-3 border-l-2 border-slate-800 py-1">
+                                            <p class="text-xs text-slate-500 italic">
+                                                <%= isPast ? 'Sin eventos registrados' : 'Día desocupado' %>
+                                            </p>
+                                        </div>
                                     <% } %>
                                 </div>
-                            <% }); %>
-                        </div>
-                    <% } else { %>
-                        <div class="text-center py-8">
-                            <i class="ph ph-calendar-check text-4xl text-slate-700 mb-3 block"></i>
-                            <p class="text-slate-400 text-sm">No hay eventos para esta semana.</p>
-                            <a href="/calendario" class="text-orange-400 text-xs hover:underline mt-2 inline-block">Agendar evento</a>
-                        </div>
-                    <% } %>
+                            </div>
+                        <% }); %>
+                    </div>
                 </div>
             </div>
 
