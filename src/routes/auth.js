@@ -12,7 +12,10 @@ const allowedEmails = (process.env.ALLOWED_EMAILS || '').split(',').map(s => s.t
 const OFFLINE = String(process.env.OFFLINE || '').toLowerCase() === 'true' || !process.env.DATABASE_URL;
 const SECRET = process.env.JWT_SECRET || 'offline_secret';
 function isAllowed(email) {
-  if (!allowedEmails.length) return true;
+  if (!allowedEmails.length) {
+    console.warn('ADVERTENCIA: No hay correos permitidos configurados (ALLOWED_EMAILS). Se bloquea el acceso.');
+    return false;
+  }
   return allowedEmails.includes(String(email || '').toLowerCase());
 }
 

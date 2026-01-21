@@ -13,8 +13,11 @@ const envAllowed = (process.env.ALLOWED_EMAILS || '').split(',').map(s => s.trim
 const allowedEmails = [...new Set([...HARDCODED_ALLOWED.map(s => s.toLowerCase()), ...envAllowed])];
 
 function isAllowed(email) {
-  // Si la lista está vacía, permitimos el acceso a todos (o puedes cambiar a return false para bloquear todo por defecto)
-  if (allowedEmails.length === 0) return true; 
+  // Si la lista está vacía, BLOQUEAMOS el acceso por seguridad (Fail-Closed)
+  if (allowedEmails.length === 0) {
+      console.warn('ADVERTENCIA: No hay correos permitidos configurados (ALLOWED_EMAILS). Se bloquea el acceso por defecto.');
+      return false;
+  }
   return allowedEmails.includes(String(email || '').toLowerCase());
 }
 
