@@ -1,8 +1,8 @@
 // top-level file: index.js
+import 'dotenv/config';
 import express from 'express';
 import compression from 'compression';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import passport from 'passport';
@@ -10,7 +10,6 @@ import session from 'express-session';
 import './passport.js';
 import expressLayouts from 'express-ejs-layouts';
 import { Server } from 'socket.io';
-dotenv.config();
 
 import authRoutes from './routes/auth.js';
 import ticketsRoutes from './routes/tickets.js';

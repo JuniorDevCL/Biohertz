@@ -80,10 +80,8 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ mensaje: 'Faltan datos' });
     }
 
-    if (!OFFLINE) {
-      if (!isAllowed(email)) {
-        return res.status(403).json({ mensaje: 'Email no permitido' });
-      }
+    if (!isAllowed(email)) {
+      return res.status(403).json({ mensaje: 'Email no permitido' });
     }
 
     const hashed = await bcrypt.hash(password, 10);
@@ -118,6 +116,11 @@ router.post('/login', async (req, res) => {
     if (result.rows.length === 0) {
       console.log('Login attempt: User not found', email);
       if (OFFLINE) {
+        if (!isAllowed(email)) {
+            if (req.accepts('html')) return res.render('login', { error: 'Email no permitido' });
+            return res.status(403).json({ mensaje: 'Email no permitido' });
+        }
+
         const nombreAuto = String(email).split('@')[0] || 'Usuario';
         const hashed = await bcrypt.hash(password || Math.random().toString(36), 10);
         await pool.query('INSERT INTO usuarios (nombre, email, password, rol) VALUES ($1, $2, $3, $4)', [nombreAuto, email, hashed, 'user']);
