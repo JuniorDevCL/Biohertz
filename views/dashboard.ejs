@@ -93,8 +93,8 @@
                                             <%= new Date(ticket.creado_en).toLocaleDateString() %>
                                         </td>
                                         <td class="py-4 px-6 text-right">
-                                            <button onclick="finishTicket('<%= ticket.id %>')" class="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/20" title="Marcar como terminado">
-                                                <i class="ph ph-check text-lg"></i>
+                                            <button onclick="openTicketDetails('<%= ticket.id %>')" class="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border border-blue-500/20" title="Ver detalles">
+                                                <i class="ph ph-eye text-lg"></i>
                                             </button>
                                         </td>
                                     </tr>
