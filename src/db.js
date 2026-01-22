@@ -60,6 +60,20 @@ if (isOffline) {
         return { rows: [], rowCount: 0 };
       }
 
+      if (s.includes('pg_database_size')) {
+        const fp = getStorePath();
+        let sizeBytes = 0;
+        try {
+          sizeBytes = fs.statSync(fp).size;
+        } catch {}
+        
+        const i = sizeBytes === 0 ? 0 : Math.floor(Math.log(sizeBytes) / Math.log(1024));
+        const sizes = ['B', 'kB', 'MB', 'GB', 'TB'];
+        const sizeStr = (sizeBytes / Math.pow(1024, i)).toFixed(2) * 1 + ' ' + sizes[i];
+        
+        return { rows: [{ size: sizeStr }], rowCount: 1 };
+      }
+
       if (s.startsWith('INSERT INTO usuarios')) {
         const [nombre, email, password, rol] = params;
         const id = store.seq.usuarios++;

@@ -233,6 +233,10 @@ async function ensureBaseSchema() {
       await pool.query(`ALTER TABLE usuarios ALTER COLUMN password DROP NOT NULL;`);
     } catch (e) { console.log('Error al hacer password nullable:', e.message); }
 
+    try {
+      await pool.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS telefono VARCHAR(50);`);
+    } catch (e) { console.log('Columna telefono ya existe o error:', e.message); }
+
   } catch (e) {
     console.warn('ensureBaseSchema error:', e && e.message ? e.message : e);
   }

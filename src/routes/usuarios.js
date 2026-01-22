@@ -21,10 +21,23 @@ router.use(adminOnly);
 router.get('/', async (req, res) => {
     try {
         const users = await pool.query('SELECT id, nombre, email, telefono, rol FROM usuarios ORDER BY id ASC');
+        
+        // Obtener tamaño de la BD
+        let dbSize = 'Unknown';
+        try {
+            const sizeRes = await pool.query("SELECT pg_size_pretty(pg_database_size(current_database())) as size");
+            if (sizeRes.rows.length > 0) {
+                dbSize = sizeRes.rows[0].size;
+            }
+        } catch (e) {
+            console.error('Error fetching DB size:', e);
+        }
+
         res.render('usuarios', { 
             users: users.rows,
             user: req.user,
-            path: '/usuarios'
+            path: '/usuarios',
+            dbSize
         });
     } catch (err) {
         console.error(err);
