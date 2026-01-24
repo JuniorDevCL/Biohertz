@@ -24,7 +24,6 @@ async function ensureSchema() {
     await pool.query(`
       ALTER TABLE clientes ADD COLUMN IF NOT EXISTS email VARCHAR(150);
       ALTER TABLE clientes ADD COLUMN IF NOT EXISTS telefono VARCHAR(50);
-await pool.query(`
       ALTER TABLE clientes ADD COLUMN IF NOT EXISTS ubicacion VARCHAR(200);
     `);
     await pool.query(`
