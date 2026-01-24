@@ -29,7 +29,7 @@
                     <% } %>
                 </div>
             </div>
-            <button onclick="document.getElementById('edit-client-modal').classList.remove('hidden')" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+            <button onclick="openEditModal()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
                 <i class="ph ph-pencil-simple mr-2"></i> Editar
             </button>
         </div>
@@ -152,6 +152,7 @@
     <div class="bg-slate-800 p-6 rounded-xl w-full max-w-md shadow-2xl border border-slate-700">
         <h3 class="text-xl font-bold text-white mb-4">Editar Cliente</h3>
         <form id="edit-client-form">
+            <input type="hidden" id="edit-id" value="<%= cliente.id %>">
             <div class="mb-4">
                 <label class="block text-slate-400 text-sm mb-2">Nombre</label>
                 <input type="text" name="nombre" value="<%= cliente.nombre %>" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
@@ -172,7 +173,37 @@
                 <label class="block text-slate-400 text-sm mb-2">Ubicación</label>
                 <input type="text" name="ubicacion" value="<%= cliente.ubicacion %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
             </div>
-            <div class="flex justify-end gap-3 mt-6">
+
+            <!-- Sección de Contactos -->
+            <div class="mt-6 border-t border-slate-700 pt-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-sm font-semibold text-white">Contactos</h4>
+                    <button type="button" onclick="document.getElementById('add-contact-form').classList.toggle('hidden')" class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded">
+                        + Agregar
+                    </button>
+                </div>
+
+                <!-- Formulario para agregar contacto (oculto por defecto) -->
+                <div id="add-contact-form" class="hidden mb-4 bg-slate-900 p-3 rounded border border-slate-700">
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <input type="text" id="new-contact-nombre" placeholder="Nombre" class="bg-slate-800 border border-slate-700 rounded p-1 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
+                        <input type="text" id="new-contact-cargo" placeholder="Cargo" class="bg-slate-800 border border-slate-700 rounded p-1 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
+                        <input type="email" id="new-contact-email" placeholder="Email" class="bg-slate-800 border border-slate-700 rounded p-1 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
+                        <input type="text" id="new-contact-telefono" placeholder="Teléfono" class="bg-slate-800 border border-slate-700 rounded p-1 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="button" onclick="saveNewContact()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded text-xs">Guardar Contacto</button>
+                    </div>
+                </div>
+
+                <!-- Lista de contactos -->
+                <div id="contacts-list" class="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                    <!-- Rendered dynamically -->
+                    <p class="text-slate-500 text-sm italic text-center">Cargando contactos...</p>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
                 <button type="button" onclick="document.getElementById('edit-client-modal').classList.add('hidden')" class="px-4 py-2 text-slate-300 hover:text-white">Cancelar</button>
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Guardar Cambios</button>
             </div>
@@ -181,6 +212,111 @@
 </div>
 
 <script>
+function openEditModal() {
+    const id = document.getElementById('edit-id').value;
+    
+    // Reset contacts UI
+    const list = document.getElementById('contacts-list');
+    if (list) {
+        list.innerHTML = '<p class="text-slate-500 text-sm italic text-center">Cargando contactos...</p>';
+        document.getElementById('add-contact-form').classList.add('hidden');
+        loadContacts(id);
+    }
+    
+    document.getElementById('edit-client-modal').classList.remove('hidden');
+}
+
+async function loadContacts(clientId) {
+    const list = document.getElementById('contacts-list');
+    try {
+        const res = await fetch(`/clientes/${clientId}/contactos`);
+        if (res.ok) {
+            const contacts = await res.json();
+            renderContacts(contacts);
+        } else {
+            list.innerHTML = '<p class="text-red-400 text-sm">Error al cargar contactos</p>';
+        }
+    } catch (e) {
+        console.error(e);
+        list.innerHTML = '<p class="text-red-400 text-sm">Error de conexión</p>';
+    }
+}
+
+function renderContacts(contacts) {
+    const list = document.getElementById('contacts-list');
+    if (contacts.length === 0) {
+        list.innerHTML = '<p class="text-slate-500 text-sm text-center">No hay contactos registrados</p>';
+        return;
+    }
+    
+    list.innerHTML = contacts.map(c => `
+        <div class="bg-slate-900/50 p-2 rounded border border-slate-700/50 flex justify-between items-start">
+            <div>
+                <div class="text-sm font-medium text-white">${c.nombre} <span class="text-slate-500 text-xs font-normal">(${c.cargo || 'Sin cargo'})</span></div>
+                <div class="text-xs text-slate-400 flex flex-col">
+                    ${c.email ? `<span><i class="ph ph-envelope"></i> ${c.email}</span>` : ''}
+                    ${c.telefono ? `<span><i class="ph ph-phone"></i> ${c.telefono}</span>` : ''}
+                </div>
+            </div>
+            <button type="button" onclick="deleteContact(${c.id})" class="text-red-400 hover:text-red-300 p-1">
+                <i class="ph ph-trash"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+async function saveNewContact() {
+    const clientId = document.getElementById('edit-id').value;
+    const nombre = document.getElementById('new-contact-nombre').value;
+    const cargo = document.getElementById('new-contact-cargo').value;
+    const email = document.getElementById('new-contact-email').value;
+    const telefono = document.getElementById('new-contact-telefono').value;
+
+    if (!nombre) return alert('El nombre es obligatorio');
+
+    try {
+        const res = await fetch(`/clientes/${clientId}/contactos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, cargo, email, telefono })
+        });
+        
+        if (res.ok) {
+            // Clear inputs
+            document.getElementById('new-contact-nombre').value = '';
+            document.getElementById('new-contact-cargo').value = '';
+            document.getElementById('new-contact-email').value = '';
+            document.getElementById('new-contact-telefono').value = '';
+            document.getElementById('add-contact-form').classList.add('hidden');
+            
+            // Reload contacts
+            loadContacts(clientId);
+        } else {
+            alert('Error al guardar contacto');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Error de conexión');
+    }
+}
+
+async function deleteContact(contactId) {
+    if (!confirm('¿Eliminar contacto?')) return;
+    const clientId = document.getElementById('edit-id').value;
+    
+    try {
+        const res = await fetch(`/clientes/${clientId}/contactos/${contactId}`, { method: 'DELETE' });
+        if (res.ok) {
+            loadContacts(clientId);
+        } else {
+            alert('Error al eliminar contacto');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Error de conexión');
+    }
+}
+
 document.getElementById('edit-client-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);

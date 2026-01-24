@@ -24,7 +24,19 @@ async function ensureSchema() {
     await pool.query(`
       ALTER TABLE clientes ADD COLUMN IF NOT EXISTS email VARCHAR(150);
       ALTER TABLE clientes ADD COLUMN IF NOT EXISTS telefono VARCHAR(50);
+await pool.query(`
       ALTER TABLE clientes ADD COLUMN IF NOT EXISTS ubicacion VARCHAR(200);
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS contactos_cliente (
+        id SERIAL PRIMARY KEY,
+        cliente_id INTEGER REFERENCES clientes(id) ON DELETE CASCADE,
+        nombre VARCHAR(150) NOT NULL,
+        cargo VARCHAR(100),
+        email VARCHAR(150),
+        telefono VARCHAR(50),
+        creado_en TIMESTAMP DEFAULT NOW()
+      );
     `);
   } catch (err) {
     console.error('Error al actualizar esquema de clientes:', err);
@@ -217,6 +229,53 @@ router.delete('/:id', authRequired, async (req, res) => {
   } catch (err) {
     console.error('Error al eliminar cliente:', err);
     res.status(500).json({ error: 'Error al eliminar cliente: ' + err.message });
+  }
+});
+
+// Contactos Routes
+router.get('/:id/contactos', authRequired, async (req, res) => {
+  try {
+    await ensureSchema();
+    const { id } = req.params;
+    const r = await pool.query('SELECT * FROM contactos_cliente WHERE cliente_id = $1 ORDER BY nombre', [id]);
+    res.json(r.rows);
+  } catch (err) {
+    console.error('Error al listar contactos:', err);
+    res.status(500).json({ error: 'Error al listar contactos' });
+  }
+});
+
+router.post('/:id/contactos', authRequired, async (req, res) => {
+  try {
+    await ensureSchema();
+    const { id } = req.params;
+    const { nombre, cargo, email, telefono } = req.body;
+    
+    if (!nombre) return res.status(400).json({ error: 'El nombre es obligatorio' });
+
+    const r = await pool.query(`
+      INSERT INTO contactos_cliente (cliente_id, nombre, cargo, email, telefono)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `, [id, nombre, cargo || null, email || null, telefono || null]);
+    
+    res.status(201).json(r.rows[0]);
+  } catch (err) {
+    console.error('Error al crear contacto:', err);
+    res.status(500).json({ error: 'Error al crear contacto' });
+  }
+});
+
+router.delete('/:id/contactos/:contactoId', authRequired, async (req, res) => {
+  try {
+    await ensureSchema();
+    const { id, contactoId } = req.params;
+    const r = await pool.query('DELETE FROM contactos_cliente WHERE id = $1 AND cliente_id = $2 RETURNING *', [contactoId, id]);
+    if (r.rows.length === 0) return res.status(404).json({ error: 'Contacto no encontrado' });
+    res.json({ message: 'Contacto eliminado', deleted: r.rows[0] });
+  } catch (err) {
+    console.error('Error al eliminar contacto:', err);
+    res.status(500).json({ error: 'Error al eliminar contacto' });
   }
 });
 
