@@ -80,6 +80,24 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-800">
+                        <% 
+                        const phases = {
+                            ingresado: { label: 'Ingresado', style: 'bg-slate-500/10 text-slate-400 border border-slate-500/20' },
+                            diagnostico: { label: 'Diagnóstico', style: 'bg-blue-500/10 text-blue-400 border border-blue-500/20' },
+                            presupuesto: { label: 'Presupuesto', style: 'bg-amber-500/10 text-amber-400 border border-amber-500/20' },
+                            reparacion: { label: 'Reparación', style: 'bg-orange-500/10 text-orange-400 border border-orange-500/20' },
+                            observacion: { label: 'Observación', style: 'bg-purple-500/10 text-purple-400 border border-purple-500/20' },
+                            terminado: { label: 'Terminado', style: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' }
+                        };
+
+                        const getPhase = (status) => {
+                            let pid = status;
+                            if (status === 'pendiente') pid = 'ingresado';
+                            if (status === 'en_proceso') pid = 'reparacion';
+                            if (status === 'hecho') pid = 'terminado';
+                            return phases[pid] || { label: status, style: 'bg-slate-500/10 text-slate-400 border border-slate-500/20' };
+                        };
+                        %>
                         <% tickets.forEach(ticket => { %>
                             <tr class="hover:bg-slate-800/40 transition-colors group">
                                 <td class="py-3 px-4 font-medium text-white">
@@ -115,8 +133,9 @@
                                 </td>
                                 <td class="py-3 px-4">
                                     <div class="flex flex-col gap-1">
-                                        <span class="px-2 py-1 rounded text-xs font-medium <%= ticket.estado === 'pendiente' ? 'bg-orange-500/20 text-orange-400' : (ticket.estado === 'en_proceso' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400') %>">
-                                            <%= ticket.estado %>
+                                        <% const p = getPhase(ticket.estado); %>
+                                        <span class="px-2 py-1 rounded text-xs font-medium <%= p.style %>">
+                                            <%= p.label %>
                                         </span>
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border <%= (ticket.estado === 'hecho' || ticket.estado === 'terminado') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40' : 'bg-amber-500/10 text-amber-400 border-amber-500/40' %>">
                                             <%= (ticket.estado === 'hecho' || ticket.estado === 'terminado') ? 'Resuelto' : 'Activo' %>
@@ -566,7 +585,15 @@ async function openTicketDetails(id) {
         
         // Actualizar estado global y renderizar pipeline
         currentTicketStatus = t.estado || 'ingresado';
-        document.getElementById('ticket-details-estado').textContent = currentTicketStatus;
+        
+        let statusToUse = currentTicketStatus;
+        if (currentTicketStatus === 'pendiente') statusToUse = 'ingresado';
+        if (currentTicketStatus === 'en_proceso') statusToUse = 'reparacion';
+        if (currentTicketStatus === 'hecho') statusToUse = 'terminado';
+        
+        const phaseObj = TICKET_PHASES.find(p => p.id === statusToUse);
+        document.getElementById('ticket-details-estado').textContent = phaseObj ? phaseObj.label : currentTicketStatus;
+        
         renderPipeline(currentTicketStatus);
 
         document.getElementById('ticket-details-codigo').textContent = t.codigo || '-';
