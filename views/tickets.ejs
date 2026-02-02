@@ -116,12 +116,12 @@
                                                 <%= ticket.asignado_a_nombre || 'Sin asignar' %>
                                             </span>
                                             <% if (ticket.tipo) { %>
-                                                <span class="text-[11px] text-slate-400">
-                                                    <%= ticket.tipo === 'mantencion_preventiva' ? 'M. Preventiva (MP)' : 
-                                                        (ticket.tipo === 'mantencion_correctiva' ? 'M. Correctiva (MC)' : 
-                                                        (ticket.tipo === 'visita_tecnica' ? 'Visita Técnica (VT)' : 
-                                                        (ticket.tipo === 'reparacion' ? 'Reparación (R)' : 
-                                                        (ticket.tipo === 'otro' ? 'Otro (O)' : ticket.tipo)))) %>
+                                                <span class="text-[11px] text-slate-400 font-bold">
+                                                    <%= ticket.tipo === 'mantencion_preventiva' ? 'MP' : 
+                                                        (ticket.tipo === 'mantencion_correctiva' ? 'MC' : 
+                                                        (ticket.tipo === 'visita_tecnica' ? 'VT' : 
+                                                        (ticket.tipo === 'reparacion' ? 'R' : 
+                                                        (ticket.tipo === 'otro' ? 'O' : ticket.tipo)))) %>
                                                 </span>
                                             <% } %>
                                             <% if (ticket.garantia) { %>
