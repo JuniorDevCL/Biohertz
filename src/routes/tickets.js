@@ -294,7 +294,9 @@ router.get('/', authRequired, async (req, res) => {
                         u.nombre AS creado_por_nombre, 
                         ua.nombre AS asignado_a_nombre,
                         c.nombre AS cliente_nombre,
-                        e.nombre AS equipo_nombre
+                        e.nombre AS equipo_nombre,
+                        e.numero_serie AS equipo_serie,
+                        e.modelo AS equipo_modelo
                  FROM tickets t
                  LEFT JOIN usuarios u ON u.id = t.creado_por
                  LEFT JOIN usuarios ua ON ua.id = t.asignado_a
