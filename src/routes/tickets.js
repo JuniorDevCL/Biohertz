@@ -731,9 +731,6 @@ router.delete('/:ticketId/comentarios/:id', authRequired, async (req, res) => {
 
 router.delete('/:id', authRequired, async (req, res) => {
   try {
-    if (req.user?.rol !== 'admin') {
-      return res.status(403).json({ error: 'Solo admin puede eliminar tickets' });
-    }
     const { id } = req.params;
     const del = await pool.query(`DELETE FROM tickets WHERE id = $1`, [id]);
     if (del.rowCount === 0) {

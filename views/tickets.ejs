@@ -160,12 +160,10 @@
                                             <i class="ph ph-arrow-up-right text-sm mr-1.5"></i>
                                             Abrir ticket
                                         </a>
-                                        <% if (typeof user !== 'undefined' && user && user.rol === 'admin') { %>
-                                            <button type="button" onclick="deleteTicket('<%= ticket.id %>')" class="inline-flex items-center px-3 py-1.5 rounded-full bg-red-600/20 hover:bg-red-600/40 text-red-200 text-xs font-medium border border-red-500/40 transition-colors" title="Eliminar ticket">
-                                                <i class="ph ph-trash text-sm mr-1.5"></i>
-                                                Eliminar
-                                            </button>
-                                        <% } %>
+                                        <button type="button" onclick="deleteTicket('<%= ticket.id %>')" class="inline-flex items-center px-3 py-1.5 rounded-full bg-red-600/20 hover:bg-red-600/40 text-red-200 text-xs font-medium border border-red-500/40 transition-colors" title="Eliminar ticket">
+                                            <i class="ph ph-trash text-sm mr-1.5"></i>
+                                            Eliminar
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
