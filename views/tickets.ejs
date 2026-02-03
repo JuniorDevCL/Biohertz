@@ -622,7 +622,8 @@ async function openTicketDetails(id) {
         document.getElementById('ticket-details-equipo-marca').textContent = t.equipo_marca || '-';
         document.getElementById('ticket-details-equipo-modelo').textContent = t.equipo_modelo || '-';
         document.getElementById('ticket-details-equipo-serie').textContent = t.equipo_serie || '-';
-        document.getElementById('ticket-details-contacto').textContent = t.lugar_instalacion || '-';
+        const contactoText = [t.lugar_instalacion, t.telefono_contacto].filter(Boolean).join(' - ');
+        document.getElementById('ticket-details-contacto').textContent = contactoText || '-';
         document.getElementById('ticket-details-descripcion').textContent = t.descripcion || 'Sin descripción';
         
         // Cargar historial y comentarios
