@@ -462,6 +462,8 @@ router.get('/:id', authRequired, async (req, res) => {
               ua.nombre AS asignado_a_nombre,
               e.nombre AS equipo_nombre,
               e.marca AS equipo_marca,
+              e.modelo AS equipo_modelo,
+              e.numero_serie AS equipo_serie,
               e.ubicacion AS equipo_ubicacion,
               c.nombre AS cliente_nombre
        FROM tickets t

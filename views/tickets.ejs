@@ -619,16 +619,11 @@ async function openTicketDetails(id) {
             garantia: 'Garantía (Legacy)'
         };
         document.getElementById('ticket-details-tipo').textContent = tipoMap[t.tipo] || (t.tipo || '-');
-        document.getElementById('ticket-details-asignado').textContent = t.asignado_a_nombre || 'Sin asignar';
-        document.getElementById('ticket-details-cliente').textContent = t.cliente_nombre || '-';
-        document.getElementById('ticket-details-equipo').textContent = t.equipo_nombre || '-';
         document.getElementById('ticket-details-equipo-marca').textContent = t.equipo_marca || '-';
-        document.getElementById('ticket-details-equipo-ubicacion').textContent = t.equipo_ubicacion || '-';
+        document.getElementById('ticket-details-equipo-modelo').textContent = t.equipo_modelo || '-';
+        document.getElementById('ticket-details-equipo-serie').textContent = t.equipo_serie || '-';
+        document.getElementById('ticket-details-contacto').textContent = t.lugar_instalacion || '-';
         document.getElementById('ticket-details-descripcion').textContent = t.descripcion || 'Sin descripción';
-        const creado = t.creado_en ? new Date(t.creado_en) : null;
-        const terminado = t.terminado_en ? new Date(t.terminado_en) : null;
-        document.getElementById('ticket-details-fecha-creacion').textContent = creado ? creado.toLocaleString() : '-';
-        document.getElementById('ticket-details-fecha-termino').textContent = terminado ? terminado.toLocaleString() : '-';
         
         // Cargar historial y comentarios
         if (typeof loadTicketHistory === 'function') loadTicketHistory(id);
@@ -858,38 +853,22 @@ document.addEventListener('DOMContentLoaded', () => {
             <!-- Columna Izquierda: Información y Descripción -->
             <div class="space-y-6">
                 <div class="bg-slate-800/30 rounded-lg p-4 border border-slate-700/50">
-                    <h4 class="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                        <i class="ph ph-info text-blue-400"></i> Información General
-                    </h4>
                     <div class="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <p class="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Cliente</p>
-                            <p id="ticket-details-cliente" class="text-slate-200 font-medium"></p>
-                        </div>
-                        <div>
-                            <p class="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Equipo</p>
-                            <p id="ticket-details-equipo" class="text-slate-200 font-medium"></p>
-                        </div>
                         <div>
                             <p class="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Marca</p>
                             <p id="ticket-details-equipo-marca" class="text-slate-200 font-medium"></p>
                         </div>
                         <div>
-                            <p class="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Ubicación</p>
-                            <p id="ticket-details-equipo-ubicacion" class="text-slate-200 font-medium"></p>
+                            <p class="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Modelo</p>
+                            <p id="ticket-details-equipo-modelo" class="text-slate-200 font-medium"></p>
                         </div>
                         <div>
-                            <p class="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Asignado a</p>
-                            <p id="ticket-details-asignado" class="text-slate-200 font-medium"></p>
-                        </div>
-
-                        <div>
-                            <p class="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Fecha Creación</p>
-                            <p id="ticket-details-fecha-creacion" class="text-slate-200"></p>
+                            <p class="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Serie</p>
+                            <p id="ticket-details-equipo-serie" class="text-slate-200 font-medium"></p>
                         </div>
                         <div>
-                            <p class="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Fecha Término</p>
-                            <p id="ticket-details-fecha-termino" class="text-slate-200"></p>
+                            <p class="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Contacto</p>
+                            <p id="ticket-details-contacto" class="text-slate-200 font-medium"></p>
                         </div>
                     </div>
                 </div>
