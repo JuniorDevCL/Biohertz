@@ -45,6 +45,7 @@
                             <th class="py-3 px-4">Serie</th>
                             <th class="py-3 px-4">Cliente</th>
                             <th class="py-3 px-4">Ubicación</th>
+                            <th class="py-3 px-4">Fecha Inst.</th>
                             <th class="py-3 px-4">Estado</th>
                             <th class="py-3 px-4 text-right">Acciones</th>
                         </tr>
@@ -66,6 +67,7 @@
                                     <% } %>
                                 </td>
                                 <td class="py-3 px-4 text-slate-400"><%= equipo.ubicacion || '-' %></td>
+                                <td class="py-3 px-4 text-slate-400"><%= equipo.fecha_instalacion ? new Date(equipo.fecha_instalacion).toLocaleDateString() : '-' %></td>
                                 <td class="py-3 px-4">
                                     <% 
                                         const estado = equipo.estado || 'desconocido';
@@ -167,6 +169,10 @@
                         <option value="baja">De Baja</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Fecha de Instalación</label>
+                    <input type="date" name="fecha_instalacion" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
             </div>
             <div class="flex justify-end gap-3 mt-6">
                 <button type="button" onclick="document.getElementById('new-equipo-modal').classList.add('hidden')" class="px-4 py-2 text-slate-300 hover:text-white">Cancelar</button>
@@ -220,6 +226,10 @@
                         <option value="en_reparacion">En Reparación</option>
                         <option value="baja">De Baja</option>
                     </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Fecha de Instalación</label>
+                    <input type="date" id="edit-equipo-fecha_instalacion" name="fecha_instalacion" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
             </div>
             <div class="flex justify-end gap-3 mt-6">
@@ -570,6 +580,10 @@ async function openEditEquipo(id) {
         const clienteSelect = document.getElementById('edit-equipo-cliente');
         if (clienteSelect) {
             clienteSelect.value = e.cliente_id || '';
+        }
+        const fechaInstInput = document.getElementById('edit-equipo-fecha_instalacion');
+        if (fechaInstInput) {
+            fechaInstInput.value = e.fecha_instalacion ? e.fecha_instalacion.split('T')[0] : '';
         }
         document.getElementById('edit-equipo-modal').classList.remove('hidden');
     } catch (err) {

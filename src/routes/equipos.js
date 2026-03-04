@@ -44,6 +44,7 @@ async function ensureExtendedSchema() {
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS cliente VARCHAR(150);
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS anio_venta INTEGER;
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS cliente_id INTEGER;
+      ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_instalacion DATE;
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS mantenciones JSONB DEFAULT '[]'::jsonb;
     `);
   } catch {}
@@ -96,7 +97,7 @@ router.get('/', authRequired, async (req, res) => {
     if (limit > 100) limit = 100;
     if (isNaN(offset) || offset < 0) offset = 0;
 
-    const sql = `SELECT id, nombre, marca, modelo, numero_serie, ubicacion, estado, cliente, cliente_id, actualizado_en FROM equipos${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+    const sql = `SELECT id, nombre, marca, modelo, numero_serie, ubicacion, estado, cliente, cliente_id, anio_venta, fecha_instalacion, actualizado_en FROM equipos${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
     const result = await pool.query(sql, [...values, limit, offset]);
 
     const totalSql = 'SELECT COUNT(*) FROM equipos';
@@ -183,7 +184,7 @@ router.get('/:id', authRequired, async (req, res) => {
 router.post('/', authRequired, async (req, res) => {
   try {
     await ensureExtendedSchema();
-    const { nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, mantenciones } = req.body;
+    const { nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones } = req.body;
     if (!nombre) return res.status(400).json({ error: 'Nombre es obligatorio' });
     // if (!cliente_id) return res.status(400).json({ error: 'Debe seleccionar un cliente' }); // Permitir STOCK (null)
 
@@ -202,10 +203,10 @@ router.post('/', authRequired, async (req, res) => {
     }
 
     const insert = await pool.query(
-      `INSERT INTO equipos (nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, mantenciones, creado_en, actualizado_en)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, COALESCE($11::jsonb, '[]'::jsonb), NOW(), NOW())
+      `INSERT INTO equipos (nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones, creado_en, actualizado_en)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, COALESCE($12::jsonb, '[]'::jsonb), NOW(), NOW())
        RETURNING *`,
-      [nombre, marca || null, modelo || null, numero_serie || null, ubicacion || null, estado || 'activo', aplicacion || null, finalClienteName || null, finalClienteId, anio_venta ? parseInt(anio_venta) : null, mantenciones ? JSON.stringify(mantenciones) : null]
+      [nombre, marca || null, modelo || null, numero_serie || null, ubicacion || null, estado || 'activo', aplicacion || null, finalClienteName || null, finalClienteId, anio_venta ? parseInt(anio_venta) : null, fecha_instalacion || null, mantenciones ? JSON.stringify(mantenciones) : null]
     );
 
     const io = req.app.get('io');
@@ -226,7 +227,7 @@ router.patch('/:id', authRequired, async (req, res) => {
   try {
     const { id } = req.params;
     await ensureExtendedSchema();
-    const { nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, mantenciones } = req.body;
+    const { nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones } = req.body;
 
     let finalClienteName = cliente;
     let finalClienteId = cliente_id;
@@ -259,11 +260,12 @@ router.patch('/:id', authRequired, async (req, res) => {
            cliente = COALESCE($8, cliente),
            cliente_id = COALESCE($9, cliente_id),
            anio_venta = COALESCE($10, anio_venta),
-           mantenciones = COALESCE($11::jsonb, mantenciones),
+           fecha_instalacion = COALESCE($11, fecha_instalacion),
+           mantenciones = COALESCE($12::jsonb, mantenciones),
            actualizado_en = NOW()
-       WHERE id = $12
+       WHERE id = $13
        RETURNING *`,
-      [nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, finalClienteName, (finalClienteId && finalClienteId !== 'STOCK') ? parseInt(finalClienteId) : (finalClienteId === null || finalClienteId === 'STOCK' ? null : undefined), anio_venta ? parseInt(anio_venta) : null, mantenciones ? JSON.stringify(mantenciones) : null, id]
+      [nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, finalClienteName, (finalClienteId && finalClienteId !== 'STOCK') ? parseInt(finalClienteId) : (finalClienteId === null || finalClienteId === 'STOCK' ? null : undefined), anio_venta ? parseInt(anio_venta) : null, fecha_instalacion || null, mantenciones ? JSON.stringify(mantenciones) : null, id]
     );
 
     if (update.rowCount === 0) return res.status(404).json({ error: 'Equipo no encontrado' });
