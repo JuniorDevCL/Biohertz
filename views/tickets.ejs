@@ -134,12 +134,8 @@
                                 </td>
                                 <td class="py-3 px-4">
                                     <div class="flex flex-col gap-1">
-                                        <% const p = getPhase(ticket.estado); %>
-                                        <span id="ticket-status-badge-<%= ticket.id %>" class="px-2 py-1 rounded text-xs font-medium <%= p.style %>">
-                                            <%= p.label %>
-                                        </span>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border <%= (ticket.estado === 'hecho' || ticket.estado === 'terminado') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40' : 'bg-amber-500/10 text-amber-400 border-amber-500/40' %>">
-                                            <%= (ticket.estado === 'hecho' || ticket.estado === 'terminado') ? 'Resuelto' : 'Activo' %>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border w-fit <%= (ticket.estado === 'hecho' || ticket.estado === 'terminado') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40' : 'bg-amber-500/10 text-amber-400 border-amber-500/40' %>">
+                                            <%= (ticket.estado === 'hecho' || ticket.estado === 'terminado') ? 'Terminado' : 'Activo' %>
                                         </span>
                                     </div>
                                 </td>
