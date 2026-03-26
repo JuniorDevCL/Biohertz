@@ -6,7 +6,8 @@ import pool from './db.js';
 // Puedes agregar correos aquí manualmente o usar la variable de entorno ALLOWED_EMAILS
 const HARDCODED_ALLOWED = [
   'alexis.cruces2122@gmail.com',
-  'leslie_vejares@hotmail.com'
+  'leslie_vejares@hotmail.com',
+  'israel.zamorano@gmail.com'
 ];
 
 const envAllowed = (process.env.ALLOWED_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
