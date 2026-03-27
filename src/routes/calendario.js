@@ -46,9 +46,16 @@ function getMonthInfo(year, month) {
   return { first, daysInMonth, startWeekDay };
 }
 
+function getTodayChile() {
+  const now = new Date();
+  const chileStr = now.toLocaleString('en-US', { timeZone: 'America/Santiago' });
+  return new Date(chileStr);
+}
+
 function buildCalendarWeeks(year, month, events) {
   const eventsByDate = {};
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayChile = getTodayChile();
+  const todayKey = todayChile.toISOString().slice(0, 10);
 
   events.forEach(e => {
     const rawFecha = e.fecha;
@@ -101,9 +108,9 @@ router.get('/', authRequired, async (req, res) => {
 
     const user = req.user || req.session.user || { nombre: 'Usuario' };
 
-    const now = new Date();
-    const year = parseInt(req.query.year || now.getFullYear(), 10);
-    const month = parseInt(req.query.month || now.getMonth() + 1, 10);
+    const nowChile = getTodayChile();
+    const year = parseInt(req.query.year || nowChile.getFullYear(), 10);
+    const month = parseInt(req.query.month || nowChile.getMonth() + 1, 10);
 
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 1);

@@ -211,9 +211,10 @@ function openDayDetails(el) {
     const rawEvents = calendarEventsByDate[date];
     let events = Array.isArray(rawEvents) ? rawEvents : [];
 
+    // Usar T00:00:00 para evitar desajustes por zona horaria al crear el objeto Date local
     const dateObj = new Date(date + 'T00:00:00');
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const dateFormattedRaw = dateObj.toLocaleDateString('es-ES', options);
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Santiago' };
+    const dateFormattedRaw = dateObj.toLocaleDateString('es-CL', options);
     const dateFormatted = dateFormattedRaw.charAt(0).toUpperCase() + dateFormattedRaw.slice(1);
     
     // Actualizar panel lateral (day-summary-panel)
