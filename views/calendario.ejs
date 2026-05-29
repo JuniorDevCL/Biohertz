@@ -1,83 +1,111 @@
+<%
+    const tipoStyles = {
+        mantencion:     { chip: 'bg-amber-500/15 text-amber-200 border-l-2 border-amber-400', dot: 'bg-amber-400', tag: 'bg-amber-500/15 text-amber-300 border border-amber-500/30' },
+        ticket:         { chip: 'bg-blue-500/15 text-blue-200 border-l-2 border-blue-400', dot: 'bg-blue-400', tag: 'bg-blue-500/15 text-blue-300 border border-blue-500/30' },
+        visita_tecnica: { chip: 'bg-violet-500/15 text-violet-200 border-l-2 border-violet-400', dot: 'bg-violet-400', tag: 'bg-violet-500/15 text-violet-300 border border-violet-500/30' },
+        garantia:       { chip: 'bg-emerald-500/15 text-emerald-200 border-l-2 border-emerald-400', dot: 'bg-emerald-400', tag: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' },
+        otro:           { chip: 'bg-slate-500/15 text-slate-200 border-l-2 border-slate-400', dot: 'bg-slate-400', tag: 'bg-slate-500/15 text-slate-300 border border-slate-500/30' }
+    };
+    const defaultTipoStyle = { chip: 'bg-sky-500/15 text-sky-200 border-l-2 border-sky-400', dot: 'bg-sky-400', tag: 'bg-sky-500/15 text-sky-300 border border-sky-500/30' };
+%>
+
+<style>
+    .custom-scroll::-webkit-scrollbar { width: 5px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(71,85,105,.7); border-radius: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,1); }
+    .cal-day { transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease, border-color .15s ease; }
+    .cal-day:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -12px rgba(0,0,0,.6); }
+    .cal-chip { transition: background-color .15s ease, transform .12s ease; }
+    .cal-chip:hover { transform: translateX(1px); }
+</style>
+
 <div class="max-w-7xl mx-auto px-6 py-8">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-            <h1 class="text-3xl font-bold text-white tracking-tight">Calendario</h1>
-            <p class="text-slate-400 text-sm mt-1">Eventos importantes de la empresa visibles para todos.</p>
+        <div class="flex items-center gap-4">
+            <div class="hidden sm:flex h-12 w-12 rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/10 border border-orange-500/30 items-center justify-center text-orange-400">
+                <i class="ph ph-calendar-dots text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-white tracking-tight">Calendario</h1>
+                <p class="text-slate-400 text-sm mt-1">Eventos importantes de la empresa visibles para todos.</p>
+            </div>
         </div>
         <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-stretch md:items-center">
-            <div class="flex items-center gap-2">
-                <a href="/calendario?month=<%= prevMonth %>&year=<%= prevYear %>" class="inline-flex items-center justify-center px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm">
-                    <i class="ph ph-caret-left mr-1"></i>
-                    Mes anterior
+            <div class="inline-flex items-center rounded-xl bg-slate-800/80 border border-slate-700/60 p-1 shadow-sm">
+                <a href="/calendario?month=<%= prevMonth %>&year=<%= prevYear %>" title="Mes anterior" class="inline-flex items-center justify-center h-9 w-9 rounded-lg text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
+                    <i class="ph ph-caret-left text-base"></i>
                 </a>
-                <a href="/calendario?month=<%= nextMonth %>&year=<%= nextYear %>" class="inline-flex items-center justify-center px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm">
-                    Mes siguiente
-                    <i class="ph ph-caret-right ml-1"></i>
-                </a>
-            </div>
-            <div class="flex items-center gap-2">
-                <div class="px-4 py-2 rounded-lg bg-slate-800 text-slate-100 text-sm font-medium">
+                <div class="px-4 text-slate-100 text-sm font-semibold whitespace-nowrap min-w-[9rem] text-center">
                     <%= monthName %> <%= year %>
                 </div>
-                <a href="/calendario" class="inline-flex items-center justify-center px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm">
-                    <i class="ph ph-calendar-blank mr-1.5"></i>
-                    Hoy
+                <a href="/calendario?month=<%= nextMonth %>&year=<%= nextYear %>" title="Mes siguiente" class="inline-flex items-center justify-center h-9 w-9 rounded-lg text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
+                    <i class="ph ph-caret-right text-base"></i>
                 </a>
             </div>
-            <button onclick="document.getElementById('new-event-modal').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-colors flex items-center justify-center text-sm font-medium shadow-sm shadow-blue-500/30">
+            <a href="/calendario" class="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-slate-800/80 border border-slate-700/60 hover:bg-slate-700 text-slate-100 text-sm font-medium transition-colors">
+                <i class="ph ph-crosshair mr-1.5"></i>
+                Hoy
+            </a>
+            <button onclick="document.getElementById('new-event-modal').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl transition-colors flex items-center justify-center text-sm font-medium shadow-lg shadow-blue-500/25">
                 <i class="ph ph-plus mr-2 text-base"></i> Nuevo Evento
             </button>
         </div>
     </div>
 
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-6">
+    <!-- Leyenda de tipos -->
+    <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mb-5 text-xs text-slate-400">
+        <span class="font-medium text-slate-500 uppercase tracking-wide">Tipos:</span>
+        <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-amber-400"></span> Mantención</span>
+        <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-blue-400"></span> Ticket</span>
+        <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-violet-400"></span> Visita técnica</span>
+        <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-emerald-400"></span> Garantía</span>
+        <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-slate-400"></span> Otro</span>
+    </div>
+
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl shadow-xl p-5 md:p-6 backdrop-blur-sm">
         <div class="md:flex md:items-start md:gap-6">
             <div class="md:flex-1">
-                <div class="grid grid-cols-7 gap-2 mb-2">
-                    <% weekDaysShort.forEach(function(dia) { %>
-                        <div class="text-center text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                <div class="grid grid-cols-7 gap-2 mb-3">
+                    <% weekDaysShort.forEach(function(dia, idx) { %>
+                        <div class="text-center text-[11px] font-semibold uppercase tracking-wider pb-1 <%= (idx === 0 || idx === 6) ? 'text-orange-300/70' : 'text-slate-400' %>">
                             <%= dia %>
                         </div>
                     <% }); %>
                 </div>
                 <div class="grid grid-cols-7 gap-2">
                     <% weeks.forEach(function(week) { %>
-                        <% week.forEach(function(day) { %>
+                        <% week.forEach(function(day, dayIdx) { %>
                             <% if (!day) { %>
-                                <div class="h-24 rounded-lg bg-slate-900/40 border border-slate-800"></div>
+                                <div class="h-28 rounded-xl bg-slate-900/30 border border-dashed border-slate-800/70"></div>
                             <% } else { %>
-                                <div class="h-24 rounded-lg border border-slate-800 flex flex-col p-2 overflow-hidden cursor-pointer transition-colors <%= day.isPast ? 'bg-slate-950/50 opacity-60 hover:bg-slate-900/50' : 'bg-slate-900/80 hover:bg-slate-800/50' %>"
+                                <% const isWeekend = (dayIdx === 0 || dayIdx === 6); %>
+                                <div class="cal-day h-28 rounded-xl border flex flex-col p-2 overflow-hidden cursor-pointer <%= day.isToday ? 'border-emerald-500/60 bg-emerald-500/[0.07] ring-1 ring-emerald-500/30' : (day.isPast ? 'border-slate-800/70 bg-slate-950/40 hover:bg-slate-900/60' : (isWeekend ? 'border-slate-800 bg-slate-800/30 hover:bg-slate-800/60' : 'border-slate-800 bg-slate-900/60 hover:bg-slate-800/70')) %>"
                                      onclick="openDayDetails(this)"
                                      data-date="<%= day.dateKey %>">
-                                    <div class="flex items-center justify-between mb-1">
-                                        <span class="text-xs font-semibold <%= day.isToday ? 'text-emerald-400' : (day.isPast ? 'text-slate-500' : 'text-slate-300') %>">
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="inline-flex items-center justify-center text-xs font-semibold <%= day.isToday ? 'h-6 w-6 rounded-full bg-emerald-500 text-slate-900' : (day.isPast ? 'text-slate-500' : (isWeekend ? 'text-orange-200/80' : 'text-slate-200')) %>">
                                             <%= day.day %>
                                         </span>
-                                        <% if (day.isToday) { %>
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-medium">
-                                                Hoy
+                                        <% if (day.events && day.events.length > 0) { %>
+                                            <span class="inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-slate-700/70 text-slate-200 text-[9px] font-semibold">
+                                                <%= day.events.length %>
                                             </span>
                                         <% } %>
                                     </div>
                                     <div class="space-y-1 overflow-y-auto pr-1 custom-scroll">
                                         <% if (day.events && day.events.length > 0) { %>
                                             <% day.events.forEach(function(ev) { %>
-                                                <div class="text-[11px] px-2 py-1 rounded bg-blue-600/20 text-blue-200 truncate flex flex-col gap-0.5">
-                                                    <div class="flex justify-between items-center gap-1">
-                                                        <span class="truncate"><%= ev.titulo %></span>
-                                                        <% if (ev.hora_inicio) { %>
-                                                            <span class="text-[9px] opacity-70"><%= ev.hora_inicio.slice(0, 5) %></span>
-                                                        <% } %>
-                                                    </div>
-                                                    <% if (ev.tipo) { %>
-                                                        <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-900/60 border border-slate-700/60 uppercase tracking-wide">
-                                                            <%= ev.tipo %>
-                                                        </span>
+                                                <% const st = tipoStyles[ev.tipo] || defaultTipoStyle; %>
+                                                <div class="cal-chip text-[11px] pl-2 pr-1.5 py-1 rounded-md truncate flex items-center justify-between gap-1 <%= st.chip %>" title="<%= ev.titulo %>">
+                                                    <span class="truncate font-medium"><%= ev.titulo %></span>
+                                                    <% if (ev.hora_inicio) { %>
+                                                        <span class="text-[9px] opacity-70 whitespace-nowrap"><%= ev.hora_inicio.slice(0, 5) %></span>
                                                     <% } %>
                                                 </div>
                                             <% }); %>
                                         <% } else { %>
-                                            <div class="text-[11px] text-slate-500 italic">Sin eventos</div>
+                                            <div class="text-[10px] text-slate-600 italic">Sin eventos</div>
                                         <% } %>
                                     </div>
                                 </div>
@@ -86,11 +114,14 @@
                     <% }); %>
                 </div>
             </div>
-            <div id="day-summary-panel" class="mt-6 md:mt-0 md:w-72 lg:w-80 bg-slate-900/80 border border-slate-800 rounded-lg p-4 hidden">
-                <div class="flex items-center justify-between mb-2">
+            <div id="day-summary-panel" class="mt-6 md:mt-0 md:w-72 lg:w-80 bg-slate-900/80 border border-slate-800 rounded-xl p-4 hidden">
+                <div class="flex items-center gap-2 mb-2 pb-3 border-b border-slate-800">
+                    <div class="h-8 w-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-300">
+                        <i class="ph ph-calendar-check"></i>
+                    </div>
                     <div>
-                        <p class="text-xs uppercase tracking-wide text-slate-500">Eventos del día</p>
-                        <h3 id="day-summary-title" class="text-sm font-semibold text-white mt-1"></h3>
+                        <p class="text-[10px] uppercase tracking-wide text-slate-500">Eventos del día</p>
+                        <h3 id="day-summary-title" class="text-sm font-semibold text-white mt-0.5"></h3>
                     </div>
                 </div>
                 <div id="day-summary-list" class="mt-3 space-y-2 max-h-64 overflow-y-auto custom-scroll"></div>
@@ -99,11 +130,13 @@
     </div>
 </div>
 
-<div id="day-details-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50"
+<div id="day-details-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4"
      onclick="if (event.target === this) this.classList.add('hidden')">
-    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-md shadow-2xl border border-slate-700 max-h-[80vh] flex flex-col">
+    <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-md shadow-2xl border border-slate-700 max-h-[80vh] flex flex-col">
         <div class="flex justify-between items-center mb-4">
-            <h3 id="day-details-title" class="text-xl font-bold text-white">Eventos</h3>
+            <h3 id="day-details-title" class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="ph ph-calendar-blank text-blue-400"></i> Eventos
+            </h3>
             <button onclick="document.getElementById('day-details-modal').classList.add('hidden')" class="text-slate-400 hover:text-white">
                 <i class="ph ph-x text-lg"></i>
             </button>
@@ -122,6 +155,15 @@
 const calendarEventsByDate = {};
 const calendarEventsById = {};
 const calendarCanEditEvents = true;
+
+const calendarTipoStyles = {
+    mantencion:     { border: 'border-l-amber-400',  tag: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',   title: 'text-amber-200' },
+    ticket:         { border: 'border-l-blue-400',   tag: 'bg-blue-500/15 text-blue-300 border border-blue-500/30',      title: 'text-blue-200' },
+    visita_tecnica: { border: 'border-l-violet-400', tag: 'bg-violet-500/15 text-violet-300 border border-violet-500/30', title: 'text-violet-200' },
+    garantia:       { border: 'border-l-emerald-400',tag: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30', title: 'text-emerald-200' },
+    otro:           { border: 'border-l-slate-400',  tag: 'bg-slate-500/15 text-slate-300 border border-slate-500/30',   title: 'text-slate-200' }
+};
+const calendarDefaultTipoStyle = { border: 'border-l-sky-400', tag: 'bg-sky-500/15 text-sky-300 border border-sky-500/30', title: 'text-sky-200' };
 
 const calendarOpenTickets = <%- JSON.stringify(typeof openTickets !== 'undefined' ? openTickets : []) %>;
 const calendarTicketsByTipo = {};
@@ -231,8 +273,9 @@ function openDayDetails(el) {
             summaryList.innerHTML = '<p class="text-slate-400 text-xs text-center py-4">No hay eventos para este día.</p>';
         } else {
             events.forEach(ev => {
+                const st = calendarTipoStyles[ev.tipo] || calendarDefaultTipoStyle;
                 const item = document.createElement('div');
-                item.className = 'bg-slate-900/60 border border-slate-700/70 rounded-lg p-3 transition-colors mb-2';
+                item.className = 'bg-slate-900/60 border border-slate-700/70 border-l-4 ' + st.border + ' rounded-lg p-3 transition-colors mb-2 hover:bg-slate-900/90';
 
                 let timeStr = '';
                 if (ev.hora_inicio) {
@@ -255,7 +298,7 @@ function openDayDetails(el) {
                     : '';
 
                 const tipoHtml = ev.tipo
-                    ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-200 uppercase tracking-wide">' +
+                    ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded-full uppercase tracking-wide ' + st.tag + '">' +
                       ev.tipo +
                       '</span>'
                     : '';
@@ -285,7 +328,7 @@ function openDayDetails(el) {
                     '<div class="flex justify-between items-start gap-2 mb-1">' +
                         '<div class="flex-1">' +
                             '<div class="flex items-center flex-wrap">' +
-                                '<span class="text-sm font-medium text-blue-300 mr-1">' + (ev.titulo || '') + '</span>' +
+                                '<span class="text-sm font-medium ' + st.title + ' mr-1">' + (ev.titulo || '') + '</span>' +
                                 tipoHtml +
                             '</div>' +
                         '</div>' +
@@ -410,9 +453,11 @@ async function deleteEvent(id) {
 }
 </script>
 
-<div id="new-event-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
-    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-md shadow-2xl border border-slate-700">
-        <h3 class="text-xl font-bold text-white mb-4">Nuevo Evento</h3>
+<div id="new-event-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-md shadow-2xl border border-slate-700 max-h-[90vh] overflow-y-auto custom-scroll">
+        <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <i class="ph ph-calendar-plus text-blue-400"></i> Nuevo Evento
+        </h3>
         <form action="/calendario/eventos" method="POST" class="space-y-4">
             <input type="hidden" name="month" value="<%= month %>">
             <input type="hidden" name="year" value="<%= year %>">
@@ -479,9 +524,11 @@ async function deleteEvent(id) {
     </div>
 </div>
 
-<div id="edit-event-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
-    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-md shadow-2xl border border-slate-700">
-        <h3 class="text-xl font-bold text-white mb-4">Editar Evento</h3>
+<div id="edit-event-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-md shadow-2xl border border-slate-700 max-h-[90vh] overflow-y-auto custom-scroll">
+        <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <i class="ph ph-pencil-simple text-blue-400"></i> Editar Evento
+        </h3>
         <form onsubmit="submitEditEvent(event)" class="space-y-4">
             <input type="hidden" id="edit-event-id" name="id">
             <div>
