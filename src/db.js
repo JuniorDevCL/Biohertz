@@ -86,6 +86,16 @@ if (isOffline) {
         const u = store.usuarios.find(x => String(x.email).toLowerCase() === String(email).toLowerCase());
         return { rows: u ? [u] : [], rowCount: u ? 1 : 0 };
       }
+      if (s.startsWith('SELECT * FROM usuarios WHERE google_id =')) {
+        const [gid] = params;
+        const u = store.usuarios.find(x => String(x.google_id) === String(gid));
+        return { rows: u ? [u] : [], rowCount: u ? 1 : 0 };
+      }
+      if (s.startsWith('SELECT * FROM usuarios WHERE id =')) {
+        const [id] = params;
+        const u = store.usuarios.find(x => String(x.id) === String(id));
+        return { rows: u ? [u] : [], rowCount: u ? 1 : 0 };
+      }
       if (s.startsWith('SELECT id, nombre, email FROM usuarios')) {
         const rows = store.usuarios.map(u => ({ id: u.id, nombre: u.nombre, email: u.email })).sort((a, b) => String(a.nombre).localeCompare(String(b.nombre)));
         return { rows, rowCount: rows.length };

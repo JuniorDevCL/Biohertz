@@ -98,6 +98,15 @@
                             if (status === 'hecho') pid = 'terminado';
                             return phases[pid] || { label: status, style: 'bg-slate-500/10 text-slate-400 border border-slate-500/20' };
                         };
+
+                        const tipoStyles = {
+                            mantencion_preventiva: { label: 'MP', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+                            mantencion_correctiva: { label: 'MC', cls: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+                            visita_tecnica:        { label: 'VT', cls: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+                            reparacion:            { label: 'R',  cls: 'bg-orange-500/15 text-orange-300 border-orange-500/30' },
+                            otro:                  { label: 'O',  cls: 'bg-slate-500/15 text-slate-300 border-slate-500/30' }
+                        };
+                        const getTipo = (tipo) => tipoStyles[tipo] || { label: tipo, cls: 'bg-slate-500/15 text-slate-300 border-slate-500/30' };
                         %>
                         <% tickets.forEach(ticket => { %>
                             <tr class="hover:bg-slate-800/40 transition-colors group text-sm">
@@ -115,20 +124,18 @@
                                             <span class="block text-xs text-slate-500">
                                                 <%= ticket.asignado_a_nombre || 'Sin asignar' %>
                                             </span>
-                                            <% if (ticket.tipo) { %>
-                                                <span class="text-[11px] text-slate-400 font-bold">
-                                                    <%= ticket.tipo === 'mantencion_preventiva' ? 'MP' : 
-                                                        (ticket.tipo === 'mantencion_correctiva' ? 'MC' : 
-                                                        (ticket.tipo === 'visita_tecnica' ? 'VT' : 
-                                                        (ticket.tipo === 'reparacion' ? 'R' : 
-                                                        (ticket.tipo === 'otro' ? 'O' : ticket.tipo)))) %>
-                                                </span>
-                                            <% } %>
-                                            <% if (ticket.garantia) { %>
-                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30 ml-1">
-                                                    GARANTÍA
-                                                </span>
-                                            <% } %>
+                                            <div class="flex items-center gap-1.5 mt-0.5">
+                                                <% if (ticket.tipo) { const ts = getTipo(ticket.tipo); %>
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border <%= ts.cls %>">
+                                                        <%= ts.label %>
+                                                    </span>
+                                                <% } %>
+                                                <% if (ticket.garantia) { %>
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                                                        GARANTÍA
+                                                    </span>
+                                                <% } %>
+                                            </div>
                                         </div>
                                     </button>
                                 </td>
@@ -174,9 +181,14 @@
 </div>
 
 <!-- Modal Nuevo Ticket -->
-<div id="new-ticket-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
-    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-4xl shadow-2xl border border-slate-700">
-        <h3 class="text-xl font-bold text-white mb-6">Nuevo Ticket</h3>
+<div id="new-ticket-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-4xl shadow-2xl border border-slate-700 max-h-[92vh] overflow-y-auto">
+        <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400">
+                <i class="ph ph-ticket"></i>
+            </span>
+            Nuevo Ticket
+        </h3>
         <form action="/tickets" method="POST" class="grid grid-cols-12 gap-4">
             
             <!-- Row 1: Titulo (8) + Tipo (4) -->
@@ -304,6 +316,7 @@
 <script>
 let currentTicketId = null;
 let currentTicketStatus = null;
+let currentTicket = null;
 
 // Auto-open modal if query param exists
 if (new URLSearchParams(window.location.search).get('new')) {
@@ -589,6 +602,81 @@ async function deleteTicket(id) {
     }
 }
 
+function setTicketEditMode(editing) {
+    const viewIds = ['ticket-details-title', 'ticket-details-asignado', 'ticket-details-descripcion'];
+    const editIds = ['ticket-edit-title', 'ticket-edit-asignado', 'ticket-edit-descripcion'];
+    viewIds.forEach(id => { const el = document.getElementById(id); if (el) el.classList.toggle('hidden', editing); });
+    editIds.forEach(id => { const el = document.getElementById(id); if (el) el.classList.toggle('hidden', !editing); });
+
+    const editBtn = document.getElementById('ticket-edit-btn');
+    const saveBtn = document.getElementById('ticket-edit-save');
+    const cancelBtn = document.getElementById('ticket-edit-cancel');
+    if (editBtn) editBtn.classList.toggle('hidden', editing);
+    if (saveBtn) saveBtn.classList.toggle('hidden', !editing);
+    if (cancelBtn) cancelBtn.classList.toggle('hidden', !editing);
+}
+
+function enterTicketEditMode() {
+    if (!currentTicket) return;
+    const titleInput = document.getElementById('ticket-edit-title');
+    const descInput = document.getElementById('ticket-edit-descripcion');
+    const asignadoSelect = document.getElementById('ticket-edit-asignado');
+    if (titleInput) titleInput.value = currentTicket.titulo || '';
+    if (descInput) descInput.value = currentTicket.descripcion || '';
+    if (asignadoSelect) asignadoSelect.value = currentTicket.asignado_a != null ? String(currentTicket.asignado_a) : '';
+    setTicketEditMode(true);
+}
+
+function cancelTicketEditMode() {
+    setTicketEditMode(false);
+}
+
+function closeTicketDetails() {
+    cancelTicketEditMode();
+    document.getElementById('ticket-details-modal').classList.add('hidden');
+}
+
+async function saveTicketEdits() {
+    if (!currentTicketId) return;
+    const titleInput = document.getElementById('ticket-edit-title');
+    const descInput = document.getElementById('ticket-edit-descripcion');
+    const asignadoSelect = document.getElementById('ticket-edit-asignado');
+
+    const nuevoTitulo = titleInput ? titleInput.value.trim() : '';
+    if (!nuevoTitulo) {
+        alert('El título no puede estar vacío.');
+        return;
+    }
+
+    const payload = {
+        titulo: nuevoTitulo,
+        descripcion: descInput ? descInput.value : '',
+        asignado_a: asignadoSelect && asignadoSelect.value ? asignadoSelect.value : null
+    };
+
+    const saveBtn = document.getElementById('ticket-edit-save');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Guardando...'; }
+
+    try {
+        const res = await fetch(`/tickets/${currentTicketId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+            alert('Error al guardar los cambios');
+            return;
+        }
+        // Refrescar datos del ticket y la lista para reflejar los cambios
+        window.location.reload();
+    } catch (e) {
+        console.error(e);
+        alert('Error de conexión');
+    } finally {
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Guardar cambios'; }
+    }
+}
+
 async function openTicketDetails(id) {
     currentTicketId = id;
     try {
@@ -598,7 +686,12 @@ async function openTicketDetails(id) {
             return;
         }
         const t = await res.json();
+        currentTicket = t;
+        // Asegurar que el modal arranque en modo lectura
+        cancelTicketEditMode();
         document.getElementById('ticket-details-title').textContent = t.titulo || '';
+        const asignadoEl = document.getElementById('ticket-details-asignado');
+        if (asignadoEl) asignadoEl.textContent = t.asignado_a_nombre || 'Sin asignar';
         
         // Actualizar estado global y renderizar pipeline
         currentTicketStatus = t.estado || 'ingresado';
@@ -826,12 +919,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<div id="ticket-details-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center overflow-y-auto py-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-6xl p-6 shadow-2xl my-auto">
-        <div class="flex justify-between items-start mb-4">
-            <div>
-                <h3 id="ticket-details-title" class="text-xl font-bold text-white"></h3>
-                <div class="flex gap-4 mt-1">
+<div id="ticket-details-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center overflow-y-auto py-4 px-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-6xl p-6 shadow-2xl my-auto">
+        <div class="flex justify-between items-start mb-4 gap-4">
+            <div class="flex-1 min-w-0">
+                <h3 id="ticket-details-title" class="text-xl font-bold text-white truncate"></h3>
+                <input id="ticket-edit-title" type="text" class="hidden w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-lg font-bold text-white focus:outline-none focus:border-blue-500" placeholder="Título del ticket">
+                <div class="flex gap-4 mt-1 flex-wrap">
                     <p class="text-xs text-slate-400">
                         Estado: <span id="ticket-details-estado" class="font-medium text-slate-200"></span>
                     </p>
@@ -843,9 +937,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     </p>
                 </div>
             </div>
-            <button type="button" class="text-slate-400 hover:text-white transition-colors" onclick="document.getElementById('ticket-details-modal').classList.add('hidden')">
-                <i class="ph ph-x text-lg"></i>
-            </button>
+            <div class="flex items-center gap-2 shrink-0">
+                <button type="button" id="ticket-edit-btn" onclick="enterTicketEditMode()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-600/60 transition-colors">
+                    <i class="ph ph-pencil-simple"></i> Editar
+                </button>
+                <button type="button" class="text-slate-400 hover:text-white transition-colors" onclick="closeTicketDetails()">
+                    <i class="ph ph-x text-lg"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Pipeline de Fases -->
@@ -876,6 +975,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p class="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Contacto</p>
                             <p id="ticket-details-contacto" class="text-slate-200 font-medium"></p>
                         </div>
+                        <div class="col-span-2">
+                            <p class="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Responsable</p>
+                            <p id="ticket-details-asignado" class="text-slate-200 font-medium"></p>
+                            <select id="ticket-edit-asignado" class="hidden w-full mt-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500">
+                                <option value="">Sin asignar</option>
+                                <% if (typeof usuarios !== 'undefined') { %>
+                                    <% usuarios.forEach(u => { %>
+                                        <option value="<%= u.id %>"><%= u.nombre %></option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -885,6 +996,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </h4>
                     <div class="bg-slate-900/50 rounded-lg p-3 border border-slate-800 min-h-[100px]">
                         <p id="ticket-details-descripcion" class="text-slate-300 whitespace-pre-wrap text-sm leading-relaxed"></p>
+                        <textarea id="ticket-edit-descripcion" rows="5" class="hidden w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:outline-none focus:border-blue-500 placeholder-slate-500" placeholder="Descripción del ticket"></textarea>
                     </div>
                 </div>
             </div>
@@ -918,8 +1030,14 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>
 
-        <div class="mt-6 flex justify-end pt-4 border-t border-slate-800">
-            <button type="button" class="px-5 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium transition-colors" onclick="document.getElementById('ticket-details-modal').classList.add('hidden')">
+        <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-800">
+            <button type="button" id="ticket-edit-cancel" class="hidden px-5 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium transition-colors" onclick="cancelTicketEditMode()">
+                Cancelar edición
+            </button>
+            <button type="button" id="ticket-edit-save" class="hidden px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors shadow-lg shadow-blue-900/20" onclick="saveTicketEdits()">
+                Guardar cambios
+            </button>
+            <button type="button" id="ticket-close-btn" class="px-5 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium transition-colors" onclick="closeTicketDetails()">
                 Cerrar
             </button>
         </div>
