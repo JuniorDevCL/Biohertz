@@ -88,7 +88,7 @@ app.get('/dashboard', authRequired, async (req, res) => {
         // Dashboard filtering: Only show tickets assigned to the logged-in user
         const [ticketsCount, pendingCount, teamsCount, clientsCount, recents, eventsToday] = await Promise.all([
             pool.query('SELECT COUNT(*) FROM tickets WHERE asignado_a = $1', [userId]),
-            pool.query("SELECT COUNT(*) FROM tickets WHERE estado = 'pendiente' AND asignado_a = $1", [userId]),
+            pool.query("SELECT COUNT(*) FROM tickets WHERE (estado IS NULL OR estado NOT IN ('hecho', 'terminado')) AND asignado_a = $1", [userId]),
             pool.query('SELECT COUNT(*) FROM equipos'),
             pool.query('SELECT COUNT(*) FROM clientes'),
             pool.query(`
@@ -96,7 +96,7 @@ app.get('/dashboard', authRequired, async (req, res) => {
                 FROM tickets t 
                 LEFT JOIN usuarios u ON t.asignado_a = u.id 
                 WHERE t.asignado_a = $1
-                  AND t.estado = 'pendiente'
+                  AND (t.estado IS NULL OR t.estado NOT IN ('hecho', 'terminado'))
                 ORDER BY t.creado_en DESC LIMIT 10
             `, [userId]),
             pool.query(`

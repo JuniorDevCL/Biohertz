@@ -303,7 +303,7 @@ if (isOffline) {
          return { rows: list, rowCount: list.length };
       }
 
-      if ((s.startsWith('SELECT * FROM equipos') && s.includes('ORDER BY actualizado_en DESC')) || s.startsWith('SELECT COUNT(*) FROM equipos')) {
+      if ((/^SELECT .* FROM equipos/i.test(s) && s.includes('ORDER BY actualizado_en DESC')) || s.startsWith('SELECT COUNT(*) FROM equipos')) {
         let list = store.equipos.slice().sort((a, b) => String(b.actualizado_en).localeCompare(String(a.actualizado_en)));
 
         const stateMatch = s.match(/estado = \$(\d+)/);

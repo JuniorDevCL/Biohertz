@@ -184,7 +184,8 @@ router.get('/:id', authRequired, async (req, res) => {
 router.post('/', authRequired, async (req, res) => {
   try {
     await ensureExtendedSchema();
-    const { nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones } = req.body;
+    let { nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones } = req.body;
+    if (typeof numero_serie === 'string') numero_serie = numero_serie.trim() || null;
     if (!nombre) return res.status(400).json({ error: 'Nombre es obligatorio' });
     // if (!cliente_id) return res.status(400).json({ error: 'Debe seleccionar un cliente' }); // Permitir STOCK (null)
 
@@ -227,7 +228,8 @@ router.patch('/:id', authRequired, async (req, res) => {
   try {
     const { id } = req.params;
     await ensureExtendedSchema();
-    const { nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones } = req.body;
+    let { nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones } = req.body;
+    if (typeof numero_serie === 'string') numero_serie = numero_serie.trim() || null;
 
     let finalClienteName = cliente;
     let finalClienteId = cliente_id;

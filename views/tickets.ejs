@@ -55,7 +55,7 @@
                 <select name="estado_view" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
                     <option value="">Todos los estados</option>
                     <option value="activos" <%= estadoView === 'activos' ? 'selected' : '' %>>Activos</option>
-                    <option value="resueltos" <%= estadoView === 'resueltos' ? 'selected' : '' %>>Resueltos</option>
+                    <option value="resueltos" <%= estadoView === 'resueltos' ? 'selected' : '' %>>Terminados</option>
                 </select>
             </div>
             <div>
@@ -134,7 +134,7 @@
                                 </td>
                                 <td class="py-3 px-4">
                                     <div class="flex flex-col gap-1">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border w-fit <%= (ticket.estado === 'hecho' || ticket.estado === 'terminado') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40' : 'bg-amber-500/10 text-amber-400 border-amber-500/40' %>">
+                                        <span id="ticket-status-badge-<%= ticket.id %>" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border w-fit <%= (ticket.estado === 'hecho' || ticket.estado === 'terminado') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40' : 'bg-amber-500/10 text-amber-400 border-amber-500/40' %>">
                                             <%= (ticket.estado === 'hecho' || ticket.estado === 'terminado') ? 'Terminado' : 'Activo' %>
                                         </span>
                                     </div>
@@ -347,9 +347,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (res.ok) {
                         const data = await res.json();
                         const equipos = data.equipos || [];
-                        // Find exact match (case insensitive)
-                        const exact = equipos.find(eq => eq.numero_serie && eq.numero_serie.toLowerCase() === val.toLowerCase());
-                        
+                        const norm = (s) => (s || '').toString().trim().toLowerCase();
+                        const target = norm(val);
+                        // Match ignoring case and surrounding whitespace; fall back to the
+                        // only result when the backend returned a single match.
+                        let exact = equipos.find(eq => norm(eq.numero_serie) === target);
+                        if (!exact && equipos.length === 1) {
+                            exact = equipos[0];
+                        }
+
                         if (exact) {
                             if (inputNombre) inputNombre.value = exact.nombre || '';
                             if (inputModelo) inputModelo.value = exact.modelo || '';
@@ -484,9 +490,12 @@ async function updateTicketStatus(newStatus) {
             
             // Actualizar fila en la lista si existe
             const listBadge = document.getElementById(`ticket-status-badge-${currentTicketId}`);
-            if (listBadge && phaseObj) {
-                listBadge.textContent = phaseObj.label;
-                listBadge.className = `px-2 py-1 rounded text-xs font-medium ${phaseObj.style.badge}`;
+            if (listBadge) {
+                const isTerminado = statusToUse === 'terminado' || statusToUse === 'hecho';
+                listBadge.textContent = isTerminado ? 'Terminado' : 'Activo';
+                listBadge.className = isTerminado 
+                    ? 'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border w-fit bg-emerald-500/10 text-emerald-400 border-emerald-500/40'
+                    : 'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border w-fit bg-amber-500/10 text-amber-400 border-amber-500/40';
             }
 
             // Recargar historial para ver el cambio
