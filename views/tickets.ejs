@@ -66,7 +66,7 @@
         </form>
         <% if (typeof tickets !== 'undefined' && tickets && tickets.length > 0) { %>
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full min-w-[1100px] text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-800/30 text-xs uppercase text-slate-400 font-semibold tracking-wider">
                             <th class="py-3 px-4">Título / Código</th>
@@ -110,16 +110,16 @@
                         %>
                         <% tickets.forEach(ticket => { %>
                             <tr class="hover:bg-slate-800/40 transition-colors group text-sm">
-                                <td class="py-3 px-4 font-medium text-white">
-                                    <button type="button" class="text-left" onclick="openTicketDetails('<%= ticket.id %>')">
+                                <td class="py-3 px-4 font-medium text-white min-w-[260px]">
+                                    <button type="button" class="text-left w-full" onclick="openTicketDetails('<%= ticket.id %>')">
                                         <div class="flex flex-col gap-0.5">
-                                            <div class="flex items-center gap-2">
+                                            <div class="flex items-start gap-2">
                                                 <% if (ticket.codigo) { %>
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-slate-800 border border-slate-700 text-slate-100">
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono tracking-wide bg-slate-800 border border-slate-700 text-slate-100 whitespace-nowrap shrink-0">
                                                         <%= ticket.codigo %>
                                                     </span>
                                                 <% } %>
-                                                <span class="group-hover:text-blue-400 transition-colors"><%= ticket.titulo %></span>
+                                                <span class="group-hover:text-blue-400 transition-colors min-w-0"><%= ticket.titulo %></span>
                                             </div>
                                             <span class="block text-xs text-slate-500">
                                                 <%= ticket.asignado_a_nombre || 'Sin asignar' %>
@@ -319,9 +319,14 @@ let currentTicketStatus = null;
 let currentTicket = null;
 
 // Auto-open modal if query param exists
-if (new URLSearchParams(window.location.search).get('new')) {
+const ticketPageParams = new URLSearchParams(window.location.search);
+if (ticketPageParams.get('new')) {
     const modal = document.getElementById('new-ticket-modal');
     if (modal) modal.classList.remove('hidden');
+}
+const openTicketId = ticketPageParams.get('open');
+if (openTicketId) {
+    document.addEventListener('DOMContentLoaded', () => openTicketDetails(openTicketId));
 }
 
 // Equipment search logic

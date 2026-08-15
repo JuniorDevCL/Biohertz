@@ -133,7 +133,9 @@ router.get('/:id', authRequired, async (req, res) => {
          FROM tickets t
          LEFT JOIN usuarios u ON u.id = t.asignado_a
          LEFT JOIN equipos e ON e.id = t.equipo_id
-         ORDER BY t.creado_en DESC`
+         WHERE t.cliente_id = $1 OR e.cliente_id = $1
+         ORDER BY t.creado_en DESC`,
+        [id]
       )
     ]);
 

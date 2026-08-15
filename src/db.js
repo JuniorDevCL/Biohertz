@@ -170,6 +170,25 @@ if (isOffline) {
         return { rows: [t], rowCount: 1 };
       }
 
+      if (s.includes('FROM tickets t') && (s.includes('t.cliente_id = $1') || s.includes('e.cliente_id = $1')) && !s.includes('WHERE t.id =')) {
+        const [id] = params;
+        const list = store.tickets
+          .filter(t => {
+            if (String(t.cliente_id) === String(id)) return true;
+            if (t.equipo_id) {
+              const eq = store.equipos.find(e => String(e.id) === String(t.equipo_id));
+              if (eq && String(eq.cliente_id) === String(id)) return true;
+            }
+            return false;
+          })
+          .sort((a, b) => String(b.creado_en).localeCompare(String(a.creado_en)))
+          .map(t => {
+            const u2 = t.asignado_a ? store.usuarios.find(u => u.id === t.asignado_a) : null;
+            return { ...t, asignado_a_nombre: u2 ? u2.nombre : null };
+          });
+        return { rows: list, rowCount: list.length };
+      }
+
       if (s.startsWith('SELECT t.*,') && s.includes('WHERE t.id =')) {
         const [id] = params;
         const t = store.tickets.find(x => String(x.id) === String(id));
@@ -218,12 +237,27 @@ if (isOffline) {
             );
         }
 
+        const clienteMatch = s.match(/(?:t\.)?cliente_id = \$(\d+)/);
+        if (clienteMatch) {
+            const idx = parseInt(clienteMatch[1]) - 1;
+            const val = params[idx];
+            list = list.filter(t => {
+                if (Number(t.cliente_id) === Number(val)) return true;
+                if (t.equipo_id) {
+                    const eq = store.equipos.find(e => Number(e.id) === Number(t.equipo_id));
+                    if (eq && Number(eq.cliente_id) === Number(val)) return true;
+                }
+                return false;
+            });
+        }
+
         if (s.startsWith('SELECT COUNT(*)')) {
             return { rows: [{ count: String(list.length) }], rowCount: 1 };
         }
 
-        const limit = Number(params[params.length - 2]) || 50;
-        const offset = Number(params[params.length - 1]) || 0;
+        const hasLimit = /\bLIMIT\s+\$/i.test(s);
+        const limit = hasLimit ? (Number(params[params.length - 2]) || 50) : list.length;
+        const offset = hasLimit ? (Number(params[params.length - 1]) || 0) : 0;
         const page = list.slice(offset, offset + limit).map(t => {
           const u1 = store.usuarios.find(u => u.id === t.creado_por);
           const u2 = t.asignado_a ? store.usuarios.find(u => u.id === t.asignado_a) : null;
