@@ -174,6 +174,35 @@ router.get('/:id', authRequired, async (req, res) => {
 
     equipo.tickets = ticketsRes.rows;
 
+    try {
+      const { ensureMantencionesSchema } = await import('../services/mantencionesSchema.js');
+      await ensureMantencionesSchema();
+      const fichasRes = await pool.query(
+        `SELECT id, tipo, estado, fecha, hora, trabajo, nota, realizado_por, firmada_en, creado_en,
+                archivo_ruta, archivo_nombre
+         FROM mantenciones_fichas
+         WHERE equipo_id = $1
+         ORDER BY COALESCE(fecha, creado_en::date) DESC, id DESC`,
+        [id]
+      );
+      equipo.fichas_mantencion = fichasRes.rows;
+      // Compat: también exponer como mantenciones para la UI
+      equipo.mantenciones = fichasRes.rows.map((f) => ({
+        id: f.id,
+        ficha_id: f.id,
+        fecha: f.fecha,
+        hora: f.hora,
+        trabajo: f.trabajo,
+        nota: f.nota,
+        realizado_por: f.realizado_por,
+        tipo: f.tipo,
+        estado: f.estado,
+        archivo: f.archivo_ruta ? { ruta: f.archivo_ruta, nombre: f.archivo_nombre } : null,
+      }));
+    } catch (e) {
+      console.warn('No se pudieron cargar fichas de mantención:', e.message);
+    }
+
     res.json(equipo);
   } catch (err) {
     console.error('Error al obtener equipo:', err);

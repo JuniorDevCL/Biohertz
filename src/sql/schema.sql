@@ -59,3 +59,45 @@ CREATE TABLE IF NOT EXISTS historial_tickets (
 );
 
 CREATE INDEX IF NOT EXISTS idx_historial_ticket ON historial_tickets(ticket_id);
+
+-- Protocolos de mantención preventiva por marca
+CREATE TABLE IF NOT EXISTS protocolos_marca (
+  id SERIAL PRIMARY KEY,
+  marca VARCHAR(100) NOT NULL UNIQUE,
+  items JSONB NOT NULL DEFAULT '[]'::jsonb,
+  activo BOOLEAN NOT NULL DEFAULT TRUE,
+  creado_en TIMESTAMPTZ DEFAULT NOW(),
+  actualizado_en TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Fichas de mantención (preventiva / correctiva)
+CREATE TABLE IF NOT EXISTS mantenciones_fichas (
+  id SERIAL PRIMARY KEY,
+  equipo_id INTEGER REFERENCES equipos(id) ON DELETE CASCADE,
+  cliente_id INTEGER,
+  tipo VARCHAR(30) NOT NULL DEFAULT 'preventiva',
+  estado VARCHAR(20) NOT NULL DEFAULT 'borrador',
+  fecha DATE,
+  hora TIME,
+  trabajo TEXT,
+  nota TEXT,
+  dano_descripcion TEXT,
+  checklist JSONB NOT NULL DEFAULT '[]'::jsonb,
+  realizado_por VARCHAR(150),
+  tecnico_id INTEGER,
+  firma_tecnico TEXT,
+  firma_cliente TEXT,
+  firmante_cliente VARCHAR(150),
+  firmada_en TIMESTAMPTZ,
+  legacy_key VARCHAR(80),
+  archivo_ruta VARCHAR(255),
+  archivo_nombre VARCHAR(255),
+  archivo_tipo VARCHAR(100),
+  creado_en TIMESTAMPTZ DEFAULT NOW(),
+  actualizado_en TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_mantenciones_equipo ON mantenciones_fichas(equipo_id);
+CREATE INDEX IF NOT EXISTS idx_mantenciones_estado ON mantenciones_fichas(estado);
+CREATE INDEX IF NOT EXISTS idx_mantenciones_fecha ON mantenciones_fichas(fecha DESC);
+

@@ -18,7 +18,9 @@ import equiposRoutes from './routes/equipos.js';
 import clientesRoutes from './routes/clientes.js';
 import calendarioRoutes from './routes/calendario.js';
 import usuariosRoutes from './routes/usuarios.js';
+import mantencionesRoutes from './routes/mantenciones.js';
 import pool from './db.js';
+import { ensureMantencionesSchema } from './services/mantencionesSchema.js';
 
 const app = express();
 
@@ -143,6 +145,7 @@ app.use('/equipos', equiposRoutes);
 app.use('/clientes', clientesRoutes);
 app.use('/calendario', calendarioRoutes);
 app.use('/usuarios', usuariosRoutes);
+app.use('/mantenciones', mantencionesRoutes);
 
 // Inicializar servidor HTTP
 const server = createServer(app);
@@ -271,5 +274,6 @@ function start(port, tries = 10) {
 }
 (async () => {
   try { await ensureBaseSchema(); } catch {}
+  try { await ensureMantencionesSchema(); } catch {}
   start(BASE);
 })();

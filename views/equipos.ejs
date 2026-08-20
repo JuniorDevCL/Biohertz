@@ -334,7 +334,10 @@
                 </div>
             </div>
             <div>
-                <p class="text-xs text-slate-500 mb-2">Mantenciones registradas</p>
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-xs text-slate-500">Mantenciones registradas</p>
+                    <div id="detalle-equipo-add-mantencion"></div>
+                </div>
                 <div id="detalle-equipo-mantenciones" class="space-y-2 text-xs">
                 </div>
             </div>
@@ -364,26 +367,13 @@ function openMantencionDesdeBoton(btn) {
 }
 
 function openMantencionModal(id, nombre) {
-    const modal = document.getElementById('mantencion-modal');
-    const idInput = document.getElementById('mantencion-equipo-id');
-    const nombreEl = document.getElementById('mantencion-equipo-nombre');
-    if (!modal || !idInput) return;
-    idInput.value = id || '';
-    if (nombreEl) {
-        nombreEl.textContent = nombre || '';
-    }
-    modal.classList.remove('hidden');
+    if (!id) return;
+    window.location.href = '/mantenciones/nueva?equipo_id=' + encodeURIComponent(id);
 }
 
 function closeMantencionModal() {
     const modal = document.getElementById('mantencion-modal');
-    const form = document.getElementById('mantencion-form');
-    if (form) {
-        form.reset();
-    }
-    if (modal) {
-        modal.classList.add('hidden');
-    }
+    if (modal) modal.classList.add('hidden');
 }
 
 async function submitMantencion(ev) {
@@ -468,48 +458,80 @@ async function openDetalleEquipo(id) {
         estadoEl.textContent = estado;
 
         mantencionesEl.innerHTML = '';
-        const list = Array.isArray(e.mantenciones) ? e.mantenciones : [];
+        const list = Array.isArray(e.fichas_mantencion) && e.fichas_mantencion.length
+            ? e.fichas_mantencion
+            : (Array.isArray(e.mantenciones) ? e.mantenciones : []);
         if (list.length === 0) {
             mantencionesEl.innerHTML = '<p class="text-slate-500">No hay mantenciones registradas.</p>';
         } else {
             list.forEach(m => {
                 const div = document.createElement('div');
                 div.className = 'bg-slate-800/70 border border-slate-700 rounded-lg px-3 py-2';
+                const fichaId = m.ficha_id || m.id;
                 const fecha = m.fecha || '';
                 const hora = m.hora || '';
                 const trabajo = m.trabajo || '';
                 const nota = m.nota || '';
                 const realizado = m.realizado_por || '';
+                const tipo = m.tipo || '';
+                const estado = m.estado || '';
                 const archivo = m.archivo || null;
                 let fechaHoraTexto = '';
                 if (fecha && hora) {
-                    fechaHoraTexto = fecha + ' ' + hora;
+                    fechaHoraTexto = String(fecha).slice(0, 10) + ' ' + String(hora).slice(0, 5);
                 } else if (fecha) {
-                    fechaHoraTexto = fecha;
+                    fechaHoraTexto = String(fecha).slice(0, 10);
                 } else if (hora) {
-                    fechaHoraTexto = hora;
+                    fechaHoraTexto = String(hora).slice(0, 5);
+                }
+                let badges = '';
+                if (tipo) {
+                    badges += '<span class="mr-1 px-1.5 py-0.5 rounded text-[10px] border ' +
+                        (tipo === 'correctiva'
+                            ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                            : 'bg-teal-500/15 text-teal-300 border-teal-500/30') +
+                        '">' + (tipo === 'correctiva' ? 'Correctiva' : 'Preventiva') + '</span>';
+                }
+                if (estado) {
+                    badges += '<span class="px-1.5 py-0.5 rounded text-[10px] border ' +
+                        (estado === 'firmada'
+                            ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                            : 'bg-slate-500/15 text-slate-300 border-slate-500/30') +
+                        '">' + (estado === 'firmada' ? 'Firmada' : 'Borrador') + '</span>';
                 }
                 let archivoHtml = '';
                 if (archivo && archivo.ruta) {
                     archivoHtml =
                         '<div class="mt-1">' +
-                            '<a href="' + archivo.ruta + '" target="_blank" class="text-[10px] text-blue-400 hover:text-blue-300 underline">Ver archivo</a>' +
+                            '<a href="' + archivo.ruta + '" target="_blank" class="text-[10px] text-teal-300 hover:text-cyan-300 underline">Ver archivo</a>' +
                         '</div>';
                 }
+                const linkHtml = fichaId
+                    ? '<a href="/mantenciones/' + fichaId + '" class="text-[10px] text-teal-300 hover:text-cyan-300 underline">Abrir ficha</a>'
+                    : '';
                 div.innerHTML =
                     '<div class="flex justify-between items-start gap-2 mb-1">' +
                         '<div class="flex-1 min-w-0">' +
+                            '<div class="mb-1">' + badges + '</div>' +
                             '<div class="text-[11px] font-medium text-slate-200 truncate">' + (trabajo || 'Mantención') + '</div>' +
                             (realizado ? '<div class="text-[10px] text-slate-400">Realizado por: ' + realizado + '</div>' : '') +
                         '</div>' +
                         '<div class="text-right flex-shrink-0">' +
                             (fechaHoraTexto ? '<div class="text-[10px] text-slate-400">' + fechaHoraTexto + '</div>' : '') +
-                            archivoHtml +
+                            '<div class="mt-1 space-y-1">' + linkHtml + archivoHtml + '</div>' +
                         '</div>' +
                     '</div>' +
                     (nota ? '<div class="text-[11px] text-slate-400 whitespace-pre-wrap mt-1">' + nota + '</div>' : '');
                 mantencionesEl.appendChild(div);
             });
+        }
+
+        const addBtnWrap = document.getElementById('detalle-equipo-add-mantencion');
+        if (addBtnWrap) {
+            addBtnWrap.innerHTML =
+                '<a href="/mantenciones/nueva?equipo_id=' + encodeURIComponent(e.id) + '" class="inline-flex items-center text-xs text-teal-300 hover:text-cyan-300 font-medium">' +
+                    '<i class="ph ph-plus mr-1"></i> Nueva ficha' +
+                '</a>';
         }
 
         const ticketsEl = document.getElementById('detalle-equipo-tickets');

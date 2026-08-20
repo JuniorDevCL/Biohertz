@@ -1,0 +1,430 @@
+<%
+  const f = typeof ficha !== 'undefined' && ficha ? ficha : null;
+  const isReadonly = !!readonly;
+  const today = new Date().toISOString().slice(0, 10);
+  const nowTime = new Date().toTimeString().slice(0, 5);
+  const initialTipo = f ? f.tipo : 'preventiva';
+  const checklistJson = JSON.stringify(checklist || []);
+%>
+<style>
+  .sig-pad {
+    touch-action: none;
+    background: #0b1220;
+    border: 1px dashed rgba(148,163,184,.35);
+    border-radius: 12px;
+    width: 100%;
+    height: 160px;
+    cursor: crosshair;
+  }
+  .sig-pad.locked { opacity: .85; cursor: default; }
+  .check-item { transition: background .15s ease, border-color .15s ease; }
+  .check-item:has(input:checked) {
+    border-color: rgba(45,212,191,.45);
+    background: rgba(45,212,191,.08);
+  }
+</style>
+
+<div class="max-w-3xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
+  <div class="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+    <div>
+      <a href="/mantenciones" class="text-slate-400 hover:text-white text-sm inline-flex items-center mb-3">
+        <i class="ph ph-arrow-left mr-1.5"></i> Volver a Mantenciones
+      </a>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+        <%= f ? (isReadonly ? 'Ficha firmada' : 'Continuar ficha') : 'Nueva ficha de mantención' %>
+      </h1>
+      <p class="text-slate-400 text-sm mt-1">Diseñada para tablet: checklist, trabajos y firmas con dedo o lápiz.</p>
+    </div>
+    <% if (f && f.estado === 'firmada') { %>
+      <span class="inline-flex self-start px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Firmada · bloqueada</span>
+    <% } %>
+  </div>
+
+  <form id="ficha-form" class="space-y-5">
+    <% if (f) { %><input type="hidden" id="ficha-id" value="<%= f.id %>"><% } %>
+
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+      <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Equipo y tipo</h2>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1 uppercase">Equipo</label>
+        <select id="equipo_id" name="equipo_id" required <%= isReadonly || f ? 'disabled' : '' %>
+          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-teal-400">
+          <option value="">Seleccionar equipo…</option>
+          <% (equipos || []).forEach(eq => { %>
+            <option
+              value="<%= eq.id %>"
+              data-marca="<%= eq.marca || '' %>"
+              <%= (equipo && String(equipo.id) === String(eq.id)) || (f && String(f.equipo_id) === String(eq.id)) ? 'selected' : '' %>
+            >
+              <%= eq.nombre %> — <%= [eq.marca, eq.modelo].filter(Boolean).join(' ') || 's/marca' %><%= eq.numero_serie ? ' · ' + eq.numero_serie : '' %>
+            </option>
+          <% }) %>
+        </select>
+        <% if (f) { %><input type="hidden" name="equipo_id" value="<%= f.equipo_id %>"><% } %>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-700 bg-slate-950/50 cursor-pointer">
+          <input type="radio" name="tipo" value="preventiva" class="accent-teal-400" <%= initialTipo !== 'correctiva' ? 'checked' : '' %> <%= isReadonly ? 'disabled' : '' %>>
+          <span class="text-sm text-white">Preventiva</span>
+        </label>
+        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-700 bg-slate-950/50 cursor-pointer">
+          <input type="radio" name="tipo" value="correctiva" class="accent-amber-400" <%= initialTipo === 'correctiva' ? 'checked' : '' %> <%= isReadonly ? 'disabled' : '' %>>
+          <span class="text-sm text-white">Correctiva</span>
+        </label>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 uppercase">Fecha</label>
+          <input type="date" name="fecha" value="<%= f && f.fecha ? String(f.fecha).slice(0,10) : today %>" <%= isReadonly ? 'disabled' : '' %>
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 uppercase">Hora</label>
+          <input type="time" name="hora" value="<%= f && f.hora ? String(f.hora).slice(0,5) : nowTime %>" <%= isReadonly ? 'disabled' : '' %>
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+      </div>
+    </section>
+
+    <section id="section-checklist" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 <%= initialTipo === 'correctiva' ? 'hidden' : '' %>">
+      <div class="flex items-center justify-between gap-2">
+        <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Checklist preventiva</h2>
+        <span id="checklist-marca" class="text-[11px] text-teal-300/80"></span>
+      </div>
+      <p class="text-xs text-slate-500">Protocolos según la marca del equipo. Márcalos al completarlos.</p>
+      <div id="checklist-list" class="space-y-2"></div>
+    </section>
+
+    <section id="section-dano" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 <%= initialTipo === 'correctiva' ? '' : 'hidden' %>">
+      <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Daño / motivo (correctiva)</h2>
+      <textarea name="dano_descripcion" rows="3" <%= isReadonly ? 'disabled' : '' %>
+        placeholder="Describe el daño o falla atendida"
+        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f ? (f.dano_descripcion || '') : '' %></textarea>
+    </section>
+
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+      <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Trabajos realizados</h2>
+      <textarea name="trabajo" rows="3" <%= isReadonly ? 'disabled' : '' %>
+        placeholder="Detalle de los trabajos hechos"
+        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f ? (f.trabajo || '') : '' %></textarea>
+      <textarea name="nota" rows="2" <%= isReadonly ? 'disabled' : '' %>
+        placeholder="Notas adicionales (opcional)"
+        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f ? (f.nota || '') : '' %></textarea>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1 uppercase">Realizado por</label>
+        <input type="text" name="realizado_por" <%= isReadonly ? 'disabled' : '' %>
+          value="<%= f ? (f.realizado_por || '') : (user && user.nombre ? user.nombre : '') %>"
+          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+      </div>
+    </section>
+
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+      <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Firmas</h2>
+      <p class="text-xs text-slate-500">Firma con el dedo o el lápiz de la tablet. Al firmar ambas, la ficha queda bloqueada.</p>
+
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-xs text-slate-400 uppercase">Firma del técnico</label>
+          <% if (!isReadonly) { %>
+            <button type="button" class="text-xs text-slate-400 hover:text-white" data-clear="sig-tecnico">Limpiar</button>
+          <% } %>
+        </div>
+        <canvas id="sig-tecnico" class="sig-pad <%= isReadonly ? 'locked' : '' %>"></canvas>
+      </div>
+
+      <div>
+        <label class="block text-xs text-slate-400 mb-1 uppercase">Nombre del cliente que firma</label>
+        <input type="text" name="firmante_cliente" <%= isReadonly ? 'disabled' : '' %>
+          value="<%= f ? (f.firmante_cliente || '') : '' %>"
+          placeholder="Nombre y apellido"
+          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white mb-3">
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-xs text-slate-400 uppercase">Firma del cliente</label>
+          <% if (!isReadonly) { %>
+            <button type="button" class="text-xs text-slate-400 hover:text-white" data-clear="sig-cliente">Limpiar</button>
+          <% } %>
+        </div>
+        <canvas id="sig-cliente" class="sig-pad <%= isReadonly ? 'locked' : '' %>"></canvas>
+      </div>
+    </section>
+
+    <% if (!isReadonly) { %>
+      <div class="sticky bottom-0 -mx-4 sm:mx-0 px-4 sm:px-0 py-3 bg-gradient-to-t from-[#070b12] via-[#070b12] to-transparent">
+        <div class="flex flex-col sm:flex-row gap-2">
+          <button type="button" id="btn-borrador" class="flex-1 px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-sm font-medium">
+            Guardar borrador
+          </button>
+          <button type="button" id="btn-firmar" class="flex-1 px-4 py-3 rounded-xl text-sm font-semibold" style="background:linear-gradient(180deg,#2dd4bf,#14b8a6);color:#042f2e">
+            Firmar y cerrar ficha
+          </button>
+        </div>
+      </div>
+    <% } else if (f && f.equipo_id) { %>
+      <a href="/equipos" class="inline-flex text-sm text-teal-300 hover:text-cyan-300">Ver equipos →</a>
+    <% } %>
+  </form>
+</div>
+
+<script>
+(() => {
+  const readonly = <%= isReadonly ? 'true' : 'false' %>;
+  let checklist = <%= checklistJson %>;
+  const existingFirmaTecnico = <%- f && f.firma_tecnico ? JSON.stringify(f.firma_tecnico) : 'null' %>;
+  const existingFirmaCliente = <%- f && f.firma_cliente ? JSON.stringify(f.firma_cliente) : 'null' %>;
+
+  const listEl = document.getElementById('checklist-list');
+  const marcaEl = document.getElementById('checklist-marca');
+  const equipoSelect = document.getElementById('equipo_id');
+  const sectionChecklist = document.getElementById('section-checklist');
+  const sectionDano = document.getElementById('section-dano');
+
+  function currentTipo() {
+    const el = document.querySelector('input[name="tipo"]:checked');
+    return el ? el.value : 'preventiva';
+  }
+
+  function toggleTipoUI() {
+    const preventiva = currentTipo() === 'preventiva';
+    sectionChecklist.classList.toggle('hidden', !preventiva);
+    sectionDano.classList.toggle('hidden', preventiva);
+  }
+
+  function renderChecklist() {
+    listEl.innerHTML = '';
+    if (!checklist.length) {
+      listEl.innerHTML = '<p class="text-xs text-slate-500">Sin ítems de protocolo para esta marca.</p>';
+      return;
+    }
+    checklist.forEach((item, idx) => {
+      const row = document.createElement('label');
+      row.className = 'check-item flex items-start gap-3 p-3 rounded-xl border border-slate-700 bg-slate-950/40 cursor-pointer';
+      row.innerHTML =
+        '<input type="checkbox" class="mt-1 accent-teal-400 scale-125" data-idx="' + idx + '" ' +
+          (item.checked ? 'checked' : '') + ' ' + (readonly ? 'disabled' : '') + '>' +
+        '<span class="text-sm text-slate-200 leading-snug">' + (item.label || '') + '</span>';
+      if (!readonly) {
+        row.querySelector('input').addEventListener('change', (e) => {
+          checklist[idx].checked = e.target.checked;
+        });
+      }
+      listEl.appendChild(row);
+    });
+  }
+
+  async function loadProtocoloForMarca(marca) {
+    marcaEl.textContent = marca ? ('Marca: ' + marca) : 'Marca: genérico';
+    try {
+      const res = await fetch('/mantenciones/protocolo?marca=' + encodeURIComponent(marca || 'generico'), {
+        headers: { Accept: 'application/json' }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      checklist = (data.items || []).map((it) => ({ id: it.id, label: it.label, checked: false }));
+      renderChecklist();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  if (equipoSelect && !readonly) {
+    equipoSelect.addEventListener('change', () => {
+      const opt = equipoSelect.selectedOptions[0];
+      const marca = opt ? (opt.dataset.marca || '') : '';
+      if (currentTipo() === 'preventiva') loadProtocoloForMarca(marca);
+    });
+  }
+
+  document.querySelectorAll('input[name="tipo"]').forEach((r) => {
+    r.addEventListener('change', () => {
+      toggleTipoUI();
+      if (currentTipo() === 'preventiva' && equipoSelect && !checklist.length) {
+        const opt = equipoSelect.selectedOptions[0];
+        loadProtocoloForMarca(opt ? opt.dataset.marca : '');
+      }
+    });
+  });
+
+  function setupPad(canvasId, existingDataUrl) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return { isEmpty: () => true, toDataURL: () => null };
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    let dirty = !!existingDataUrl;
+
+    function resize() {
+      const ratio = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const data = dirty ? canvas.toDataURL() : null;
+      canvas.width = Math.max(300, Math.floor(rect.width * ratio));
+      canvas.height = Math.floor(160 * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#e8eef8';
+      if (data) {
+        const img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 0, rect.width, 160);
+        img.src = data;
+      } else if (existingDataUrl && !dirty) {
+        const img = new Image();
+        img.onload = () => { ctx.drawImage(img, 0, 0, rect.width, 160); dirty = true; };
+        img.src = existingDataUrl;
+      }
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    if (readonly) {
+      if (existingDataUrl) {
+        const img = new Image();
+        img.onload = () => {
+          const rect = canvas.getBoundingClientRect();
+          ctx.drawImage(img, 0, 0, rect.width, 160);
+        };
+        img.src = existingDataUrl;
+      }
+      return {
+        isEmpty: () => !existingDataUrl,
+        toDataURL: () => existingDataUrl,
+        clear: () => {},
+      };
+    }
+
+    function pos(ev) {
+      const rect = canvas.getBoundingClientRect();
+      const t = ev.touches ? ev.touches[0] : ev;
+      return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+    }
+    function start(ev) {
+      ev.preventDefault();
+      drawing = true;
+      const p = pos(ev);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+    }
+    function move(ev) {
+      if (!drawing) return;
+      ev.preventDefault();
+      const p = pos(ev);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      dirty = true;
+    }
+    function end(ev) {
+      if (!drawing) return;
+      ev.preventDefault();
+      drawing = false;
+    }
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+    canvas.addEventListener('mouseup', end);
+    canvas.addEventListener('mouseleave', end);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', move, { passive: false });
+    canvas.addEventListener('touchend', end);
+
+    return {
+      isEmpty: () => !dirty,
+      toDataURL: () => (dirty ? canvas.toDataURL('image/png') : null),
+      clear: () => {
+        const rect = canvas.getBoundingClientRect();
+        ctx.clearRect(0, 0, rect.width, 160);
+        dirty = false;
+      },
+    };
+  }
+
+  const padTecnico = setupPad('sig-tecnico', existingFirmaTecnico);
+  const padCliente = setupPad('sig-cliente', existingFirmaCliente);
+
+  document.querySelectorAll('[data-clear]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-clear');
+      if (id === 'sig-tecnico') padTecnico.clear();
+      if (id === 'sig-cliente') padCliente.clear();
+    });
+  });
+
+  function collectPayload(firmar) {
+    const form = document.getElementById('ficha-form');
+    const fd = new FormData(form);
+    const equipoId = fd.get('equipo_id') || (equipoSelect && !equipoSelect.disabled ? equipoSelect.value : null);
+    return {
+      equipo_id: equipoId,
+      tipo: currentTipo(),
+      fecha: fd.get('fecha'),
+      hora: fd.get('hora'),
+      trabajo: fd.get('trabajo'),
+      nota: fd.get('nota'),
+      dano_descripcion: fd.get('dano_descripcion'),
+      realizado_por: fd.get('realizado_por'),
+      firmante_cliente: fd.get('firmante_cliente'),
+      checklist: JSON.stringify(checklist),
+      firma_tecnico: padTecnico.toDataURL(),
+      firma_cliente: padCliente.toDataURL(),
+      guardar_y_firmar: firmar ? 'true' : 'false',
+    };
+  }
+
+  async function save(firmar) {
+    const payload = collectPayload(firmar);
+    if (!payload.equipo_id) {
+      alert('Selecciona un equipo');
+      return;
+    }
+    if (firmar) {
+      if (padTecnico.isEmpty() || padCliente.isEmpty()) {
+        alert('Se necesitan ambas firmas (técnico y cliente) para cerrar la ficha');
+        return;
+      }
+      if (!payload.firmante_cliente) {
+        alert('Indica el nombre del cliente que firma');
+        return;
+      }
+    }
+
+    const fichaId = document.getElementById('ficha-id')?.value;
+    const url = fichaId ? '/mantenciones/' + fichaId : '/mantenciones';
+    const method = fichaId ? 'PATCH' : 'POST';
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || ('Error ' + res.status));
+        return;
+      }
+      window.location.href = '/mantenciones/' + data.id;
+    } catch (e) {
+      console.error(e);
+      alert('Error de conexión');
+    }
+  }
+
+  const btnBorrador = document.getElementById('btn-borrador');
+  const btnFirmar = document.getElementById('btn-firmar');
+  if (btnBorrador) btnBorrador.addEventListener('click', () => save(false));
+  if (btnFirmar) btnFirmar.addEventListener('click', () => save(true));
+
+  toggleTipoUI();
+  if (checklist && checklist.length) {
+    const opt = equipoSelect && equipoSelect.selectedOptions[0];
+    marcaEl.textContent = opt && opt.dataset.marca ? ('Marca: ' + opt.dataset.marca) : '';
+    renderChecklist();
+  } else if (!readonly && equipoSelect && equipoSelect.value) {
+    const opt = equipoSelect.selectedOptions[0];
+    loadProtocoloForMarca(opt ? opt.dataset.marca : '');
+  } else {
+    renderChecklist();
+  }
+})();
+</script>
