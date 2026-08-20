@@ -157,7 +157,7 @@ router.get('/', authRequired, async (req, res) => {
     const nextYear = month === 12 ? year + 1 : year;
 
     res.render('calendario', {
-      title: 'Calendario - BIOHERTS',
+      title: 'Calendario - BIODATA',
       user,
       year,
       month,

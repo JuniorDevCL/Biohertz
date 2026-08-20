@@ -23,7 +23,7 @@
 <div class="max-w-7xl mx-auto px-6 py-8">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div class="flex items-center gap-4">
-            <div class="hidden sm:flex h-12 w-12 rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/10 border border-orange-500/30 items-center justify-center text-orange-400">
+            <div class="hidden sm:flex h-12 w-12 rounded-2xl bg-gradient-to-br from-teal-500/20 to-cyan-600/10 border border-teal-500/30 items-center justify-center text-teal-300">
                 <i class="ph ph-calendar-dots text-2xl"></i>
             </div>
             <div>
@@ -68,7 +68,7 @@
             <div class="md:flex-1">
                 <div class="grid grid-cols-7 gap-2 mb-3">
                     <% weekDaysShort.forEach(function(dia, idx) { %>
-                        <div class="text-center text-[11px] font-semibold uppercase tracking-wider pb-1 <%= (idx === 0 || idx === 6) ? 'text-orange-300/70' : 'text-slate-400' %>">
+                        <div class="text-center text-[11px] font-semibold uppercase tracking-wider pb-1 <%= (idx === 0 || idx === 6) ? 'text-teal-300/70' : 'text-slate-400' %>">
                             <%= dia %>
                         </div>
                     <% }); %>
@@ -84,7 +84,7 @@
                                      onclick="openDayDetails(this)"
                                      data-date="<%= day.dateKey %>">
                                     <div class="flex items-center justify-between mb-1.5">
-                                        <span class="inline-flex items-center justify-center text-xs font-semibold <%= day.isToday ? 'h-6 w-6 rounded-full bg-emerald-500 text-slate-900' : (day.isPast ? 'text-slate-500' : (isWeekend ? 'text-orange-200/80' : 'text-slate-200')) %>">
+                                        <span class="inline-flex items-center justify-center text-xs font-semibold <%= day.isToday ? 'h-6 w-6 rounded-full bg-emerald-500 text-slate-900' : (day.isPast ? 'text-slate-500' : (isWeekend ? 'text-teal-200/80' : 'text-slate-200')) %>">
                                             <%= day.day %>
                                         </span>
                                         <% if (day.events && day.events.length > 0) { %>

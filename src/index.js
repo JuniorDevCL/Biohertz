@@ -120,7 +120,7 @@ app.get('/dashboard', authRequired, async (req, res) => {
 
     // 3. Renderizar pasando TODAS las variables
     res.render('dashboard', { 
-        title: 'Dashboard - BIOHERTZ', 
+        title: 'Dashboard - BIODATA', 
         user: user,       
         stats: stats,     
         tickets: recentTickets,

@@ -71,7 +71,7 @@ router.get('/', authRequired, async (req, res) => {
       clientes: r.rows,
       query: q || '',
       totalClientes,
-      title: 'Clientes - BIOHERTS',
+      title: 'Clientes - BIODATA',
       user: req.user || req.session.user || { nombre: 'Usuario' }
     });
   } catch (err) {

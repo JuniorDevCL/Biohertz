@@ -323,7 +323,7 @@ router.get('/', authRequired, async (req, res) => {
       query: q || '',
       queryTipo: tipo || '',
       estadoView: estado_view || '',
-      title: 'Tickets - BIOHERTS',
+      title: 'Tickets - BIODATA',
       user: req.user || req.session.user || { nombre: 'Usuario' }
     });
   } catch (err) {

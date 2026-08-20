@@ -120,7 +120,7 @@ router.get('/', authRequired, async (req, res) => {
       clientes: clients,
       query: q || '',
       totalEquipos,
-      title: 'Equipos - BIOHERTS',
+      title: 'Equipos - BIODATA',
       user: req.user || req.session.user || { nombre: 'Usuario' }
     });
   } catch (err) {

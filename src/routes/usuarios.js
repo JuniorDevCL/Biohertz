@@ -37,7 +37,8 @@ router.get('/', async (req, res) => {
             users: users.rows,
             user: req.user,
             path: '/usuarios',
-            dbSize
+            dbSize,
+            title: 'Usuarios - BIODATA'
         });
     } catch (err) {
         console.error(err);
