@@ -1,0 +1,53 @@
+<div class="mb-6">
+  <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Mis equipos</h1>
+  <p class="text-slate-400 text-sm mt-1">Solo ves equipos asociados a tu organización. Consulta la próxima mantención y las fichas firmadas.</p>
+</div>
+
+<% if (!equipos || !equipos.length) { %>
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-10 text-center text-slate-400">
+    <i class="ph ph-desktop text-4xl text-slate-600 mb-3 block"></i>
+    <p class="text-white font-medium mb-1">No hay equipos registrados</p>
+    <p class="text-sm">Cuando BIODATA asigne equipos a tu cuenta, aparecerán aquí.</p>
+  </div>
+<% } else { %>
+  <div class="grid gap-3">
+    <% equipos.forEach(function(eq) {
+      const prox = eq.proxima_mantencion ? new Date(eq.proxima_mantencion) : null;
+      const hoy = new Date();
+      hoy.setHours(0,0,0,0);
+      let proxClass = 'text-slate-300';
+      let proxLabel = 'Sin fecha programada';
+      if (prox && !isNaN(prox)) {
+        const d = new Date(prox); d.setHours(0,0,0,0);
+        const diff = Math.round((d - hoy) / 86400000);
+        proxLabel = d.toLocaleDateString('es-CL');
+        if (diff < 0) proxClass = 'text-red-300';
+        else if (diff <= 30) proxClass = 'text-amber-300';
+        else proxClass = 'text-teal-300';
+      }
+    %>
+      <a href="/portal/equipos/<%= eq.id %>"
+         class="block rounded-2xl border border-slate-800 bg-slate-900/70 hover:border-teal-500/40 hover:bg-slate-900 p-4 sm:p-5 transition-colors">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="min-w-0">
+            <h2 class="text-lg font-semibold text-white truncate"><%= eq.nombre %></h2>
+            <p class="text-xs text-slate-500 mt-1">
+              <%= [eq.marca, eq.modelo].filter(Boolean).join(' · ') || 'Sin marca/modelo' %>
+              <% if (eq.numero_serie) { %> · Serie <%= eq.numero_serie %><% } %>
+            </p>
+            <% if (eq.ubicacion) { %>
+              <p class="text-xs text-slate-500 mt-0.5"><i class="ph ph-map-pin"></i> <%= eq.ubicacion %></p>
+            <% } %>
+          </div>
+          <div class="sm:text-right shrink-0">
+            <p class="text-[11px] uppercase tracking-wider text-slate-500">Próxima mantención</p>
+            <p class="text-sm font-semibold <%= proxClass %>"><%= proxLabel %></p>
+            <% if (eq.ultima_mantencion) { %>
+              <p class="text-[11px] text-slate-500 mt-1">Última: <%= new Date(eq.ultima_mantencion).toLocaleDateString('es-CL') %></p>
+            <% } %>
+          </div>
+        </div>
+      </a>
+    <% }) %>
+  </div>
+<% } %>

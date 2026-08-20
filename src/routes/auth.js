@@ -27,20 +27,20 @@ function isAllowed(email) {
 const OFFLINE = String(process.env.OFFLINE || '').toLowerCase() === 'true' || !process.env.DATABASE_URL;
 const SECRET = process.env.JWT_SECRET || 'offline_secret';
 
-// GOOGLE AUTH
+// GOOGLE AUTH (staff)
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get('/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
   (req, res) => {
     console.log('Google Auth Callback Success. User:', req.user ? req.user.email : 'none');
-    // 2. Forzar guardado para evitar condiciones de carrera
+    // Limpiar sesión de portal si existía (no mezclar roles)
+    if (req.session) delete req.session.portalUser;
     req.session.save((err) => {
         if (err) {
             console.error('Error guardando sesión:', err);
             return res.redirect('/');
         }
-        // 3. Redirigir LIMPIO al dashboard (sin tokens en URL)
         console.log('Session saved, redirecting to dashboard');
         res.redirect('/dashboard');
     });
@@ -203,6 +203,7 @@ router.post('/login', async (req, res) => {
 });
 
 router.get('/logout', (req, res, next) => {
+  if (req.session) delete req.session.portalUser;
   req.logout((err) => {
     if (err) { return next(err); }
     res.redirect('/');

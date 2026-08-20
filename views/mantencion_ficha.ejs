@@ -145,6 +145,24 @@
       </div>
     </section>
 
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+      <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Portal cliente</h2>
+      <p class="text-xs text-slate-500">Al firmar, se crea una clave cifrada y se envía por correo al cliente (solo la primera vez o si aún no tenía acceso).</p>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1 uppercase">Correo electrónico del cliente</label>
+        <input type="email" name="email_cliente" <%= isReadonly ? 'disabled' : '' %>
+          value="<%= f ? (f.email_cliente || '') : (typeof emailClientePrefill !== 'undefined' && emailClientePrefill ? emailClientePrefill : '') %>"
+          placeholder="cliente@empresa.cl"
+          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1 uppercase">Próxima mantención</label>
+        <input type="date" name="proxima_mantencion" <%= isReadonly ? 'disabled' : '' %>
+          value="<%= f && f.proxima_mantencion ? String(f.proxima_mantencion).slice(0,10) : '' %>"
+          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+      </div>
+    </section>
+
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
       <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Firmas</h2>
       <p class="text-xs text-slate-500">Firma con el dedo o el lápiz de la tablet. Al firmar ambas, la ficha queda bloqueada.</p>
@@ -498,6 +516,8 @@
       dano_descripcion: fd.get('dano_descripcion'),
       realizado_por: fd.get('realizado_por'),
       firmante_cliente: fd.get('firmante_cliente'),
+      email_cliente: fd.get('email_cliente'),
+      proxima_mantencion: fd.get('proxima_mantencion'),
       checklist: JSON.stringify(checklist),
       firma_tecnico: padTecnico.toDataURL(),
       firma_cliente: padCliente.toDataURL(),

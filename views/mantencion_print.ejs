@@ -270,9 +270,13 @@
 
   <div class="toolbar no-print">
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <a href="/mantenciones">← Volver</a>
-      <% if (f.equipo_id) { %>
-        <a href="/equipos">Equipos</a>
+      <% if (typeof portalBack !== 'undefined' && portalBack) { %>
+        <a href="<%= portalBack %>">← Volver al portal</a>
+      <% } else { %>
+        <a href="/mantenciones">← Volver</a>
+        <% if (f.equipo_id) { %>
+          <a href="/equipos">Equipos</a>
+        <% } %>
       <% } %>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -317,6 +321,8 @@
           <div class="kv"><div class="l">Fecha / hora</div><div class="v"><%= fechaTxt %> · <%= horaTxt %></div></div>
           <div class="kv"><div class="l">Realizado por</div><div class="v"><%= f.realizado_por || '—' %></div></div>
           <div class="kv"><div class="l">Tipo</div><div class="v"><%= tipoLabel %></div></div>
+          <div class="kv"><div class="l">Correo cliente</div><div class="v"><%= f.email_cliente || '—' %></div></div>
+          <div class="kv"><div class="l">Próxima mantención</div><div class="v"><%= f.proxima_mantencion ? new Date(f.proxima_mantencion).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' }) : '—' %></div></div>
         </div>
       </section>
 

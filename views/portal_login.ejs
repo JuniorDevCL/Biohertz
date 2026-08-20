@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal clientes - BIODATA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="/img/biodata-logo.svg" type="image/svg+xml">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="/theme.css" rel="stylesheet">
+  <style>
+    body { font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-4" style="background:#070b12">
+  <div class="w-full max-w-md">
+    <div class="text-center mb-8">
+      <img src="/img/biodata-logo.svg" alt="BIODATA" class="h-14 w-14 rounded-xl mx-auto mb-4">
+      <h1 class="text-2xl font-bold text-white tracking-tight">Portal de clientes</h1>
+      <p class="text-slate-400 text-sm mt-2">Consulta tus equipos y la próxima mantención</p>
+    </div>
+
+    <% if (error) { %>
+      <div class="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-3 rounded-xl mb-6 text-center">
+        <%= error %>
+      </div>
+    <% } %>
+
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl">
+      <form action="/portal/login" method="POST" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">Correo</label>
+          <input type="email" name="email" required autocomplete="username"
+            value="<%= typeof email !== 'undefined' && email ? email : '' %>"
+            class="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-teal-400 outline-none"
+            placeholder="cliente@empresa.cl">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">Clave</label>
+          <input type="password" name="password" required autocomplete="current-password"
+            class="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-teal-400 outline-none"
+            placeholder="••••••••">
+        </div>
+        <button type="submit" class="w-full font-semibold py-3 rounded-xl transition-all"
+          style="background:linear-gradient(180deg,#2dd4bf,#14b8a6);color:#042f2e;box-shadow:0 10px 24px -10px rgba(20,184,166,.7)">
+          Entrar al portal
+        </button>
+      </form>
+      <p class="text-[11px] text-slate-500 mt-4 text-center leading-relaxed">
+        Las credenciales se envían por correo cuando BIODATA registra tu ficha de mantención.
+        Solo ves los equipos de tu organización.
+      </p>
+    </div>
+
+    <p class="text-center mt-6 text-sm text-slate-500">
+      ¿Eres del equipo BIODATA?
+      <a href="/" class="text-teal-300 hover:text-cyan-300">Ir al sistema interno</a>
+    </p>
+  </div>
+</body>
+</html>

@@ -112,6 +112,13 @@ export async function ensureMantencionesSchema() {
         WHERE legacy_key IS NOT NULL;
     `);
 
+    await pool.query(`
+      ALTER TABLE mantenciones_fichas
+        ADD COLUMN IF NOT EXISTS email_cliente VARCHAR(150);
+      ALTER TABLE mantenciones_fichas
+        ADD COLUMN IF NOT EXISTS proxima_mantencion DATE;
+    `);
+
     await seedProtocolos();
     await migrateLegacyMantenciones();
     ready = true;

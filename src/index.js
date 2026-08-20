@@ -19,8 +19,11 @@ import clientesRoutes from './routes/clientes.js';
 import calendarioRoutes from './routes/calendario.js';
 import usuariosRoutes from './routes/usuarios.js';
 import mantencionesRoutes from './routes/mantenciones.js';
+import portalRoutes from './routes/portal.js';
 import pool from './db.js';
 import { ensureMantencionesSchema } from './services/mantencionesSchema.js';
+import { ensurePortalSchema } from './services/portalSchema.js';
+import { blockPortalFromStaff } from './middleware/portalRequired.js';
 
 const app = express();
 
@@ -59,7 +62,13 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Aislamiento: sesión solo-portal no puede tocar APIs/rutas del staff
+app.use(blockPortalFromStaff);
+
 app.get('/', (req, res) => {
+  if (req.session?.portalUser?.cliente_id && !(req.isAuthenticated && req.isAuthenticated())) {
+    return res.redirect('/portal');
+  }
   if (req.isAuthenticated && req.isAuthenticated()) {
     return res.redirect('/dashboard');
   }
@@ -140,6 +149,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/auth', authRoutes);
+app.use('/portal', portalRoutes);
 app.use('/tickets', ticketsRoutes);
 app.use('/equipos', equiposRoutes);
 app.use('/clientes', clientesRoutes);
@@ -275,5 +285,6 @@ function start(port, tries = 10) {
 (async () => {
   try { await ensureBaseSchema(); } catch {}
   try { await ensureMantencionesSchema(); } catch {}
+  try { await ensurePortalSchema(); } catch {}
   start(BASE);
 })();

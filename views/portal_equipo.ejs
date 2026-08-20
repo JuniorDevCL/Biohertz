@@ -1,0 +1,63 @@
+<div class="mb-6">
+  <a href="/portal" class="text-slate-400 hover:text-white text-sm inline-flex items-center mb-3">
+    <i class="ph ph-arrow-left mr-1.5"></i> Volver a mis equipos
+  </a>
+  <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight"><%= equipo.nombre %></h1>
+  <p class="text-slate-400 text-sm mt-1">
+    <%= [equipo.marca, equipo.modelo].filter(Boolean).join(' · ') || 'Sin marca/modelo' %>
+    <% if (equipo.numero_serie) { %> · Serie <%= equipo.numero_serie %><% } %>
+  </p>
+</div>
+
+<div class="grid sm:grid-cols-3 gap-3 mb-8">
+  <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+    <p class="text-[11px] uppercase tracking-wider text-slate-500">Ubicación</p>
+    <p class="text-sm text-white mt-1"><%= equipo.ubicacion || '—' %></p>
+  </div>
+  <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+    <p class="text-[11px] uppercase tracking-wider text-slate-500">Estado</p>
+    <p class="text-sm text-white mt-1"><%= equipo.estado || '—' %></p>
+  </div>
+  <%
+    const proxima = (fichas || []).map(f => f.proxima_mantencion).filter(Boolean).sort()[0];
+  %>
+  <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+    <p class="text-[11px] uppercase tracking-wider text-slate-500">Próxima mantención</p>
+    <p class="text-sm font-semibold text-teal-300 mt-1">
+      <%= proxima ? new Date(proxima).toLocaleDateString('es-CL') : 'Sin fecha programada' %>
+    </p>
+  </div>
+</div>
+
+<section>
+  <h2 class="text-sm font-semibold text-white uppercase tracking-wider mb-3">Fichas firmadas</h2>
+  <% if (!fichas || !fichas.length) { %>
+    <p class="text-sm text-slate-500">Aún no hay fichas firmadas para este equipo.</p>
+  <% } else { %>
+    <div class="space-y-2">
+      <% fichas.forEach(function(f) { %>
+        <div class="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <div class="flex items-center gap-2 flex-wrap mb-1">
+              <span class="px-2 py-0.5 rounded-full text-[10px] border <%= f.tipo === 'correctiva' ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-teal-500/15 text-teal-300 border-teal-500/30' %>">
+                <%= f.tipo === 'correctiva' ? 'Correctiva' : 'Preventiva' %>
+              </span>
+              <% if (f.proxima_mantencion) { %>
+                <span class="text-[11px] text-slate-400">Próxima: <%= new Date(f.proxima_mantencion).toLocaleDateString('es-CL') %></span>
+              <% } %>
+            </div>
+            <p class="text-sm text-white"><%= f.trabajo || 'Mantención' %></p>
+            <p class="text-[11px] text-slate-500 mt-0.5">
+              <%= f.fecha ? new Date(f.fecha).toLocaleDateString('es-CL') : (f.firmada_en ? new Date(f.firmada_en).toLocaleDateString('es-CL') : '') %>
+              <% if (f.realizado_por) { %> · <%= f.realizado_por %><% } %>
+            </p>
+          </div>
+          <a href="/portal/fichas/<%= f.id %>"
+             class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-medium border border-teal-500/40 text-teal-200 hover:bg-teal-500/10 shrink-0">
+            <i class="ph ph-file-pdf mr-1.5"></i> Ver ficha PDF
+          </a>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</section>

@@ -6,6 +6,7 @@ import {
   getProtocoloByMarca,
   checklistTemplateFromProtocolo,
 } from '../services/mantencionesSchema.js';
+import { ensurePortalSchema, ensurePortalAccessFromFicha } from '../services/portalSchema.js';
 
 const router = Router();
 
@@ -15,6 +16,31 @@ function mapFichaRow(row) {
     ...row,
     checklist: Array.isArray(row.checklist) ? row.checklist : [],
   };
+}
+
+function normalizeEmail(email) {
+  const e = String(email || '').trim().toLowerCase();
+  return e || null;
+}
+
+async function maybeGrantPortalAccess(ficha, firmanteNombre) {
+  try {
+    await ensurePortalSchema();
+    const email = normalizeEmail(ficha.email_cliente);
+    const clienteId = ficha.cliente_id;
+    if (!email || !clienteId) return;
+    const result = await ensurePortalAccessFromFicha({
+      email,
+      cliente_id: clienteId,
+      nombre: firmanteNombre || null,
+      sendEmail: true,
+    });
+    if (result?.credentialsSent) {
+      console.log('Credenciales portal enviadas a', email);
+    }
+  } catch (e) {
+    console.warn('No se pudo habilitar acceso portal:', e.message);
+  }
 }
 
 router.get('/', authRequired, async (req, res) => {
@@ -91,6 +117,7 @@ router.get('/', authRequired, async (req, res) => {
 router.get('/nueva', authRequired, async (req, res) => {
   try {
     await ensureMantencionesSchema();
+    await ensurePortalSchema();
     const equiposRes = await pool.query(
       `SELECT id, nombre, marca, modelo, numero_serie, cliente, cliente_id, estado
        FROM equipos ORDER BY nombre ASC`
@@ -98,6 +125,7 @@ router.get('/nueva', authRequired, async (req, res) => {
     let equipo = null;
     let protocolo = null;
     let checklist = [];
+    let emailClientePrefill = '';
     const equipoId = req.query.equipo_id ? Number(req.query.equipo_id) : null;
     if (equipoId) {
       const er = await pool.query('SELECT * FROM equipos WHERE id = $1', [equipoId]);
@@ -105,6 +133,10 @@ router.get('/nueva', authRequired, async (req, res) => {
         equipo = er.rows[0];
         protocolo = await getProtocoloByMarca(equipo.marca);
         checklist = checklistTemplateFromProtocolo(protocolo);
+        if (equipo.cliente_id) {
+          const cr = await pool.query('SELECT email FROM clientes WHERE id = $1', [equipo.cliente_id]);
+          if (cr.rowCount && cr.rows[0].email) emailClientePrefill = cr.rows[0].email;
+        }
       }
     }
 
@@ -115,6 +147,7 @@ router.get('/nueva', authRequired, async (req, res) => {
       equipos: equiposRes.rows,
       equipo,
       checklist,
+      emailClientePrefill,
       modo: 'nueva',
       readonly: false,
     });
@@ -220,6 +253,8 @@ router.post('/', authRequired, async (req, res) => {
       dano_descripcion,
       realizado_por,
       firmante_cliente,
+      email_cliente,
+      proxima_mantencion,
       checklist,
       guardar_y_firmar,
       firma_tecnico,
@@ -256,14 +291,17 @@ router.post('/', authRequired, async (req, res) => {
       }
     }
 
+    const emailNorm = normalizeEmail(email_cliente);
     const estado = firmar ? 'firmada' : 'borrador';
     const insert = await pool.query(
       `INSERT INTO mantenciones_fichas (
         equipo_id, cliente_id, tipo, estado, fecha, hora, trabajo, nota, dano_descripcion,
-        checklist, realizado_por, tecnico_id, firma_tecnico, firma_cliente, firmante_cliente, firmada_en
+        checklist, realizado_por, tecnico_id, firma_tecnico, firma_cliente, firmante_cliente,
+        email_cliente, proxima_mantencion, firmada_en
       ) VALUES (
         $1, $2, $3, $4, NULLIF($5,'')::date, NULLIF($6,'')::time, $7, $8, $9,
-        $10::jsonb, $11, $12, $13, $14, $15, $16
+        $10::jsonb, $11, $12, $13, $14, $15,
+        $16, NULLIF($17,'')::date, $18
       ) RETURNING *`,
       [
         Number(equipo_id),
@@ -281,11 +319,16 @@ router.post('/', authRequired, async (req, res) => {
         firmar ? firma_tecnico : null,
         firmar ? firma_cliente : null,
         firmante_cliente || null,
+        emailNorm,
+        proxima_mantencion || null,
         firmar ? new Date() : null,
       ]
     );
 
     const ficha = mapFichaRow(insert.rows[0]);
+    if (firmar) {
+      await maybeGrantPortalAccess(ficha, firmante_cliente);
+    }
     if (req.accepts('json') && !req.accepts('html')) {
       return res.status(201).json(ficha);
     }
@@ -315,6 +358,8 @@ router.patch('/:id', authRequired, async (req, res) => {
       dano_descripcion,
       realizado_por,
       firmante_cliente,
+      email_cliente,
+      proxima_mantencion,
       checklist,
       firma_tecnico,
       firma_cliente,
@@ -338,6 +383,10 @@ router.patch('/:id', authRequired, async (req, res) => {
       return res.status(400).json({ error: 'Se requieren ambas firmas para cerrar la ficha' });
     }
 
+    const emailNorm = email_cliente !== undefined
+      ? normalizeEmail(email_cliente)
+      : current.rows[0].email_cliente;
+
     const estado = firmar ? 'firmada' : 'borrador';
     const updated = await pool.query(
       `UPDATE mantenciones_fichas SET
@@ -352,10 +401,12 @@ router.patch('/:id', authRequired, async (req, res) => {
          firmante_cliente = COALESCE($9, firmante_cliente),
          firma_tecnico = COALESCE($10, firma_tecnico),
          firma_cliente = COALESCE($11, firma_cliente),
-         estado = $12,
-         firmada_en = CASE WHEN $12 = 'firmada' THEN COALESCE(firmada_en, NOW()) ELSE firmada_en END,
+         email_cliente = COALESCE($12, email_cliente),
+         proxima_mantencion = COALESCE(NULLIF($13,'')::date, proxima_mantencion),
+         estado = $14,
+         firmada_en = CASE WHEN $14 = 'firmada' THEN COALESCE(firmada_en, NOW()) ELSE firmada_en END,
          actualizado_en = NOW()
-       WHERE id = $13
+       WHERE id = $15
        RETURNING *`,
       [
         tipo || null,
@@ -369,12 +420,18 @@ router.patch('/:id', authRequired, async (req, res) => {
         firmante_cliente || null,
         firmar ? nextFirmaTecnico : (firma_tecnico || null),
         firmar ? nextFirmaCliente : (firma_cliente || null),
+        emailNorm,
+        proxima_mantencion ?? null,
         estado,
         id,
       ]
     );
 
-    res.json(mapFichaRow(updated.rows[0]));
+    const ficha = mapFichaRow(updated.rows[0]);
+    if (firmar) {
+      await maybeGrantPortalAccess(ficha, firmante_cliente || ficha.firmante_cliente);
+    }
+    res.json(ficha);
   } catch (err) {
     console.error('Error actualizando mantención:', err);
     res.status(500).json({ error: 'Error al actualizar mantención' });
@@ -414,10 +471,30 @@ router.post('/:id/firmar', authRequired, async (req, res) => {
         id,
       ]
     );
-    res.json(mapFichaRow(updated.rows[0]));
+    const ficha = mapFichaRow(updated.rows[0]);
+    await maybeGrantPortalAccess(ficha, firmante_cliente || ficha.firmante_cliente);
+    res.json(ficha);
   } catch (err) {
     console.error('Error firmando mantención:', err);
     res.status(500).json({ error: 'Error al firmar mantención' });
+  }
+});
+
+router.delete('/:id', authRequired, async (req, res) => {
+  try {
+    await ensureMantencionesSchema();
+    const { id } = req.params;
+    const del = await pool.query(
+      'DELETE FROM mantenciones_fichas WHERE id = $1 RETURNING id',
+      [id]
+    );
+    if (del.rowCount === 0) {
+      return res.status(404).json({ error: 'Ficha no encontrada' });
+    }
+    res.json({ mensaje: 'Ficha eliminada', id: del.rows[0].id });
+  } catch (err) {
+    console.error('Error eliminando mantención:', err);
+    res.status(500).json({ error: 'Error al eliminar ficha' });
   }
 });
 
