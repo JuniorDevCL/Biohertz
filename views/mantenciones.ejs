@@ -85,8 +85,8 @@
                                 <td class="py-3 px-4 text-slate-300"><%= f.realizado_por || '-' %></td>
                                 <td class="py-3 px-4 text-right">
                                     <a href="/mantenciones/<%= f.id %>" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs border border-slate-600">
-                                        <i class="ph ph-eye mr-1.5"></i>
-                                        <%= f.estado === 'firmada' ? 'Ver' : 'Continuar' %>
+                                        <i class="ph <%= f.estado === 'firmada' ? 'ph-file-pdf' : 'ph-pencil-simple' %> mr-1.5"></i>
+                                        <%= f.estado === 'firmada' ? 'Ver ficha' : 'Continuar' %>
                                     </a>
                                 </td>
                             </tr>

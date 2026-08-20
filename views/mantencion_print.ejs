@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ficha de mantención #<%= ficha.id %> — BIODATA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #cbd5e1;
+      --teal: #0f766e;
+      --bg: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      font-size: 11pt;
+      line-height: 1.45;
+    }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #0b1220;
+      color: #e8eef8;
+    }
+    .toolbar a, .toolbar button {
+      font: inherit;
+      cursor: pointer;
+      border-radius: 10px;
+      padding: 9px 14px;
+      text-decoration: none;
+      border: 1px solid rgba(148,163,184,.25);
+      background: rgba(255,255,255,.06);
+      color: #e8eef8;
+    }
+    .toolbar .primary {
+      background: linear-gradient(180deg, #2dd4bf, #14b8a6);
+      color: #042f2e;
+      border: none;
+      font-weight: 650;
+    }
+    .sheet-wrap {
+      padding: 24px 16px 48px;
+      display: flex;
+      justify-content: center;
+    }
+    .sheet {
+      width: 210mm;
+      max-width: 100%;
+      background: #fff;
+      border: 1px solid #94a3b8;
+      box-shadow: 0 18px 50px -28px rgba(15, 23, 42, 0.45);
+      padding: 18mm 16mm;
+    }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+    .brand {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .brand img {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+    }
+    .brand .name {
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      font-size: 13pt;
+    }
+    .brand .sub {
+      font-size: 8.5pt;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .meta {
+      text-align: right;
+      font-size: 9pt;
+      color: var(--muted);
+    }
+    .meta strong {
+      display: block;
+      color: var(--ink);
+      font-size: 12pt;
+      margin-bottom: 2px;
+    }
+    h1 {
+      font-size: 14pt;
+      margin: 0 0 4px;
+      letter-spacing: -0.02em;
+    }
+    h2 {
+      font-size: 10pt;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin: 0 0 8px;
+      color: var(--teal);
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 4px;
+    }
+    section { margin-bottom: 14px; page-break-inside: avoid; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 14px;
+    }
+    .kv .l {
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+    .kv .v {
+      font-size: 10.5pt;
+      font-weight: 600;
+      margin-top: 1px;
+      min-height: 1.2em;
+    }
+    .box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      min-height: 52px;
+      white-space: pre-wrap;
+      font-size: 10pt;
+    }
+    .checks {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 12px;
+    }
+    .check {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      font-size: 9.5pt;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px 8px;
+    }
+    .mark {
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid var(--ink);
+      border-radius: 3px;
+      flex-shrink: 0;
+      margin-top: 1px;
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .mark.on {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #fff;
+    }
+    .sigs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .sig {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+    }
+    .sig .who {
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .sig img {
+      max-width: 100%;
+      max-height: 90px;
+      object-fit: contain;
+      margin: auto 0;
+    }
+    .sig .name {
+      margin-top: auto;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+      font-size: 9.5pt;
+      font-weight: 600;
+    }
+    .foot {
+      margin-top: 18px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      font-size: 8pt;
+      color: var(--muted);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      margin-left: 6px;
+    }
+    .badge.ok { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    .badge.tipo { background: #f0fdfa; color: #0f766e; border-color: #99f6e4; }
+    .badge.corr { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+
+    @media print {
+      @page { size: A4; margin: 10mm; }
+      body { background: #fff; }
+      .toolbar { display: none !important; }
+      .sheet-wrap { padding: 0; }
+      .sheet {
+        width: auto;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+      }
+    }
+    @media (max-width: 720px) {
+      .grid, .checks, .sigs { grid-template-columns: 1fr; }
+      .sheet { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <%
+    const f = ficha;
+    const fechaTxt = f.fecha
+      ? new Date(f.fecha).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })
+      : (f.creado_en ? new Date(f.creado_en).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' }) : '—');
+    const horaTxt = f.hora ? String(f.hora).slice(0, 5) : '—';
+    const firmadaTxt = f.firmada_en
+      ? new Date(f.firmada_en).toLocaleString('es-CL', { timeZone: 'America/Santiago' })
+      : '—';
+    const items = Array.isArray(f.checklist) ? f.checklist : [];
+    const tipoLabel = f.tipo === 'correctiva' ? 'Correctiva' : 'Preventiva';
+  %>
+
+  <div class="toolbar no-print">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a href="/mantenciones">← Volver</a>
+      <% if (f.equipo_id) { %>
+        <a href="/equipos">Equipos</a>
+      <% } %>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" class="primary" onclick="window.print()">Imprimir / Guardar PDF</button>
+    </div>
+  </div>
+
+  <div class="sheet-wrap">
+    <article class="sheet" id="ficha-print">
+      <header class="head">
+        <div class="brand">
+          <img src="/img/biodata-logo.svg" alt="Biodata" />
+          <div>
+            <div class="name">BIODATA</div>
+            <div class="sub">Sistema de tickets · Mantención</div>
+          </div>
+        </div>
+        <div class="meta">
+          <strong>Ficha N° <%= f.id %></strong>
+          Estado: Firmada<br />
+          Cerrada: <%= firmadaTxt %>
+        </div>
+      </header>
+
+      <div style="margin-bottom:14px">
+        <h1>
+          Ficha de mantención
+          <span class="badge <%= f.tipo === 'correctiva' ? 'corr' : 'tipo' %>"><%= tipoLabel %></span>
+          <span class="badge ok">Firmada</span>
+        </h1>
+        <div style="color:var(--muted);font-size:9.5pt">Documento generado al consultar · no se almacena una copia PDF en el servidor</div>
+      </div>
+
+      <section>
+        <h2>Datos del equipo</h2>
+        <div class="grid">
+          <div class="kv"><div class="l">Equipo</div><div class="v"><%= f.equipo_nombre || '—' %></div></div>
+          <div class="kv"><div class="l">Cliente</div><div class="v"><%= f.equipo_cliente || f.cliente_nombre || '—' %></div></div>
+          <div class="kv"><div class="l">Marca</div><div class="v"><%= f.equipo_marca || '—' %></div></div>
+          <div class="kv"><div class="l">Modelo</div><div class="v"><%= f.equipo_modelo || '—' %></div></div>
+          <div class="kv"><div class="l">N° de serie</div><div class="v"><%= f.equipo_serie || '—' %></div></div>
+          <div class="kv"><div class="l">Fecha / hora</div><div class="v"><%= fechaTxt %> · <%= horaTxt %></div></div>
+          <div class="kv"><div class="l">Realizado por</div><div class="v"><%= f.realizado_por || '—' %></div></div>
+          <div class="kv"><div class="l">Tipo</div><div class="v"><%= tipoLabel %></div></div>
+        </div>
+      </section>
+
+      <% if (f.tipo === 'preventiva' && items.length) { %>
+        <section>
+          <h2>Checklist de protocolo<%= f.equipo_marca ? ' · ' + f.equipo_marca : '' %></h2>
+          <div class="checks">
+            <% items.forEach(function(it) { %>
+              <div class="check">
+                <div class="mark <%= it.checked ? 'on' : '' %>"><%= it.checked ? '✓' : '' %></div>
+                <div><%= it.label || '' %></div>
+              </div>
+            <% }) %>
+          </div>
+        </section>
+      <% } %>
+
+      <% if (f.tipo === 'correctiva') { %>
+        <section>
+          <h2>Daño / motivo</h2>
+          <div class="box"><%= f.dano_descripcion || 'Sin descripción' %></div>
+        </section>
+      <% } %>
+
+      <section>
+        <h2>Trabajos realizados</h2>
+        <div class="box"><%= f.trabajo || 'Sin detalle' %></div>
+      </section>
+
+      <% if (f.nota) { %>
+        <section>
+          <h2>Notas adicionales</h2>
+          <div class="box"><%= f.nota %></div>
+        </section>
+      <% } %>
+
+      <section>
+        <h2>Firmas</h2>
+        <div class="sigs">
+          <div class="sig">
+            <div class="who">Técnico</div>
+            <% if (f.firma_tecnico) { %>
+              <img src="<%= f.firma_tecnico %>" alt="Firma técnico" />
+            <% } else { %>
+              <div style="color:var(--muted);font-size:9pt;margin:auto 0">Sin firma</div>
+            <% } %>
+            <div class="name"><%= f.realizado_por || '—' %></div>
+          </div>
+          <div class="sig">
+            <div class="who">Cliente</div>
+            <% if (f.firma_cliente) { %>
+              <img src="<%= f.firma_cliente %>" alt="Firma cliente" />
+            <% } else { %>
+              <div style="color:var(--muted);font-size:9pt;margin:auto 0">Sin firma</div>
+            <% } %>
+            <div class="name"><%= f.firmante_cliente || '—' %></div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="foot">
+        <span>BIODATA · Ficha de mantención N° <%= f.id %></span>
+        <span>Imprimir o “Guardar como PDF” desde el navegador</span>
+      </footer>
+    </article>
+  </div>
+</body>
+</html>

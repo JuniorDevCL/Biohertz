@@ -167,6 +167,16 @@ router.get('/:id', authRequired, async (req, res) => {
       return res.json(ficha);
     }
 
+    // Ficha firmada: vista tipo documento imprimible (PDF al vuelo, sin guardar archivo)
+    if (ficha.estado === 'firmada') {
+      return res.render('mantencion_print', {
+        layout: false,
+        title: `Ficha mantención #${ficha.id} - BIODATA`,
+        ficha,
+        user: req.user || req.session.user,
+      });
+    }
+
     const equiposRes = await pool.query(
       `SELECT id, nombre, marca, modelo, numero_serie, cliente, cliente_id, estado
        FROM equipos ORDER BY nombre ASC`
@@ -188,8 +198,8 @@ router.get('/:id', authRequired, async (req, res) => {
       equipos: equiposRes.rows,
       equipo,
       checklist: ficha.checklist || [],
-      modo: ficha.estado === 'firmada' ? 'ver' : 'editar',
-      readonly: ficha.estado === 'firmada',
+      modo: 'editar',
+      readonly: false,
     });
   } catch (err) {
     console.error('Error obteniendo mantención:', err);
