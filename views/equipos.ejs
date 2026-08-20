@@ -99,9 +99,9 @@
                                             data-equipo-nombre="<%- equipo.nombre || '' %>" 
                                             onclick="openMantencionDesdeBoton(this)" 
                                             class="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-200 text-xs font-medium border border-emerald-500/40 transition-colors" 
-                                            title="Registrar mantención">
-                                            <i class="ph ph-wrench text-sm mr-1.5"></i>
-                                            Mantención
+                                            title="Ver fichas de mantención">
+                                            <i class="ph ph-file-pdf text-sm mr-1.5"></i>
+                                            Ver ficha
                                         </button>
                                         <button type="button" onclick="openDetalleEquipo('<%= equipo.id %>')" class="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-600/60 transition-colors" title="Ver detalle">
                                             <i class="ph ph-eye text-sm mr-1.5"></i>
@@ -362,13 +362,40 @@
 function openMantencionDesdeBoton(btn) {
     if (!btn) return;
     const id = btn.dataset.equipoId || '';
-    const nombre = btn.dataset.equipoNombre || '';
-    openMantencionModal(id, nombre);
+    openFichaODetalle(id);
 }
 
-function openMantencionModal(id, nombre) {
+async function openFichaODetalle(id) {
     if (!id) return;
-    window.location.href = '/mantenciones/nueva?equipo_id=' + encodeURIComponent(id);
+    try {
+        const res = await fetch(`/equipos/${id}`, {
+            headers: { Accept: 'application/json' }
+        });
+        if (!res.ok) {
+            openDetalleEquipo(id);
+            return;
+        }
+        const e = await res.json();
+        const list = Array.isArray(e.fichas_mantencion) && e.fichas_mantencion.length
+            ? e.fichas_mantencion
+            : (Array.isArray(e.mantenciones) ? e.mantenciones : []);
+        const firmada = list.find((m) => m.estado === 'firmada');
+        const fichaId = firmada ? (firmada.ficha_id || firmada.id) : null;
+        if (fichaId) {
+            window.location.href = '/mantenciones/' + encodeURIComponent(fichaId);
+            return;
+        }
+        // Sin ficha firmada: abrir detalle para ver borradores o crear nueva
+        openDetalleEquipo(id);
+    } catch (err) {
+        console.error(err);
+        openDetalleEquipo(id);
+    }
+}
+
+function openMantencionModal(id) {
+    if (!id) return;
+    openFichaODetalle(id);
 }
 
 function closeMantencionModal() {
@@ -507,7 +534,9 @@ async function openDetalleEquipo(id) {
                         '</div>';
                 }
                 const linkHtml = fichaId
-                    ? '<a href="/mantenciones/' + fichaId + '" class="text-[10px] text-teal-300 hover:text-cyan-300 underline">Abrir ficha</a>'
+                    ? '<a href="/mantenciones/' + fichaId + '" class="inline-flex items-center text-[10px] text-teal-300 hover:text-cyan-300 underline">' +
+                        (estado === 'firmada' ? '<i class="ph ph-file-pdf mr-1"></i>Ver ficha PDF' : 'Continuar ficha') +
+                      '</a>'
                     : '';
                 div.innerHTML =
                     '<div class="flex justify-between items-start gap-2 mb-1">' +

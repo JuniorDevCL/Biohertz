@@ -45,22 +45,47 @@
 
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
       <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Equipo y tipo</h2>
-      <div>
+      <div class="space-y-2">
         <label class="block text-xs text-slate-400 mb-1 uppercase">Equipo</label>
-        <select id="equipo_id" name="equipo_id" required <%= isReadonly || f ? 'disabled' : '' %>
-          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-teal-400">
-          <option value="">Seleccionar equipo…</option>
-          <% (equipos || []).forEach(eq => { %>
-            <option
-              value="<%= eq.id %>"
-              data-marca="<%= eq.marca || '' %>"
-              <%= (equipo && String(equipo.id) === String(eq.id)) || (f && String(f.equipo_id) === String(eq.id)) ? 'selected' : '' %>
-            >
-              <%= eq.nombre %> — <%= [eq.marca, eq.modelo].filter(Boolean).join(' ') || 's/marca' %><%= eq.numero_serie ? ' · ' + eq.numero_serie : '' %>
-            </option>
-          <% }) %>
-        </select>
-        <% if (f) { %><input type="hidden" name="equipo_id" value="<%= f.equipo_id %>"><% } %>
+        <% if (isReadonly || f) { %>
+          <input type="hidden" name="equipo_id" id="equipo_id" value="<%= f ? f.equipo_id : (equipo ? equipo.id : '') %>">
+          <div class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+            <% const eqLocked = equipo || (f && { nombre: f.equipo_nombre, marca: f.equipo_marca, modelo: f.equipo_modelo, numero_serie: f.equipo_serie }); %>
+            <%= eqLocked ? ([eqLocked.nombre, [eqLocked.marca, eqLocked.modelo].filter(Boolean).join(' '), eqLocked.numero_serie ? 'Serie: ' + eqLocked.numero_serie : ''].filter(Boolean).join(' · ')) : 'Equipo' %>
+          </div>
+        <% } else { %>
+          <input type="hidden" name="equipo_id" id="equipo_id" value="<%= equipo ? equipo.id : '' %>" required>
+          <div class="relative">
+            <div class="flex gap-2">
+              <div class="relative flex-1">
+                <i class="ph ph-barcode absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg pointer-events-none"></i>
+                <input
+                  type="search"
+                  id="equipo-serie-search"
+                  autocomplete="off"
+                  placeholder="Buscar por número de serie, nombre o marca…"
+                  value="<%= equipo && equipo.numero_serie ? equipo.numero_serie : '' %>"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-3 py-3 text-sm text-white focus:outline-none focus:border-teal-400"
+                >
+              </div>
+            </div>
+            <div id="equipo-search-results" class="hidden absolute z-20 mt-1 w-full max-h-56 overflow-y-auto rounded-xl border border-slate-700 bg-slate-950 shadow-xl"></div>
+          </div>
+          <div id="equipo-selected" class="<%= equipo ? '' : 'hidden' %> rounded-xl border border-teal-500/30 bg-teal-500/10 px-3 py-2.5 text-sm">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <p id="equipo-selected-nombre" class="text-white font-medium"><%= equipo ? (equipo.nombre || '') : '' %></p>
+                <p id="equipo-selected-meta" class="text-xs text-slate-400 mt-0.5">
+                  <% if (equipo) { %>
+                    <%= [equipo.marca, equipo.modelo].filter(Boolean).join(' ') || 's/marca' %><%= equipo.numero_serie ? ' · Serie: ' + equipo.numero_serie : '' %>
+                  <% } %>
+                </p>
+              </div>
+              <button type="button" id="equipo-clear" class="text-xs text-slate-400 hover:text-white shrink-0">Cambiar</button>
+            </div>
+          </div>
+          <p id="equipo-search-hint" class="text-[11px] text-slate-500">Escribe el N° de serie para encontrar el equipo rápido en terreno.</p>
+        <% } %>
       </div>
 
       <div class="grid grid-cols-2 gap-3">
@@ -176,9 +201,18 @@
 
   const listEl = document.getElementById('checklist-list');
   const marcaEl = document.getElementById('checklist-marca');
-  const equipoSelect = document.getElementById('equipo_id');
+  const equipoIdInput = document.getElementById('equipo_id');
   const sectionChecklist = document.getElementById('section-checklist');
   const sectionDano = document.getElementById('section-dano');
+  const equiposData = <%- JSON.stringify((equipos || []).map(eq => ({
+    id: eq.id,
+    nombre: eq.nombre || '',
+    marca: eq.marca || '',
+    modelo: eq.modelo || '',
+    numero_serie: eq.numero_serie || '',
+    cliente: eq.cliente || ''
+  }))) %>;
+  let selectedEquipoMarca = <%- JSON.stringify(equipo && equipo.marca ? equipo.marca : (f && f.equipo_marca ? f.equipo_marca : '')) %>;
 
   function currentTipo() {
     const el = document.querySelector('input[name="tipo"]:checked');
@@ -214,6 +248,7 @@
   }
 
   async function loadProtocoloForMarca(marca) {
+    selectedEquipoMarca = marca || '';
     marcaEl.textContent = marca ? ('Marca: ' + marca) : 'Marca: genérico';
     try {
       const res = await fetch('/mantenciones/protocolo?marca=' + encodeURIComponent(marca || 'generico'), {
@@ -228,20 +263,119 @@
     }
   }
 
-  if (equipoSelect && !readonly) {
-    equipoSelect.addEventListener('change', () => {
-      const opt = equipoSelect.selectedOptions[0];
-      const marca = opt ? (opt.dataset.marca || '') : '';
-      if (currentTipo() === 'preventiva') loadProtocoloForMarca(marca);
+  function normalize(s) {
+    return String(s || '').toLowerCase().trim();
+  }
+
+  function selectEquipo(eq) {
+    if (!equipoIdInput || !eq) return;
+    equipoIdInput.value = eq.id;
+    selectedEquipoMarca = eq.marca || '';
+    const selectedBox = document.getElementById('equipo-selected');
+    const nombreEl = document.getElementById('equipo-selected-nombre');
+    const metaEl = document.getElementById('equipo-selected-meta');
+    const searchEl = document.getElementById('equipo-serie-search');
+    const resultsEl = document.getElementById('equipo-search-results');
+    if (nombreEl) nombreEl.textContent = eq.nombre || 'Equipo';
+    if (metaEl) {
+      metaEl.textContent =
+        ([eq.marca, eq.modelo].filter(Boolean).join(' ') || 's/marca') +
+        (eq.numero_serie ? ' · Serie: ' + eq.numero_serie : '');
+    }
+    if (selectedBox) selectedBox.classList.remove('hidden');
+    if (searchEl) searchEl.value = eq.numero_serie || eq.nombre || '';
+    if (resultsEl) {
+      resultsEl.classList.add('hidden');
+      resultsEl.innerHTML = '';
+    }
+    if (currentTipo() === 'preventiva') loadProtocoloForMarca(eq.marca || '');
+  }
+
+  function clearEquipo() {
+    if (equipoIdInput) equipoIdInput.value = '';
+    selectedEquipoMarca = '';
+    const selectedBox = document.getElementById('equipo-selected');
+    const searchEl = document.getElementById('equipo-serie-search');
+    const resultsEl = document.getElementById('equipo-search-results');
+    if (selectedBox) selectedBox.classList.add('hidden');
+    if (searchEl) {
+      searchEl.value = '';
+      searchEl.focus();
+    }
+    if (resultsEl) {
+      resultsEl.classList.add('hidden');
+      resultsEl.innerHTML = '';
+    }
+  }
+
+  function renderEquipoResults(query) {
+    const resultsEl = document.getElementById('equipo-search-results');
+    if (!resultsEl) return;
+    const q = normalize(query);
+    if (!q) {
+      resultsEl.classList.add('hidden');
+      resultsEl.innerHTML = '';
+      return;
+    }
+    const matches = equiposData.filter((eq) => {
+      const serie = normalize(eq.numero_serie);
+      const nombre = normalize(eq.nombre);
+      const marca = normalize(eq.marca);
+      const modelo = normalize(eq.modelo);
+      return serie.includes(q) || nombre.includes(q) || marca.includes(q) || modelo.includes(q);
+    }).slice(0, 12);
+
+    if (!matches.length) {
+      resultsEl.innerHTML = '<p class="px-3 py-3 text-xs text-slate-500">Sin equipos con ese criterio.</p>';
+      resultsEl.classList.remove('hidden');
+      return;
+    }
+
+    resultsEl.innerHTML = matches.map((eq) => {
+      const meta = ([eq.marca, eq.modelo].filter(Boolean).join(' ') || 's/marca') +
+        (eq.numero_serie ? ' · Serie: ' + eq.numero_serie : ' · Sin serie');
+      return (
+        '<button type="button" class="equipo-result w-full text-left px-3 py-2.5 hover:bg-slate-800/80 border-b border-slate-800 last:border-0" data-id="' + eq.id + '">' +
+          '<div class="text-sm text-white font-medium">' + (eq.nombre || 'Equipo') + '</div>' +
+          '<div class="text-[11px] text-slate-400 mt-0.5">' + meta + '</div>' +
+        '</button>'
+      );
+    }).join('');
+    resultsEl.classList.remove('hidden');
+    resultsEl.querySelectorAll('.equipo-result').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const eq = equiposData.find((e) => String(e.id) === String(btn.dataset.id));
+        if (eq) selectEquipo(eq);
+      });
     });
   }
+
+  const searchInput = document.getElementById('equipo-serie-search');
+  if (searchInput && !readonly) {
+    let debounce;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(debounce);
+      debounce = setTimeout(() => renderEquipoResults(searchInput.value), 120);
+    });
+    searchInput.addEventListener('focus', () => {
+      if (searchInput.value.trim()) renderEquipoResults(searchInput.value);
+    });
+    document.addEventListener('click', (ev) => {
+      const wrap = searchInput.closest('.relative');
+      const resultsEl = document.getElementById('equipo-search-results');
+      if (resultsEl && wrap && !wrap.contains(ev.target)) {
+        resultsEl.classList.add('hidden');
+      }
+    });
+  }
+  const clearBtn = document.getElementById('equipo-clear');
+  if (clearBtn) clearBtn.addEventListener('click', clearEquipo);
 
   document.querySelectorAll('input[name="tipo"]').forEach((r) => {
     r.addEventListener('change', () => {
       toggleTipoUI();
-      if (currentTipo() === 'preventiva' && equipoSelect && !checklist.length) {
-        const opt = equipoSelect.selectedOptions[0];
-        loadProtocoloForMarca(opt ? opt.dataset.marca : '');
+      if (currentTipo() === 'preventiva' && equipoIdInput && equipoIdInput.value) {
+        loadProtocoloForMarca(selectedEquipoMarca);
       }
     });
   });
@@ -353,7 +487,7 @@
   function collectPayload(firmar) {
     const form = document.getElementById('ficha-form');
     const fd = new FormData(form);
-    const equipoId = fd.get('equipo_id') || (equipoSelect && !equipoSelect.disabled ? equipoSelect.value : null);
+    const equipoId = fd.get('equipo_id') || (equipoIdInput ? equipoIdInput.value : null);
     return {
       equipo_id: equipoId,
       tipo: currentTipo(),
@@ -417,12 +551,10 @@
 
   toggleTipoUI();
   if (checklist && checklist.length) {
-    const opt = equipoSelect && equipoSelect.selectedOptions[0];
-    marcaEl.textContent = opt && opt.dataset.marca ? ('Marca: ' + opt.dataset.marca) : '';
+    marcaEl.textContent = selectedEquipoMarca ? ('Marca: ' + selectedEquipoMarca) : '';
     renderChecklist();
-  } else if (!readonly && equipoSelect && equipoSelect.value) {
-    const opt = equipoSelect.selectedOptions[0];
-    loadProtocoloForMarca(opt ? opt.dataset.marca : '');
+  } else if (!readonly && equipoIdInput && equipoIdInput.value) {
+    loadProtocoloForMarca(selectedEquipoMarca);
   } else {
     renderChecklist();
   }
