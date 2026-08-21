@@ -50,18 +50,18 @@ export const enviarCredencialesPortal = async (emailDestino, { nombre, clienteNo
   const safeEmail = esc(emailDestino);
   const safePass = esc(password);
 
-  sendSmtpEmail.subject = 'Acceso al portal de clientes — BIODATA';
+  sendSmtpEmail.subject = 'Acceso al portal de clientes — Biohertz';
   sendSmtpEmail.htmlContent = `
     <html><body style="font-family:Segoe UI,Arial,sans-serif;color:#0f172a;line-height:1.5">
       <p>Hola ${safeName}${org},</p>
-      <p>Te habilitamos el acceso al <strong>portal de clientes BIODATA</strong> para consultar tus equipos y la próxima mantención.</p>
+      <p>Te habilitamos el acceso al <strong>portal de clientes Biohertz</strong> para consultar tus equipos y la próxima mantención.</p>
       <p><strong>Correo:</strong> ${safeEmail}<br>
          <strong>Clave temporal:</strong> <code style="font-size:16px;background:#f1f5f9;padding:4px 8px;border-radius:6px">${safePass}</code></p>
       <p>Ingresa aquí: <a href="${url}">${url}</a></p>
-      <p style="color:#64748b;font-size:13px">Por seguridad, esta clave es personal. Si no solicitaste este acceso, ignora este mensaje o contacta a BIODATA.</p>
-      <p>Saludos,<br>Equipo BIODATA</p>
+      <p style="color:#64748b;font-size:13px">Por seguridad, esta clave es personal. Si no solicitaste este acceso, ignora este mensaje o contacta a Biohertz.</p>
+      <p>Saludos,<br>Equipo Biohertz</p>
     </body></html>`;
-  sendSmtpEmail.sender = { name: 'BIODATA Portal', email: process.env.EMAIL_SENDER };
+  sendSmtpEmail.sender = { name: 'Biohertz', email: process.env.EMAIL_SENDER };
   sendSmtpEmail.to = [{ email: emailDestino }];
 
   const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
