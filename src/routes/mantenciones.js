@@ -6,6 +6,7 @@ import {
   getProtocoloByMarca,
   checklistTemplateFromProtocolo,
   CATEGORIAS_ATENCION,
+  resetMantencionesCompletas,
 } from '../services/mantencionesSchema.js';
 import { ensurePortalSchema, ensurePortalAccessFromFicha } from '../services/portalSchema.js';
 import {
@@ -245,6 +246,27 @@ router.get('/protocolo', authRequired, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener protocolo' });
+  }
+});
+
+router.post('/admin/reset', authRequired, async (req, res) => {
+  try {
+    const user = req.user || req.session?.user;
+    if (user?.rol !== 'admin') {
+      return res.status(403).json({ error: 'Solo administradores pueden reiniciar mantenciones' });
+    }
+    const confirm = String(req.body?.confirm || req.query?.confirm || '');
+    if (confirm !== 'REINICIAR') {
+      return res.status(400).json({
+        error: 'Confirmación requerida',
+        hint: 'POST con JSON { "confirm": "REINICIAR" }',
+      });
+    }
+    await resetMantencionesCompletas();
+    res.json({ ok: true, mensaje: 'Mantenciones reiniciadas desde cero. La próxima ficha será Nº 00001.' });
+  } catch (err) {
+    console.error('Error reiniciando mantenciones:', err);
+    res.status(500).json({ error: 'No se pudo reiniciar mantenciones' });
   }
 });
 

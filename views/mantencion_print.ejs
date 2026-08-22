@@ -66,12 +66,16 @@
       margin-bottom: 6px;
     }
     .logo-box {
-      background: #000;
-      padding: 6px 10px;
+      background: transparent;
+      padding: 0;
       display: inline-flex;
       align-items: center;
     }
-    .logo-box img { height: 46px; width: auto; display: block; }
+    .logo-box img {
+      height: 46px;
+      width: auto;
+      display: block;
+    }
     .title-bar {
       display: flex;
       align-items: stretch;
@@ -241,7 +245,7 @@
     <article class="sheet">
       <header class="head">
         <div class="logo-box">
-          <img src="/img/biohertz-logo.png" alt="Biohertz Medical Systems" />
+          <img src="/img/biohertz-logo.svg" alt="Biohertz Medical Systems" onerror="this.onerror=null;this.src='/img/biohertz-logo.png'" />
         </div>
       </header>
 

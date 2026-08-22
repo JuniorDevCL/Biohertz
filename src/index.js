@@ -21,7 +21,7 @@ import usuariosRoutes from './routes/usuarios.js';
 import mantencionesRoutes from './routes/mantenciones.js';
 import portalRoutes from './routes/portal.js';
 import pool from './db.js';
-import { ensureMantencionesSchema } from './services/mantencionesSchema.js';
+import { ensureMantencionesSchema, resetMantencionesCompletas } from './services/mantencionesSchema.js';
 import { ensurePortalSchema } from './services/portalSchema.js';
 import { initFotosStorage, migrateAllLegacyFotos } from './services/mantencionesFotos.js';
 import { blockPortalFromStaff } from './middleware/portalRequired.js';
@@ -286,6 +286,14 @@ function start(port, tries = 10) {
 (async () => {
   try { await ensureBaseSchema(); } catch {}
   try { await ensureMantencionesSchema(); } catch {}
+  if (String(process.env.RESET_MANTENCIONES || '').toLowerCase() === 'true') {
+    try {
+      await resetMantencionesCompletas();
+      console.log('[mantenciones] RESET_MANTENCIONES aplicado — elimina esta variable de entorno en Render');
+    } catch (e) {
+      console.warn('[mantenciones] reset:', e.message);
+    }
+  }
   try { await ensurePortalSchema(); } catch {}
   try { await initFotosStorage(); } catch (e) { console.warn('[fotos] init:', e.message); }
   try { await migrateAllLegacyFotos(pool); } catch (e) { console.warn('[fotos] migrate:', e.message); }

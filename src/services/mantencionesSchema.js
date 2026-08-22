@@ -1,4 +1,6 @@
 import pool from '../db.js';
+import fs from 'fs/promises';
+import { getFotosRoot } from './mantencionesFotos.js';
 
 const PREVENTIVA_CHECKLIST = [
   'Revisión estado de Sistema Operativo Windows',
@@ -126,7 +128,9 @@ export async function ensureMantencionesSchema() {
     `);
 
     await seedProtocolos();
-    await migrateLegacyMantenciones();
+    if (String(process.env.MIGRATE_LEGACY_MANTENCIONES || '').toLowerCase() === 'true') {
+      await migrateLegacyMantenciones();
+    }
     ready = true;
   } catch (err) {
     console.warn('ensureMantencionesSchema:', err && err.message ? err.message : err);
@@ -231,6 +235,38 @@ async function migrateLegacyMantenciones() {
       }
     }
   }
+}
+
+/** Borra todas las fichas, limpia mantenciones embebidas en equipos y el disco de fotos. */
+export async function resetMantencionesCompletas() {
+  await ensureMantencionesSchema();
+
+  const fichas = await pool.query('SELECT id FROM mantenciones_fichas');
+  for (const row of fichas.rows) {
+    try {
+      const { deleteAllFichaFotos } = await import('./mantencionesFotos.js');
+      await deleteAllFichaFotos(row.id);
+    } catch {}
+  }
+
+  try {
+    const root = getFotosRoot();
+    await fs.rm(root, { recursive: true, force: true });
+    await fs.mkdir(root, { recursive: true });
+  } catch (err) {
+    console.warn('[mantenciones] no se pudo limpiar disco de fotos:', err.message);
+  }
+
+  await pool.query('DELETE FROM mantenciones_fichas');
+  await pool.query(`UPDATE equipos SET mantenciones = '[]'::jsonb`);
+  try {
+    await pool.query('ALTER SEQUENCE mantenciones_fichas_id_seq RESTART WITH 1');
+  } catch {
+    // store offline / sin secuencia
+  }
+
+  console.log('[mantenciones] reset completo: fichas eliminadas, equipos.mantenciones vaciado, contador en 1');
+  return { ok: true };
 }
 
 export { normalizeMarca, itemsFromLabels, DEFAULT_PROTOCOLS, PREVENTIVA_CHECKLIST };
