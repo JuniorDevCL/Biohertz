@@ -4,10 +4,21 @@ import path from 'path';
 import crypto from 'crypto';
 
 export const MAX_FOTOS = 4;
-export const MAX_FOTO_BASE64_LEN = 280000;
+export const MAX_FOTO_BASE64_LEN = 240000;
+export const MAX_FOTO_BYTES = 180000;
+
+function diskQuotaBytes() {
+  const gb = Number(process.env.MANTENCIONES_FOTOS_QUOTA_GB || 3);
+  return Math.max(0.5, gb) * 1024 * 1024 * 1024;
+}
 
 export function getFotosRoot() {
   return process.env.MANTENCIONES_FOTOS_DIR || path.join(process.cwd(), 'data', 'mantenciones-fotos');
+}
+
+export function isPersistentFotosDir() {
+  const root = path.resolve(getFotosRoot());
+  return root.startsWith('/var/data');
 }
 
 export function fotoUrl(fichaId, archivo) {
@@ -34,8 +45,8 @@ function parseDataUrl(dataUrl) {
   if (ext === 'jpeg') ext = 'jpg';
   try {
     const buf = Buffer.from(m[2], 'base64');
-    if (buf.length > 220000) return null;
-    return { ext, buf };
+    if (buf.length > MAX_FOTO_BYTES) return null;
+    return { ext: ext === 'png' || ext === 'webp' ? 'jpg' : ext, buf };
   } catch {
     return null;
   }
@@ -47,9 +58,100 @@ export async function ensureFotosDir(fichaId) {
   return dir;
 }
 
+export async function getFotosStorageStats() {
+  const root = getFotosRoot();
+  const quotaBytes = diskQuotaBytes();
+  let totalBytes = 0;
+  let fileCount = 0;
+  let fichaCount = 0;
+
+  try {
+    const entries = await fs.readdir(root, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      fichaCount += 1;
+      const fichaDir = path.join(root, entry.name);
+      const files = await fs.readdir(fichaDir, { withFileTypes: true });
+      for (const f of files) {
+        if (!f.isFile()) continue;
+        try {
+          const st = await fs.stat(path.join(fichaDir, f.name));
+          totalBytes += st.size;
+          fileCount += 1;
+        } catch {}
+      }
+    }
+  } catch {}
+
+  const percentUsed = quotaBytes > 0 ? Math.min(100, (totalBytes / quotaBytes) * 100) : 0;
+  return {
+    root,
+    persistent: isPersistentFotosDir(),
+    quotaGb: quotaBytes / (1024 * 1024 * 1024),
+    totalBytes,
+    totalMb: Math.round((totalBytes / (1024 * 1024)) * 10) / 10,
+    fileCount,
+    fichaCount,
+    percentUsed: Math.round(percentUsed * 10) / 10,
+    warn: percentUsed >= 85,
+    full: percentUsed >= 97,
+  };
+}
+
+async function assertDiskSpaceAvailable(extraBytes = 0) {
+  const stats = await getFotosStorageStats();
+  if (stats.totalBytes + extraBytes > diskQuotaBytes()) {
+    const err = new Error('Espacio de fotos agotado en el disco. Contacta al administrador.');
+    err.code = 'DISK_FULL';
+    throw err;
+  }
+  return stats;
+}
+
+export async function initFotosStorage() {
+  const root = getFotosRoot();
+  await fs.mkdir(root, { recursive: true });
+  const testFile = path.join(root, '.write-test');
+  await fs.writeFile(testFile, 'ok');
+  await fs.unlink(testFile);
+  const stats = await getFotosStorageStats();
+  console.log(
+    `[fotos] ${stats.persistent ? 'disco persistente' : 'disco local'}: ${root} | ` +
+    `${stats.totalMb} MB usados de ${stats.quotaGb} GB (${stats.percentUsed}%) | ` +
+    `${stats.fileCount} fotos en ${stats.fichaCount} fichas`
+  );
+  if (!stats.persistent && process.env.NODE_ENV === 'production') {
+    console.warn('[fotos] AVISO: MANTENCIONES_FOTOS_DIR no apunta a /var/data — las fotos pueden perderse al redeploy');
+  }
+  return stats;
+}
+
+export async function migrateAllLegacyFotos(pool) {
+  if (!pool) return { migrated: 0 };
+  const r = await pool.query(`
+    SELECT id, fotos FROM mantenciones_fichas
+    WHERE fotos::text LIKE '%"data"%'
+    ORDER BY id ASC
+    LIMIT 100
+  `);
+  let migrated = 0;
+  for (const row of r.rows) {
+    const before = JSON.stringify(row.fotos || []);
+    await attachFichaFotos({ id: row.id, fotos: row.fotos || [] }, pool);
+    const afterRow = await pool.query('SELECT fotos FROM mantenciones_fichas WHERE id = $1', [row.id]);
+    const after = JSON.stringify(afterRow.rows[0]?.fotos || []);
+    if (before !== after) migrated += 1;
+  }
+  if (migrated) {
+    console.log(`[fotos] migradas ${migrated} ficha(s) con fotos legacy desde Postgres al disco`);
+  }
+  return { migrated, pending: Math.max(0, r.rowCount - migrated) };
+}
+
 async function saveFotoFromDataUrl(fichaId, nombre, dataUrl) {
   const parsed = parseDataUrl(dataUrl);
   if (!parsed) return null;
+  await assertDiskSpaceAvailable(parsed.buf.length);
   const dir = await ensureFotosDir(fichaId);
   const archivo = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}.${parsed.ext}`;
   await fs.writeFile(path.join(dir, archivo), parsed.buf);

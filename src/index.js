@@ -23,6 +23,7 @@ import portalRoutes from './routes/portal.js';
 import pool from './db.js';
 import { ensureMantencionesSchema } from './services/mantencionesSchema.js';
 import { ensurePortalSchema } from './services/portalSchema.js';
+import { initFotosStorage, migrateAllLegacyFotos } from './services/mantencionesFotos.js';
 import { blockPortalFromStaff } from './middleware/portalRequired.js';
 
 const app = express();
@@ -286,5 +287,7 @@ function start(port, tries = 10) {
   try { await ensureBaseSchema(); } catch {}
   try { await ensureMantencionesSchema(); } catch {}
   try { await ensurePortalSchema(); } catch {}
+  try { await initFotosStorage(); } catch (e) { console.warn('[fotos] init:', e.message); }
+  try { await migrateAllLegacyFotos(pool); } catch (e) { console.warn('[fotos] migrate:', e.message); }
   start(BASE);
 })();

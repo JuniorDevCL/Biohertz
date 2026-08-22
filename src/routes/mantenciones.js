@@ -15,6 +15,7 @@ import {
   parseFotosInput,
   deleteAllFichaFotos,
   attachFichaFotos,
+  getFotosStorageStats,
 } from '../services/mantencionesFotos.js';
 import fs from 'fs';
 
@@ -145,15 +146,20 @@ router.get('/', authRequired, async (req, res) => {
     `;
     const result = await pool.query(sql, values);
     const fichas = result.rows.map((row) => mapFichaRow(row, { withFotos: false }));
+    let fotoStorage = null;
+    try {
+      fotoStorage = await getFotosStorageStats();
+    } catch {}
 
     if (req.accepts('json') && !req.accepts('html')) {
-      return res.json({ fichas, total: fichas.length });
+      return res.json({ fichas, total: fichas.length, fotoStorage });
     }
 
     res.render('mantenciones', {
       title: 'Mantenciones - BIODATA',
       user: req.user || req.session.user,
       fichas,
+      fotoStorage,
       query: q || '',
       queryTipo: tipo || '',
       queryEstado: estado || '',
@@ -239,6 +245,19 @@ router.get('/protocolo', authRequired, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener protocolo' });
+  }
+});
+
+router.get('/storage', authRequired, async (req, res) => {
+  try {
+    const stats = await getFotosStorageStats();
+    if (req.accepts('json') && !req.accepts('html')) {
+      return res.json(stats);
+    }
+    res.json(stats);
+  } catch (err) {
+    console.error('Error leyendo almacenamiento de fotos:', err);
+    res.status(500).json({ error: 'No se pudo leer el almacenamiento de fotos' });
   }
 });
 
@@ -470,6 +489,9 @@ router.post('/', authRequired, async (req, res) => {
     return res.redirect(`/mantenciones/${ficha.id}`);
   } catch (err) {
     console.error('Error creando mantención:', err);
+    if (err.code === 'DISK_FULL') {
+      return res.status(507).json({ error: err.message });
+    }
     res.status(500).json({ error: 'Error al crear mantención: ' + err.message });
   }
 });
@@ -613,6 +635,9 @@ router.patch('/:id', authRequired, async (req, res) => {
     res.json(ficha);
   } catch (err) {
     console.error('Error actualizando mantención:', err);
+    if (err.code === 'DISK_FULL') {
+      return res.status(507).json({ error: err.message });
+    }
     res.status(500).json({ error: 'Error al actualizar mantención' });
   }
 });

@@ -7,6 +7,13 @@
                     <i class="ph ph-clipboard-text text-sm mr-1.5"></i>
                     Fichas: <span class="ml-1 font-semibold"><%= fichas && fichas.length ? fichas.length : 0 %></span>
                 </span>
+                <% if (typeof fotoStorage !== 'undefined' && fotoStorage) { %>
+                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs border <%= fotoStorage.warn ? 'bg-amber-500/10 text-amber-200 border-amber-500/30' : 'bg-slate-800 text-slate-200 border-slate-700' %>">
+                    <i class="ph ph-hard-drives text-sm mr-1.5"></i>
+                    Fotos: <%= fotoStorage.totalMb %> MB / <%= fotoStorage.quotaGb %> GB
+                    <% if (fotoStorage.persistent) { %> · disco Render<% } %>
+                </span>
+                <% } %>
             </div>
             <p class="text-slate-400 text-sm">Fichas de mantención preventiva y correctiva, con checklist y firmas en tablet.</p>
         </div>

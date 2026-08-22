@@ -220,7 +220,7 @@
 
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
       <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Registro fotográfico</h2>
-      <p class="text-xs text-slate-500">Hasta 4 fotos. Se comprimen en el dispositivo y se guardan como archivos (no en la base de datos).</p>
+      <p class="text-xs text-slate-500">Hasta 4 fotos (~150 KB c/u). Se comprimen en la tablet y se guardan en el disco persistente de Render.</p>
       <% if (!isReadonly) { %>
         <input type="file" id="fotos-input" accept="image/*" multiple capture="environment"
           class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-200">
@@ -708,7 +708,7 @@
       const img = new Image();
       const url = URL.createObjectURL(file);
       img.onload = () => {
-        const max = 1024;
+        const max = 960;
         let w = img.width;
         let h = img.height;
         if (w > max || h > max) {
@@ -721,7 +721,7 @@
         canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
         URL.revokeObjectURL(url);
-        resolve(canvas.toDataURL('image/jpeg', 0.55));
+        resolve(canvas.toDataURL('image/jpeg', 0.5));
       };
       img.onerror = reject;
       img.src = url;
