@@ -13,8 +13,8 @@
 <style>
   .sig-pad {
     touch-action: none;
-    background: #0b1220;
-    border: 1px dashed rgba(148,163,184,.35);
+    background: #ffffff;
+    border: 1px dashed rgba(100,116,139,.55);
     border-radius: 12px;
     width: 100%;
     height: 160px;
@@ -500,33 +500,85 @@
     });
   });
 
+  function normalizeSignatureDataUrl(dataUrl, done) {
+    if (!dataUrl) { done(null); return; }
+    const img = new Image();
+    img.onload = () => {
+      const w = img.naturalWidth || 300;
+      const h = img.naturalHeight || 160;
+      const c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const sample = ctx.getImageData(0, 0, Math.min(w, 80), Math.min(h, 80)).data;
+      let dark = 0;
+      for (let i = 0; i < sample.length; i += 4) {
+        if (sample[i] < 72 && sample[i + 1] < 72 && sample[i + 2] < 72) dark++;
+      }
+      const needsInvert = dark > sample.length / 20;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      if (needsInvert) ctx.filter = 'invert(1)';
+      ctx.drawImage(img, 0, 0);
+      ctx.filter = 'none';
+      done(c.toDataURL('image/png'));
+    };
+    img.onerror = () => done(dataUrl);
+    img.src = dataUrl;
+  }
+
+  function paintWhitePad(ctx, w, h) {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  function exportSignatureCanvas(canvas) {
+    const out = document.createElement('canvas');
+    out.width = canvas.width;
+    out.height = canvas.height;
+    const octx = out.getContext('2d');
+    paintWhitePad(octx, out.width, out.height);
+    octx.drawImage(canvas, 0, 0);
+    return out.toDataURL('image/png');
+  }
+
   function setupPad(canvasId, existingDataUrl) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return { isEmpty: () => true, toDataURL: () => null };
     const ctx = canvas.getContext('2d');
     let drawing = false;
-    let dirty = !!existingDataUrl;
+    let userDrawn = false;
+    let normalizedExisting = null;
+
+    function drawImageSrc(src) {
+      if (!src) return;
+      const rect = canvas.getBoundingClientRect();
+      const img = new Image();
+      img.onload = () => ctx.drawImage(img, 0, 0, rect.width, 160);
+      img.src = src;
+    }
+
+    if (existingDataUrl) {
+      normalizeSignatureDataUrl(existingDataUrl, (fixed) => {
+        normalizedExisting = fixed || existingDataUrl;
+        resize();
+      });
+    }
 
     function resize() {
       const ratio = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
-      const data = dirty ? canvas.toDataURL() : null;
+      const preserve = userDrawn ? exportSignatureCanvas(canvas) : normalizedExisting;
       canvas.width = Math.max(300, Math.floor(rect.width * ratio));
       canvas.height = Math.floor(160 * ratio);
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
       ctx.lineWidth = 2.2;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.strokeStyle = '#e8eef8';
-      if (data) {
-        const img = new Image();
-        img.onload = () => ctx.drawImage(img, 0, 0, rect.width, 160);
-        img.src = data;
-      } else if (existingDataUrl && !dirty) {
-        const img = new Image();
-        img.onload = () => { ctx.drawImage(img, 0, 0, rect.width, 160); dirty = true; };
-        img.src = existingDataUrl;
-      }
+      ctx.strokeStyle = '#0f172a';
+      paintWhitePad(ctx, rect.width, 160);
+      drawImageSrc(preserve);
     }
 
     resize();
@@ -534,16 +586,15 @@
 
     if (readonly) {
       if (existingDataUrl) {
-        const img = new Image();
-        img.onload = () => {
+        normalizeSignatureDataUrl(existingDataUrl, (fixed) => {
           const rect = canvas.getBoundingClientRect();
-          ctx.drawImage(img, 0, 0, rect.width, 160);
-        };
-        img.src = existingDataUrl;
+          paintWhitePad(ctx, rect.width, 160);
+          drawImageSrc(fixed || existingDataUrl);
+        });
       }
       return {
         isEmpty: () => !existingDataUrl,
-        toDataURL: () => existingDataUrl,
+        toDataURL: () => normalizedExisting || existingDataUrl,
         clear: () => {},
       };
     }
@@ -566,7 +617,7 @@
       const p = pos(ev);
       ctx.lineTo(p.x, p.y);
       ctx.stroke();
-      dirty = true;
+      userDrawn = true;
     }
     function end(ev) {
       if (!drawing) return;
@@ -583,12 +634,13 @@
     canvas.addEventListener('touchend', end);
 
     return {
-      isEmpty: () => !dirty,
-      toDataURL: () => (dirty ? canvas.toDataURL('image/jpeg', 0.85) : null),
+      isEmpty: () => !userDrawn && !normalizedExisting,
+      toDataURL: () => (userDrawn ? exportSignatureCanvas(canvas) : normalizedExisting),
       clear: () => {
         const rect = canvas.getBoundingClientRect();
-        ctx.clearRect(0, 0, rect.width, 160);
-        dirty = false;
+        paintWhitePad(ctx, rect.width, 160);
+        userDrawn = false;
+        normalizedExisting = null;
       },
     };
   }

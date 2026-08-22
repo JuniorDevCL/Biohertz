@@ -187,7 +187,7 @@
     }
     .sig + .sig { border-left: none; }
     .sig .who { font-size: 7.5pt; font-weight: 800; text-transform: uppercase; }
-    .sig img { max-height: 58px; max-width: 100%; object-fit: contain; margin: 8px auto; }
+    .sig img { max-height: 58px; max-width: 100%; object-fit: contain; margin: 8px auto; background: #fff; }
     .sig .name { margin-top: auto; font-size: 9pt; font-weight: 700; border-top: 1px solid #000; padding-top: 4px; }
     .foot {
       margin-top: 8px;
@@ -409,5 +409,39 @@
       </div>
     </article>
   </div>
+  <script>
+    (function () {
+      function normalizeSigImg(img) {
+        if (!img || !img.src || img.dataset.sigFixed) return;
+        var probe = new Image();
+        probe.onload = function () {
+          var w = probe.naturalWidth || 300;
+          var h = probe.naturalHeight || 160;
+          var c = document.createElement('canvas');
+          c.width = w;
+          c.height = h;
+          var ctx = c.getContext('2d');
+          ctx.drawImage(probe, 0, 0);
+          var sample = ctx.getImageData(0, 0, Math.min(w, 80), Math.min(h, 80)).data;
+          var dark = 0;
+          for (var i = 0; i < sample.length; i += 4) {
+            if (sample[i] < 72 && sample[i + 1] < 72 && sample[i + 2] < 72) dark++;
+          }
+          if (dark <= sample.length / 20) return;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, w, h);
+          ctx.filter = 'invert(1)';
+          ctx.drawImage(probe, 0, 0);
+          img.src = c.toDataURL('image/png');
+          img.dataset.sigFixed = '1';
+        };
+        probe.src = img.src;
+      }
+      document.querySelectorAll('.sig img').forEach(function (img) {
+        if (img.complete) normalizeSigImg(img);
+        else img.addEventListener('load', function () { normalizeSigImg(img); });
+      });
+    })();
+  </script>
 </body>
 </html>
