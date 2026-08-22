@@ -5,17 +5,71 @@ import {
   ensureMantencionesSchema,
   getProtocoloByMarca,
   checklistTemplateFromProtocolo,
+  CATEGORIAS_ATENCION,
 } from '../services/mantencionesSchema.js';
 import { ensurePortalSchema, ensurePortalAccessFromFicha } from '../services/portalSchema.js';
+import {
+  FICHA_LIST_COLUMNS,
+  persistFotosFromPayload,
+  resolveFotoPath,
+  parseFotosInput,
+  deleteAllFichaFotos,
+  attachFichaFotos,
+} from '../services/mantencionesFotos.js';
+import fs from 'fs';
 
 const router = Router();
 
-function mapFichaRow(row) {
+function mapFichaRow(row, { withFotos = true } = {}) {
   if (!row) return null;
-  return {
+  const ficha = {
     ...row,
     checklist: Array.isArray(row.checklist) ? row.checklist : [],
+    categorias: Array.isArray(row.categorias) ? row.categorias : [],
   };
+  if (withFotos) {
+    ficha.fotos = Array.isArray(row.fotos) ? row.fotos : [];
+  }
+  return ficha;
+}
+
+async function prepareFichaFotos(ficha) {
+  return attachFichaFotos(ficha, pool);
+}
+
+function parseJsonArray(value, fallback = []) {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+}
+
+const CATEGORIA_IDS = new Set(CATEGORIAS_ATENCION.map((c) => c.id));
+
+function sanitizeCategorias(value) {
+  return parseJsonArray(value).filter((id) => CATEGORIA_IDS.has(String(id))).slice(0, 8);
+}
+
+async function canAccessFichaFoto(req, fichaId) {
+  if (req.isAuthenticated && req.isAuthenticated()) return true;
+
+  const portal = req.session?.portalUser;
+  if (!portal?.cliente_id) return false;
+
+  const r = await pool.query(
+    `SELECT m.id
+     FROM mantenciones_fichas m
+     INNER JOIN equipos e ON e.id = m.equipo_id
+     WHERE m.id = $1 AND e.cliente_id = $2 AND m.estado = 'firmada'`,
+    [fichaId, portal.cliente_id]
+  );
+  return r.rowCount > 0;
 }
 
 function normalizeEmail(email) {
@@ -75,7 +129,7 @@ router.get('/', authRequired, async (req, res) => {
     }
 
     const sql = `
-      SELECT m.*,
+      SELECT ${FICHA_LIST_COLUMNS},
              e.nombre AS equipo_nombre,
              e.marca AS equipo_marca,
              e.modelo AS equipo_modelo,
@@ -90,7 +144,7 @@ router.get('/', authRequired, async (req, res) => {
       LIMIT 200
     `;
     const result = await pool.query(sql, values);
-    const fichas = result.rows.map(mapFichaRow);
+    const fichas = result.rows.map((row) => mapFichaRow(row, { withFotos: false }));
 
     if (req.accepts('json') && !req.accepts('html')) {
       return res.json({ fichas, total: fichas.length });
@@ -119,35 +173,52 @@ router.get('/nueva', authRequired, async (req, res) => {
     await ensureMantencionesSchema();
     await ensurePortalSchema();
     const equiposRes = await pool.query(
-      `SELECT id, nombre, marca, modelo, numero_serie, cliente, cliente_id, estado
-       FROM equipos ORDER BY nombre ASC`
+      `SELECT e.id, e.nombre, e.marca, e.modelo, e.numero_serie, e.cliente, e.cliente_id, e.estado, e.ubicacion,
+              c.nombre AS cliente_nombre, c.email AS cliente_email, c.telefono AS cliente_telefono,
+              c.ubicacion AS cliente_direccion
+       FROM equipos e
+       LEFT JOIN clientes c ON c.id = e.cliente_id
+       ORDER BY e.nombre ASC`
     );
     let equipo = null;
     let protocolo = null;
     let checklist = [];
     let emailClientePrefill = '';
+    let clientePrefill = {};
     const equipoId = req.query.equipo_id ? Number(req.query.equipo_id) : null;
     if (equipoId) {
-      const er = await pool.query('SELECT * FROM equipos WHERE id = $1', [equipoId]);
+      const er = await pool.query(
+        `SELECT e.*, c.nombre AS cliente_nombre, c.email AS cliente_email, c.telefono AS cliente_telefono,
+                c.ubicacion AS cliente_direccion
+         FROM equipos e
+         LEFT JOIN clientes c ON c.id = e.cliente_id
+         WHERE e.id = $1`,
+        [equipoId]
+      );
       if (er.rowCount) {
         equipo = er.rows[0];
         protocolo = await getProtocoloByMarca(equipo.marca);
         checklist = checklistTemplateFromProtocolo(protocolo);
-        if (equipo.cliente_id) {
-          const cr = await pool.query('SELECT email FROM clientes WHERE id = $1', [equipo.cliente_id]);
-          if (cr.rowCount && cr.rows[0].email) emailClientePrefill = cr.rows[0].email;
-        }
+        emailClientePrefill = equipo.cliente_email || '';
+        clientePrefill = {
+          senores: equipo.cliente_nombre || equipo.cliente || '',
+          direccion: equipo.cliente_direccion || equipo.ubicacion || '',
+          telefono_cliente: equipo.cliente_telefono || '',
+          email_cliente: equipo.cliente_email || '',
+        };
       }
     }
 
     res.render('mantencion_ficha', {
-      title: 'Nueva mantención - BIODATA',
+      title: 'Nueva mantención - Biohertz',
       user: req.user || req.session.user,
       ficha: null,
       equipos: equiposRes.rows,
       equipo,
       checklist,
       emailClientePrefill,
+      clientePrefill,
+      categoriasAtencion: CATEGORIAS_ATENCION,
       modo: 'nueva',
       readonly: false,
     });
@@ -168,6 +239,25 @@ router.get('/protocolo', authRequired, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener protocolo' });
+  }
+});
+
+router.get('/fotos/:fichaId/:archivo', async (req, res) => {
+  try {
+    const fichaId = Number(req.params.fichaId);
+    if (!fichaId) return res.status(400).end();
+
+    const allowed = await canAccessFichaFoto(req, fichaId);
+    if (!allowed) return res.status(403).end();
+
+    const fp = resolveFotoPath(fichaId, req.params.archivo);
+    if (!fp || !fs.existsSync(fp)) return res.status(404).end();
+
+    res.setHeader('Cache-Control', 'private, max-age=86400');
+    res.sendFile(fp);
+  } catch (err) {
+    console.error('Error sirviendo foto mantención:', err);
+    res.status(500).end();
   }
 });
 
@@ -196,6 +286,7 @@ router.get('/:id', authRequired, async (req, res) => {
     }
 
     const ficha = mapFichaRow(result.rows[0]);
+    await prepareFichaFotos(ficha);
     if (req.accepts('json') && !req.accepts('html')) {
       return res.json(ficha);
     }
@@ -204,15 +295,20 @@ router.get('/:id', authRequired, async (req, res) => {
     if (ficha.estado === 'firmada') {
       return res.render('mantencion_print', {
         layout: false,
-        title: `Ficha mantención #${ficha.id} - BIODATA`,
+        title: `Atención a clientes Nº ${String(ficha.id).padStart(5, '0')} - Biohertz`,
         ficha,
         user: req.user || req.session.user,
+        categoriasAtencion: CATEGORIAS_ATENCION,
       });
     }
 
     const equiposRes = await pool.query(
-      `SELECT id, nombre, marca, modelo, numero_serie, cliente, cliente_id, estado
-       FROM equipos ORDER BY nombre ASC`
+      `SELECT e.id, e.nombre, e.marca, e.modelo, e.numero_serie, e.cliente, e.cliente_id, e.estado, e.ubicacion,
+              c.nombre AS cliente_nombre, c.email AS cliente_email, c.telefono AS cliente_telefono,
+              c.ubicacion AS cliente_direccion
+       FROM equipos e
+       LEFT JOIN clientes c ON c.id = e.cliente_id
+       ORDER BY e.nombre ASC`
     );
     const equipo = {
       id: ficha.equipo_id,
@@ -225,12 +321,15 @@ router.get('/:id', authRequired, async (req, res) => {
     };
 
     res.render('mantencion_ficha', {
-      title: `Mantención #${ficha.id} - BIODATA`,
+      title: `Mantención #${ficha.id} - Biohertz`,
       user: req.user || req.session.user,
       ficha,
       equipos: equiposRes.rows,
       equipo,
       checklist: ficha.checklist || [],
+      emailClientePrefill: ficha.email_cliente || '',
+      clientePrefill: {},
+      categoriasAtencion: CATEGORIAS_ATENCION,
       modo: 'editar',
       readonly: false,
     });
@@ -259,6 +358,16 @@ router.post('/', authRequired, async (req, res) => {
       guardar_y_firmar,
       firma_tecnico,
       firma_cliente,
+      rut_cliente,
+      senores,
+      direccion,
+      ciudad_comuna,
+      telefono_cliente,
+      contacto_nombre,
+      version_sw,
+      motivo_atencion,
+      categorias,
+      fotos,
     } = req.body;
 
     if (!equipo_id) {
@@ -292,16 +401,22 @@ router.post('/', authRequired, async (req, res) => {
     }
 
     const emailNorm = normalizeEmail(email_cliente);
+    const categoriasData = sanitizeCategorias(categorias);
+    const fotosInput = parseFotosInput(fotos);
     const estado = firmar ? 'firmada' : 'borrador';
     const insert = await pool.query(
       `INSERT INTO mantenciones_fichas (
         equipo_id, cliente_id, tipo, estado, fecha, hora, trabajo, nota, dano_descripcion,
         checklist, realizado_por, tecnico_id, firma_tecnico, firma_cliente, firmante_cliente,
-        email_cliente, proxima_mantencion, firmada_en
+        email_cliente, proxima_mantencion, firmada_en,
+        rut_cliente, senores, direccion, ciudad_comuna, telefono_cliente, contacto_nombre,
+        version_sw, motivo_atencion, categorias, fotos
       ) VALUES (
         $1, $2, $3, $4, NULLIF($5,'')::date, NULLIF($6,'')::time, $7, $8, $9,
         $10::jsonb, $11, $12, $13, $14, $15,
-        $16, NULLIF($17,'')::date, $18
+        $16, NULLIF($17,'')::date, $18,
+        $19, $20, $21, $22, $23, $24,
+        $25, $26, $27::jsonb, '[]'::jsonb
       ) RETURNING *`,
       [
         Number(equipo_id),
@@ -322,10 +437,30 @@ router.post('/', authRequired, async (req, res) => {
         emailNorm,
         proxima_mantencion || null,
         firmar ? new Date() : null,
+        rut_cliente || null,
+        senores || eq.rows[0].cliente || null,
+        direccion || null,
+        ciudad_comuna || null,
+        telefono_cliente || null,
+        contacto_nombre || null,
+        version_sw || null,
+        motivo_atencion || '',
+        JSON.stringify(categoriasData),
       ]
     );
 
+    const fichaId = insert.rows[0].id;
+    const fotosStored = await persistFotosFromPayload(fichaId, fotosInput, []);
+    if (fotosStored.length) {
+      await pool.query('UPDATE mantenciones_fichas SET fotos = $1::jsonb WHERE id = $2', [
+        JSON.stringify(fotosStored),
+        fichaId,
+      ]);
+      insert.rows[0].fotos = fotosStored;
+    }
+
     const ficha = mapFichaRow(insert.rows[0]);
+    await prepareFichaFotos(ficha);
     if (firmar) {
       await maybeGrantPortalAccess(ficha, firmante_cliente);
     }
@@ -364,6 +499,16 @@ router.patch('/:id', authRequired, async (req, res) => {
       firma_tecnico,
       firma_cliente,
       guardar_y_firmar,
+      rut_cliente,
+      senores,
+      direccion,
+      ciudad_comuna,
+      telefono_cliente,
+      contacto_nombre,
+      version_sw,
+      motivo_atencion,
+      categorias,
+      fotos,
     } = req.body;
 
     let checklistData = current.rows[0].checklist;
@@ -387,6 +532,19 @@ router.patch('/:id', authRequired, async (req, res) => {
       ? normalizeEmail(email_cliente)
       : current.rows[0].email_cliente;
 
+    const categoriasData = categorias !== undefined
+      ? sanitizeCategorias(categorias)
+      : (current.rows[0].categorias || []);
+
+    let fotosStored = current.rows[0].fotos || [];
+    if (fotos !== undefined) {
+      fotosStored = await persistFotosFromPayload(
+        Number(id),
+        parseFotosInput(fotos),
+        current.rows[0].fotos || []
+      );
+    }
+
     const estado = firmar ? 'firmada' : 'borrador';
     const updated = await pool.query(
       `UPDATE mantenciones_fichas SET
@@ -405,8 +563,18 @@ router.patch('/:id', authRequired, async (req, res) => {
          proxima_mantencion = COALESCE(NULLIF($13,'')::date, proxima_mantencion),
          estado = $14,
          firmada_en = CASE WHEN $14 = 'firmada' THEN COALESCE(firmada_en, NOW()) ELSE firmada_en END,
+         rut_cliente = COALESCE($15, rut_cliente),
+         senores = COALESCE($16, senores),
+         direccion = COALESCE($17, direccion),
+         ciudad_comuna = COALESCE($18, ciudad_comuna),
+         telefono_cliente = COALESCE($19, telefono_cliente),
+         contacto_nombre = COALESCE($20, contacto_nombre),
+         version_sw = COALESCE($21, version_sw),
+         motivo_atencion = COALESCE($22, motivo_atencion),
+         categorias = $23::jsonb,
+         fotos = $24::jsonb,
          actualizado_en = NOW()
-       WHERE id = $15
+       WHERE id = $25
        RETURNING *`,
       [
         tipo || null,
@@ -423,11 +591,22 @@ router.patch('/:id', authRequired, async (req, res) => {
         emailNorm,
         proxima_mantencion ?? null,
         estado,
+        rut_cliente ?? null,
+        senores ?? null,
+        direccion ?? null,
+        ciudad_comuna ?? null,
+        telefono_cliente ?? null,
+        contacto_nombre ?? null,
+        version_sw ?? null,
+        motivo_atencion ?? null,
+        JSON.stringify(categoriasData),
+        JSON.stringify(fotosStored),
         id,
       ]
     );
 
     const ficha = mapFichaRow(updated.rows[0]);
+    await prepareFichaFotos(ficha);
     if (firmar) {
       await maybeGrantPortalAccess(ficha, firmante_cliente || ficha.firmante_cliente);
     }
@@ -472,6 +651,7 @@ router.post('/:id/firmar', authRequired, async (req, res) => {
       ]
     );
     const ficha = mapFichaRow(updated.rows[0]);
+    await prepareFichaFotos(ficha);
     await maybeGrantPortalAccess(ficha, firmante_cliente || ficha.firmante_cliente);
     res.json(ficha);
   } catch (err) {
@@ -491,6 +671,7 @@ router.delete('/:id', authRequired, async (req, res) => {
     if (del.rowCount === 0) {
       return res.status(404).json({ error: 'Ficha no encontrada' });
     }
+    await deleteAllFichaFotos(Number(id));
     res.json({ mensaje: 'Ficha eliminada', id: del.rows[0].id });
   } catch (err) {
     console.error('Error eliminando mantención:', err);

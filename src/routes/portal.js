@@ -7,6 +7,7 @@ import {
   authenticatePortalUser,
 } from '../services/portalSchema.js';
 import { ensureMantencionesSchema } from '../services/mantencionesSchema.js';
+import { attachFichaFotos } from '../services/mantencionesFotos.js';
 
 const router = Router();
 
@@ -209,12 +210,22 @@ router.get('/fichas/:id', portalRequired, async (req, res) => {
     }
 
     const ficha = mapFichaRow(result.rows[0]);
+    await attachFichaFotos(ficha, pool);
     res.render('mantencion_print', {
       layout: false,
-      title: `Ficha mantención #${ficha.id} - BIODATA`,
+      title: `Atención a clientes Nº ${String(ficha.id).padStart(5, '0')} - Biohertz`,
       ficha,
       user: null,
       portalBack: '/portal/equipos/' + ficha.equipo_id,
+      categoriasAtencion: [
+        { id: 'facturable', label: 'Facturable' },
+        { id: 'garantia', label: 'Garantía' },
+        { id: 'mantencion', label: 'Mantención' },
+        { id: 'reparacion', label: 'Reparación' },
+        { id: 'visita_tecnica', label: 'Visita Técnica' },
+        { id: 'rep_s_tecnico', label: 'Rep. S. Técnico' },
+        { id: 'rep_terreno', label: 'Rep. Terreno' },
+      ],
     });
   } catch (err) {
     console.error('Error portal ficha:', err);

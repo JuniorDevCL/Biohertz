@@ -24,6 +24,7 @@ export function blockPortalFromStaff(req, res, next) {
       p.startsWith('/portal') ||
       p === '/auth/logout' ||
       p.startsWith('/img') ||
+      p.startsWith('/mantenciones/fotos/') ||
       p.startsWith('/theme') ||
       p === '/favicon.ico' ||
       p === '/api/health' ||

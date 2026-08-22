@@ -5,6 +5,10 @@
   const nowTime = new Date().toTimeString().slice(0, 5);
   const initialTipo = f ? f.tipo : 'preventiva';
   const checklistJson = JSON.stringify(checklist || []);
+  const pre = typeof clientePrefill !== 'undefined' && clientePrefill ? clientePrefill : {};
+  const cats = typeof categoriasAtencion !== 'undefined' && categoriasAtencion ? categoriasAtencion : [];
+  const selectedCats = f && Array.isArray(f.categorias) ? f.categorias.map(String) : [];
+  const fotosIniciales = f && Array.isArray(f.fotos) ? f.fotos : [];
 %>
 <style>
   .sig-pad {
@@ -19,9 +23,10 @@
   .sig-pad.locked { opacity: .85; cursor: default; }
   .check-item { transition: background .15s ease, border-color .15s ease; }
   .check-item:has(input:checked) {
-    border-color: rgba(45,212,191,.45);
-    background: rgba(45,212,191,.08);
+    border-color: rgba(232,119,26,.55);
+    background: rgba(232,119,26,.08);
   }
+  .foto-thumb { width: 100%; height: 88px; object-fit: cover; border-radius: 10px; border: 1px solid #334155; }
 </style>
 
 <div class="max-w-3xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
@@ -33,7 +38,7 @@
       <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
         <%= f ? (isReadonly ? 'Ficha firmada' : 'Continuar ficha') : 'Nueva ficha de mantención' %>
       </h1>
-      <p class="text-slate-400 text-sm mt-1">Diseñada para tablet: checklist, trabajos y firmas con dedo o lápiz.</p>
+      <p class="text-slate-400 text-sm mt-1">Ficha tipo Atención a clientes Biohertz: checklist, fotos y firmas en tablet.</p>
     </div>
     <% if (f && f.estado === 'firmada') { %>
       <span class="inline-flex self-start px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Firmada · bloqueada</span>
@@ -111,6 +116,67 @@
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
       </div>
+
+      <div>
+        <p class="text-[11px] text-slate-500 uppercase tracking-wider mb-2">Tipo de atención</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <% cats.forEach(function(c) { %>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-700 bg-slate-950/50 cursor-pointer text-xs text-slate-200">
+              <input type="checkbox" name="categoria" value="<%= c.id %>" class="accent-orange-500"
+                <%= selectedCats.includes(c.id) ? 'checked' : '' %> <%= isReadonly ? 'disabled' : '' %>>
+              <%= c.label %>
+            </label>
+          <% }) %>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+      <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Datos del cliente</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 uppercase">RUT</label>
+          <input type="text" name="rut_cliente" <%= isReadonly ? 'disabled' : '' %>
+            value="<%= f ? (f.rut_cliente || '') : '' %>"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 uppercase">Señor(es)</label>
+          <input type="text" name="senores" <%= isReadonly ? 'disabled' : '' %>
+            value="<%= f ? (f.senores || '') : (pre.senores || '') %>"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 uppercase">Dirección</label>
+          <input type="text" name="direccion" <%= isReadonly ? 'disabled' : '' %>
+            value="<%= f ? (f.direccion || '') : (pre.direccion || '') %>"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 uppercase">Ciudad - Comuna</label>
+          <input type="text" name="ciudad_comuna" <%= isReadonly ? 'disabled' : '' %>
+            value="<%= f ? (f.ciudad_comuna || '') : '' %>"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 uppercase">Teléfono</label>
+          <input type="text" name="telefono_cliente" <%= isReadonly ? 'disabled' : '' %>
+            value="<%= f ? (f.telefono_cliente || '') : (pre.telefono_cliente || '') %>"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 uppercase">Contacto</label>
+          <input type="text" name="contacto_nombre" <%= isReadonly ? 'disabled' : '' %>
+            value="<%= f ? (f.contacto_nombre || '') : '' %>"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs text-slate-400 mb-1 uppercase">Versión S/W</label>
+          <input type="text" name="version_sw" <%= isReadonly ? 'disabled' : '' %>
+            value="<%= f ? (f.version_sw || '') : '' %>"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+      </div>
     </section>
 
     <section id="section-checklist" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 <%= initialTipo === 'correctiva' ? 'hidden' : '' %>">
@@ -118,7 +184,7 @@
         <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Checklist preventiva</h2>
         <span id="checklist-marca" class="text-[11px] text-teal-300/80"></span>
       </div>
-      <p class="text-xs text-slate-500">Protocolos según la marca del equipo. Márcalos al completarlos.</p>
+      <p class="text-xs text-slate-500">19 ítems de protocolo preventiva. Márcalos al completarlos.</p>
       <div id="checklist-list" class="space-y-2"></div>
     </section>
 
@@ -130,19 +196,36 @@
     </section>
 
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
-      <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Trabajos realizados</h2>
-      <textarea name="trabajo" rows="3" <%= isReadonly ? 'disabled' : '' %>
-        placeholder="Detalle de los trabajos hechos"
+      <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Motivo y descripción</h2>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1 uppercase">Motivo de atención</label>
+        <input type="text" name="motivo_atencion" <%= isReadonly ? 'disabled' : '' %>
+          value="<%= f ? (f.motivo_atencion || '') : '' %>"
+          placeholder="Ej: Reparación y mantención de equipo"
+          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+      </div>
+      <textarea name="trabajo" rows="4" <%= isReadonly ? 'disabled' : '' %>
+        placeholder="Descripción de los trabajos realizados"
         class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f ? (f.trabajo || '') : '' %></textarea>
       <textarea name="nota" rows="2" <%= isReadonly ? 'disabled' : '' %>
-        placeholder="Notas adicionales (opcional)"
+        placeholder="Observaciones adicionales (opcional)"
         class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f ? (f.nota || '') : '' %></textarea>
       <div>
-        <label class="block text-xs text-slate-400 mb-1 uppercase">Realizado por</label>
+        <label class="block text-xs text-slate-400 mb-1 uppercase">Realizado por (servicio técnico)</label>
         <input type="text" name="realizado_por" <%= isReadonly ? 'disabled' : '' %>
           value="<%= f ? (f.realizado_por || '') : (user && user.nombre ? user.nombre : '') %>"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
       </div>
+    </section>
+
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+      <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Registro fotográfico</h2>
+      <p class="text-xs text-slate-500">Hasta 4 fotos. Se comprimen en el dispositivo y se guardan como archivos (no en la base de datos).</p>
+      <% if (!isReadonly) { %>
+        <input type="file" id="fotos-input" accept="image/*" multiple capture="environment"
+          class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-200">
+      <% } %>
+      <div id="fotos-preview" class="grid grid-cols-3 gap-2"></div>
     </section>
 
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
@@ -151,7 +234,7 @@
       <div>
         <label class="block text-xs text-slate-400 mb-1 uppercase">Correo electrónico del cliente</label>
         <input type="email" name="email_cliente" <%= isReadonly ? 'disabled' : '' %>
-          value="<%= f ? (f.email_cliente || '') : (typeof emailClientePrefill !== 'undefined' && emailClientePrefill ? emailClientePrefill : '') %>"
+          value="<%= f ? (f.email_cliente || '') : (typeof emailClientePrefill !== 'undefined' && emailClientePrefill ? emailClientePrefill : (pre.email_cliente || '')) %>"
           placeholder="cliente@empresa.cl"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
       </div>
@@ -216,6 +299,12 @@
   let checklist = <%= checklistJson %>;
   const existingFirmaTecnico = <%- f && f.firma_tecnico ? JSON.stringify(f.firma_tecnico) : 'null' %>;
   const existingFirmaCliente = <%- f && f.firma_cliente ? JSON.stringify(f.firma_cliente) : 'null' %>;
+  let fotos = <%- JSON.stringify(fotosIniciales.map(p => ({
+    nombre: p.nombre || 'foto',
+    archivo: p.archivo || null,
+    url: p.url || null,
+    data: p.data || null
+  }))) %>;
 
   const listEl = document.getElementById('checklist-list');
   const marcaEl = document.getElementById('checklist-marca');
@@ -228,7 +317,11 @@
     marca: eq.marca || '',
     modelo: eq.modelo || '',
     numero_serie: eq.numero_serie || '',
-    cliente: eq.cliente || ''
+    cliente: eq.cliente || eq.cliente_nombre || '',
+    senores: eq.cliente_nombre || eq.cliente || '',
+    direccion: eq.cliente_direccion || eq.ubicacion || '',
+    telefono: eq.cliente_telefono || '',
+    email: eq.cliente_email || ''
   }))) %>;
   let selectedEquipoMarca = <%- JSON.stringify(equipo && equipo.marca ? equipo.marca : (f && f.equipo_marca ? f.equipo_marca : '')) %>;
 
@@ -255,6 +348,7 @@
       row.innerHTML =
         '<input type="checkbox" class="mt-1 accent-teal-400 scale-125" data-idx="' + idx + '" ' +
           (item.checked ? 'checked' : '') + ' ' + (readonly ? 'disabled' : '') + '>' +
+        '<span class="text-[11px] text-slate-500 w-5 shrink-0">' + (idx + 1) + '.</span>' +
         '<span class="text-sm text-slate-200 leading-snug">' + (item.label || '') + '</span>';
       if (!readonly) {
         row.querySelector('input').addEventListener('change', (e) => {
@@ -307,6 +401,14 @@
       resultsEl.innerHTML = '';
     }
     if (currentTipo() === 'preventiva') loadProtocoloForMarca(eq.marca || '');
+    const setIf = (name, value) => {
+      const el = document.querySelector('[name="' + name + '"]');
+      if (el && !el.value && value) el.value = value;
+    };
+    setIf('senores', eq.senores || eq.cliente);
+    setIf('direccion', eq.direccion);
+    setIf('telefono_cliente', eq.telefono);
+    setIf('email_cliente', eq.email);
   }
 
   function clearEquipo() {
@@ -482,7 +584,7 @@
 
     return {
       isEmpty: () => !dirty,
-      toDataURL: () => (dirty ? canvas.toDataURL('image/png') : null),
+      toDataURL: () => (dirty ? canvas.toDataURL('image/jpeg', 0.85) : null),
       clear: () => {
         const rect = canvas.getBoundingClientRect();
         ctx.clearRect(0, 0, rect.width, 160);
@@ -506,6 +608,7 @@
     const form = document.getElementById('ficha-form');
     const fd = new FormData(form);
     const equipoId = fd.get('equipo_id') || (equipoIdInput ? equipoIdInput.value : null);
+    const categorias = Array.from(document.querySelectorAll('input[name="categoria"]:checked')).map((el) => el.value);
     return {
       equipo_id: equipoId,
       tipo: currentTipo(),
@@ -518,6 +621,20 @@
       firmante_cliente: fd.get('firmante_cliente'),
       email_cliente: fd.get('email_cliente'),
       proxima_mantencion: fd.get('proxima_mantencion'),
+      rut_cliente: fd.get('rut_cliente'),
+      senores: fd.get('senores'),
+      direccion: fd.get('direccion'),
+      ciudad_comuna: fd.get('ciudad_comuna'),
+      telefono_cliente: fd.get('telefono_cliente'),
+      contacto_nombre: fd.get('contacto_nombre'),
+      version_sw: fd.get('version_sw'),
+      motivo_atencion: fd.get('motivo_atencion'),
+      categorias,
+      fotos: fotos.map((p) => {
+        if (p.archivo) return { nombre: p.nombre, archivo: p.archivo };
+        if (p.data) return { nombre: p.nombre, data: p.data };
+        return null;
+      }).filter(Boolean),
       checklist: JSON.stringify(checklist),
       firma_tecnico: padTecnico.toDataURL(),
       firma_cliente: padCliente.toDataURL(),
@@ -568,6 +685,68 @@
   const btnFirmar = document.getElementById('btn-firmar');
   if (btnBorrador) btnBorrador.addEventListener('click', () => save(false));
   if (btnFirmar) btnFirmar.addEventListener('click', () => save(true));
+
+  function renderFotos() {
+    const wrap = document.getElementById('fotos-preview');
+    if (!wrap) return;
+    wrap.innerHTML = fotos.map((p, i) =>
+      '<div class="relative">' +
+        '<img src="' + (p.url || p.data || '') + '" alt="" class="foto-thumb">' +
+        (readonly ? '' : '<button type="button" data-foto="' + i + '" class="absolute top-1 right-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">x</button>') +
+      '</div>'
+    ).join('');
+    wrap.querySelectorAll('[data-foto]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        fotos.splice(Number(btn.dataset.foto), 1);
+        renderFotos();
+      });
+    });
+  }
+
+  function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const max = 1024;
+        let w = img.width;
+        let h = img.height;
+        if (w > max || h > max) {
+          const scale = Math.min(max / w, max / h);
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL('image/jpeg', 0.55));
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  const fotosInput = document.getElementById('fotos-input');
+  if (fotosInput && !readonly) {
+    fotosInput.addEventListener('change', async (ev) => {
+      const files = Array.from(ev.target.files || []);
+      for (const file of files) {
+        if (fotos.length >= 4) break;
+        if (!file.type.startsWith('image/')) continue;
+        try {
+          const data = await compressImage(file);
+          fotos.push({ nombre: file.name.slice(0, 80), data });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      ev.target.value = '';
+      renderFotos();
+    });
+  }
+  renderFotos();
 
   toggleTipoUI();
   if (checklist && checklist.length) {

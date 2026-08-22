@@ -47,8 +47,8 @@ app.set('layout', 'layout');
 app.set('view engine', 'ejs');
 app.set('views', path.join(process.cwd(), 'views'));
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.urlencoded({ extended: true, limit: '8mb' }));
+app.use(express.json({ limit: '2mb' }));
 
 app.use(session({
   secret: process.env.JWT_SECRET || 'secret_key_biohertz',

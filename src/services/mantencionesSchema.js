@@ -1,54 +1,40 @@
 import pool from '../db.js';
 
+const PREVENTIVA_CHECKLIST = [
+  'Revisión estado de Sistema Operativo Windows',
+  'Calibración general y test de operación de acuerdo a lo establecido por el fabricante',
+  'Test de funcionamiento software',
+  'Revisión, ajuste y limpieza de conectores internos y externos',
+  'Revisión y limpieza de fuente de poder',
+  'Revisión y limpieza de filtros y ventiladores',
+  'Limpieza interna y externa',
+  'Revisión de estado externo de transductores y cables',
+  'Revisión de imagen ecográfica (elementos transductor)',
+  'Revisión de procedimientos y procesos',
+  'Revisión y chequeo de periféricos y sus conexiones',
+  'Verificación de espacio disponible en unidades de almacenamiento',
+  'Verificación y actualización de software ALPINION',
+  'Revisión estado de licencias de software',
+  'Test de diagnóstico ALPINION',
+  'Test de encendido y apagado',
+  'Revisión de voltajes de red (entrada) y UPS (salida)',
+  'Upgrade de Software Alpinion',
+  'Entrega de informe digital del mantenimiento realizado',
+];
+
+export const CATEGORIAS_ATENCION = [
+  { id: 'facturable', label: 'Facturable' },
+  { id: 'garantia', label: 'Garantía' },
+  { id: 'mantencion', label: 'Mantención' },
+  { id: 'reparacion', label: 'Reparación' },
+  { id: 'visita_tecnica', label: 'Visita Técnica' },
+  { id: 'rep_s_tecnico', label: 'Rep. S. Técnico' },
+  { id: 'rep_terreno', label: 'Rep. Terreno' },
+];
+
 const DEFAULT_PROTOCOLS = {
-  mindray: [
-    'Verificar encendido y autotest',
-    'Revisar sensores SpO2 / ECG / NIBP',
-    'Calibrar NIBP según protocolo',
-    'Limpiar pantalla y carcasa',
-    'Verificar batería y carga',
-    'Registrar lecturas de control',
-  ],
-  'dräger': [
-    'Verificar encendido y alarmas',
-    'Revisar circuito / sensores de flujo',
-    'Comprobar fugas del sistema',
-    'Limpiar filtros y conexiones',
-    'Verificar batería de respaldo',
-    'Probar modos ventilatorios básicos',
-  ],
-  philips: [
-    'Verificar encendido y autotest',
-    'Revisar paddles / electrodos',
-    'Comprobar batería y carga',
-    'Probar descarga en modo de prueba',
-    'Limpiar equipo y accesorios',
-    'Verificar registro de eventos',
-  ],
-  biosystems: [
-    'Verificar encendido y estado del analizador',
-    'Revisar reactivos y controles',
-    'Ejecutar control de calidad',
-    'Limpiar bandeja / pipeteo',
-    'Verificar calibración vigente',
-    'Registrar resultados de control',
-  ],
-  'bd alaris': [
-    'Verificar encendido y pantalla',
-    'Revisar módulo de infusión',
-    'Probar oclusión / alarmas',
-    'Verificar batería',
-    'Limpiar carcasa y conectores',
-    'Comprobar precisión de flujo (si aplica)',
-  ],
-  generico: [
-    'Inspección visual general',
-    'Verificar encendido y funciones básicas',
-    'Revisar accesorios y cables',
-    'Limpiar superficies externas',
-    'Verificar alimentación / batería',
-    'Registrar observaciones',
-  ],
+  generico: PREVENTIVA_CHECKLIST,
+  alpinion: PREVENTIVA_CHECKLIST,
 };
 
 function normalizeMarca(marca) {
@@ -117,6 +103,26 @@ export async function ensureMantencionesSchema() {
         ADD COLUMN IF NOT EXISTS email_cliente VARCHAR(150);
       ALTER TABLE mantenciones_fichas
         ADD COLUMN IF NOT EXISTS proxima_mantencion DATE;
+      ALTER TABLE mantenciones_fichas
+        ADD COLUMN IF NOT EXISTS rut_cliente VARCHAR(30);
+      ALTER TABLE mantenciones_fichas
+        ADD COLUMN IF NOT EXISTS senores VARCHAR(200);
+      ALTER TABLE mantenciones_fichas
+        ADD COLUMN IF NOT EXISTS direccion VARCHAR(250);
+      ALTER TABLE mantenciones_fichas
+        ADD COLUMN IF NOT EXISTS ciudad_comuna VARCHAR(150);
+      ALTER TABLE mantenciones_fichas
+        ADD COLUMN IF NOT EXISTS telefono_cliente VARCHAR(50);
+      ALTER TABLE mantenciones_fichas
+        ADD COLUMN IF NOT EXISTS contacto_nombre VARCHAR(150);
+      ALTER TABLE mantenciones_fichas
+        ADD COLUMN IF NOT EXISTS version_sw VARCHAR(80);
+      ALTER TABLE mantenciones_fichas
+        ADD COLUMN IF NOT EXISTS motivo_atencion TEXT;
+      ALTER TABLE mantenciones_fichas
+        ADD COLUMN IF NOT EXISTS categorias JSONB NOT NULL DEFAULT '[]'::jsonb;
+      ALTER TABLE mantenciones_fichas
+        ADD COLUMN IF NOT EXISTS fotos JSONB NOT NULL DEFAULT '[]'::jsonb;
     `);
 
     await seedProtocolos();
@@ -128,20 +134,30 @@ export async function ensureMantencionesSchema() {
 }
 
 async function seedProtocolos() {
+  const preventivaItems = JSON.stringify(itemsFromLabels(PREVENTIVA_CHECKLIST));
   for (const [marca, labels] of Object.entries(DEFAULT_PROTOCOLS)) {
     const items = JSON.stringify(itemsFromLabels(labels));
     await pool.query(
-      `INSERT INTO protocolos_marca (marca, items)
-       VALUES ($1, $2::jsonb)
-       ON CONFLICT (marca) DO NOTHING`,
+      `INSERT INTO protocolos_marca (marca, items, activo)
+       VALUES ($1, $2::jsonb, TRUE)
+       ON CONFLICT (marca) DO UPDATE SET
+         items = EXCLUDED.items,
+         activo = TRUE,
+         actualizado_en = NOW()`,
       [marca, items]
     );
   }
+  // Checklist preventiva unificado (19 ítems) para protocolos previos
+  await pool.query(
+    `UPDATE protocolos_marca SET items = $1::jsonb, actualizado_en = NOW()`,
+    [preventivaItems]
+  );
 }
 
 export async function getProtocoloByMarca(marca) {
   await ensureMantencionesSchema();
-  const key = normalizeMarca(marca);
+  const raw = normalizeMarca(marca);
+  const key = raw.includes('alpinion') ? 'alpinion' : raw;
   let r = await pool.query(
     `SELECT * FROM protocolos_marca WHERE lower(marca) = $1 AND activo = TRUE LIMIT 1`,
     [key]
@@ -217,4 +233,4 @@ async function migrateLegacyMantenciones() {
   }
 }
 
-export { normalizeMarca, itemsFromLabels, DEFAULT_PROTOCOLS };
+export { normalizeMarca, itemsFromLabels, DEFAULT_PROTOCOLS, PREVENTIVA_CHECKLIST };
