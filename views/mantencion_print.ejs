@@ -83,12 +83,12 @@
     }
     .title-bar .t {
       flex: 1;
-      background: #111;
+      background: var(--orange);
       color: #fff;
       font-weight: 800;
       letter-spacing: 0.08em;
       font-size: 11pt;
-      padding: 6px 10px;
+      padding: 5px 10px;
       text-transform: uppercase;
     }
     .title-bar .n {
@@ -97,7 +97,7 @@
       align-items: center;
       justify-content: flex-end;
       gap: 8px;
-      padding: 4px 10px;
+      padding: 3px 10px;
       font-weight: 700;
       border-left: 1.5px solid #000;
     }
@@ -109,32 +109,37 @@
     }
     table.grid td {
       border: 1px solid #000;
-      padding: 4px 6px;
+      padding: 2px 5px;
       vertical-align: top;
     }
     .lbl {
-      font-size: 7.2pt;
+      font-size: 6.8pt;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.03em;
       color: #111;
+      line-height: 1.1;
     }
     .val {
-      font-size: 9.5pt;
-      min-height: 1.15em;
-      margin-top: 1px;
+      font-size: 9pt;
+      min-height: 0.95em;
+      margin-top: 0;
+      line-height: 1.15;
     }
     .cats {
-      width: 168px;
+      width: 150px;
+      padding: 3px 6px !important;
+      vertical-align: top;
     }
     .cat {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 8pt;
+      gap: 5px;
+      font-size: 7.5pt;
       font-weight: 700;
       text-transform: uppercase;
-      padding: 1px 0;
+      padding: 0.5px 0;
+      white-space: nowrap;
     }
     .boxx {
       width: 11px;
@@ -148,21 +153,29 @@
     }
     .boxx.on { background: #111; color: #fff; }
     .desc {
-      min-height: 92px;
+      min-height: 52px;
       white-space: pre-wrap;
-      font-size: 9.5pt;
+      font-size: 9pt;
     }
     .checks {
       width: 100%;
       border-collapse: collapse;
+      table-layout: fixed;
     }
     .checks td {
       border: 1px solid #000;
-      padding: 3px 6px;
-      font-size: 8.2pt;
-      vertical-align: top;
+      padding: 2px 5px;
+      font-size: 7.6pt;
+      vertical-align: middle;
+      width: 50%;
     }
-    .checks .n { width: 22px; text-align: center; font-weight: 800; }
+    .checks .item {
+      display: flex;
+      align-items: flex-start;
+      gap: 5px;
+      line-height: 1.2;
+    }
+    .checks .item .boxx { margin-top: 1px; }
     .photos {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -255,11 +268,11 @@
 
       <table class="grid">
         <tr>
-          <td style="width:28%">
+          <td style="width:36%">
             <div class="lbl">RUT</div>
             <div class="val"><%= f.rut_cliente || '—' %></div>
           </td>
-          <td style="width:22%">
+          <td style="width:36%">
             <div class="lbl">Fecha</div>
             <div class="val"><%= fechaTxt %></div>
           </td>
@@ -348,17 +361,29 @@
       <% if (f.tipo !== 'correctiva' && items.length) { %>
         <table class="checks" style="margin-top:-1px">
           <tr>
-            <td colspan="2" class="lbl" style="padding:5px 6px">Checklist mantención preventiva</td>
+            <td colspan="2" class="lbl" style="padding:4px 5px; width:auto">Checklist mantención preventiva</td>
           </tr>
-          <% items.forEach(function(it, i) { %>
+          <% for (let i = 0; i < items.length; i += 2) {
+               const left = items[i];
+               const right = items[i + 1];
+          %>
             <tr>
-              <td class="n"><%= i + 1 %></td>
               <td>
-                <span class="boxx <%= it.checked ? 'on' : '' %>" style="margin-right:6px"><%= it.checked ? '✓' : '' %></span>
-                <%= it.label || '' %>
+                <div class="item">
+                  <span class="boxx <%= left.checked ? 'on' : '' %>"><%= left.checked ? '✓' : '' %></span>
+                  <span><%= left.label || '' %></span>
+                </div>
+              </td>
+              <td>
+                <% if (right) { %>
+                  <div class="item">
+                    <span class="boxx <%= right.checked ? 'on' : '' %>"><%= right.checked ? '✓' : '' %></span>
+                    <span><%= right.label || '' %></span>
+                  </div>
+                <% } %>
               </td>
             </tr>
-          <% }) %>
+          <% } %>
         </table>
       <% } %>
 

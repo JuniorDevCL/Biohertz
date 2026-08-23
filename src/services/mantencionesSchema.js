@@ -4,7 +4,7 @@ import { getFotosRoot } from './mantencionesFotos.js';
 
 const PREVENTIVA_CHECKLIST = [
   'Revisión estado de Sistema Operativo Windows',
-  'Calibración general y test de operación de acuerdo a lo establecido por el fabricante',
+  'Calibración general y test de operación',
   'Test de funcionamiento software',
   'Revisión, ajuste y limpieza de conectores internos y externos',
   'Revisión y limpieza de fuente de poder',
@@ -14,7 +14,7 @@ const PREVENTIVA_CHECKLIST = [
   'Revisión de imagen ecográfica (elementos transductor)',
   'Revisión de procedimientos y procesos',
   'Revisión y chequeo de periféricos y sus conexiones',
-  'Verificación de espacio disponible en unidades de almacenamiento',
+  'Verificación de espacio disponible en HDD y SSD',
   'Verificación y actualización de software ALPINION',
   'Revisión estado de licencias de software',
   'Test de diagnóstico ALPINION',

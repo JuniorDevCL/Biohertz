@@ -348,7 +348,6 @@
       row.innerHTML =
         '<input type="checkbox" class="mt-1 accent-teal-400 scale-125" data-idx="' + idx + '" ' +
           (item.checked ? 'checked' : '') + ' ' + (readonly ? 'disabled' : '') + '>' +
-        '<span class="text-[11px] text-slate-500 w-5 shrink-0">' + (idx + 1) + '.</span>' +
         '<span class="text-sm text-slate-200 leading-snug">' + (item.label || '') + '</span>';
       if (!readonly) {
         row.querySelector('input').addEventListener('change', (e) => {
