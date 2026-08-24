@@ -161,13 +161,20 @@
       width: 100%;
       border-collapse: collapse;
       table-layout: fixed;
+      border: 1px solid #000;
     }
     .checks td {
-      border: 1px solid #000;
+      border: none;
       padding: 2px 5px;
       font-size: 7.6pt;
       vertical-align: middle;
       width: 50%;
+    }
+    .checks td + td {
+      border-left: 1px solid #000;
+    }
+    .checks .checks-title {
+      font-weight: 800;
     }
     .checks .item {
       display: flex;
@@ -196,15 +203,15 @@
     }
     .sig {
       border: 1.5px solid #000;
-      min-height: 108px;
-      padding: 6px 8px;
+      min-height: 72px;
+      padding: 4px 8px 5px;
       display: flex;
       flex-direction: column;
     }
     .sig + .sig { border-left: none; }
     .sig .who { font-size: 7.5pt; font-weight: 800; text-transform: uppercase; }
-    .sig img { max-height: 58px; max-width: 100%; object-fit: contain; margin: 8px auto; background: #fff; }
-    .sig .name { margin-top: auto; font-size: 9pt; font-weight: 700; border-top: 1px solid #000; padding-top: 4px; }
+    .sig img { max-height: 38px; max-width: 100%; object-fit: contain; margin: 4px auto 2px; background: #fff; }
+    .sig .name { margin-top: auto; font-size: 9pt; font-weight: 700; padding-top: 2px; }
     .foot {
       margin-top: 8px;
       border: 1.5px solid #000;
@@ -361,7 +368,7 @@
       <% if (f.tipo !== 'correctiva' && items.length) { %>
         <table class="checks" style="margin-top:-1px">
           <tr>
-            <td colspan="2" class="lbl" style="padding:4px 5px; width:auto">Checklist mantención preventiva</td>
+            <td colspan="2" class="lbl checks-title" style="padding:4px 5px; width:auto">Checklist mantención preventiva</td>
           </tr>
           <% for (let i = 0; i < items.length; i += 2) {
                const left = items[i];
