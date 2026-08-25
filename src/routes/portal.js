@@ -96,6 +96,7 @@ router.get('/', portalRequired, async (req, res) => {
     await ensurePortalSchema();
     await ensureMantencionesSchema();
     const clienteId = req.portalUser.cliente_id;
+    const portalEmail = String(req.portalUser.email || '').trim().toLowerCase();
 
     const equiposRes = await pool.query(
       `SELECT e.id, e.nombre, e.marca, e.modelo, e.numero_serie, e.ubicacion, e.estado,
@@ -105,27 +106,32 @@ router.get('/', portalRequired, async (req, res) => {
                 WHERE m.equipo_id = e.id
                   AND m.estado = 'firmada'
                   AND m.proxima_mantencion IS NOT NULL
+                  AND lower(trim(m.email_cliente)) = $2
                 ORDER BY m.proxima_mantencion ASC
                 LIMIT 1
               ) AS proxima_mantencion,
               (
                 SELECT m.fecha
                 FROM mantenciones_fichas m
-                WHERE m.equipo_id = e.id AND m.estado = 'firmada'
+                WHERE m.equipo_id = e.id
+                  AND m.estado = 'firmada'
+                  AND lower(trim(m.email_cliente)) = $2
                 ORDER BY COALESCE(m.fecha, m.firmada_en::date) DESC NULLS LAST, m.id DESC
                 LIMIT 1
               ) AS ultima_mantencion,
               (
                 SELECT m.id
                 FROM mantenciones_fichas m
-                WHERE m.equipo_id = e.id AND m.estado = 'firmada'
+                WHERE m.equipo_id = e.id
+                  AND m.estado = 'firmada'
+                  AND lower(trim(m.email_cliente)) = $2
                 ORDER BY COALESCE(m.fecha, m.firmada_en::date) DESC NULLS LAST, m.id DESC
                 LIMIT 1
               ) AS ultima_ficha_id
        FROM equipos e
        WHERE e.cliente_id = $1
        ORDER BY e.nombre ASC`,
-      [clienteId]
+      [clienteId, portalEmail]
     );
 
     if (req.portalUser.id) {
@@ -149,6 +155,7 @@ router.get('/equipos/:id', portalRequired, async (req, res) => {
     await ensurePortalSchema();
     await ensureMantencionesSchema();
     const clienteId = req.portalUser.cliente_id;
+    const portalEmail = String(req.portalUser.email || '').trim().toLowerCase();
     const equipoId = Number(req.params.id);
 
     const eq = await pool.query(
@@ -164,9 +171,11 @@ router.get('/equipos/:id', portalRequired, async (req, res) => {
     const fichas = await pool.query(
       `SELECT id, tipo, estado, fecha, hora, trabajo, realizado_por, proxima_mantencion, firmada_en, email_cliente
        FROM mantenciones_fichas
-       WHERE equipo_id = $1 AND estado = 'firmada'
+       WHERE equipo_id = $1
+         AND estado = 'firmada'
+         AND lower(trim(email_cliente)) = $2
        ORDER BY COALESCE(fecha, firmada_en::date) DESC NULLS LAST, id DESC`,
-      [equipoId]
+      [equipoId, portalEmail]
     );
 
     res.render('portal_equipo', {
@@ -187,6 +196,7 @@ router.get('/fichas/:id', portalRequired, async (req, res) => {
     await ensurePortalSchema();
     await ensureMantencionesSchema();
     const clienteId = req.portalUser.cliente_id;
+    const portalEmail = String(req.portalUser.email || '').trim().toLowerCase();
     const fichaId = Number(req.params.id);
 
     const result = await pool.query(
@@ -201,8 +211,9 @@ router.get('/fichas/:id', portalRequired, async (req, res) => {
        INNER JOIN equipos e ON e.id = m.equipo_id
        WHERE m.id = $1
          AND m.estado = 'firmada'
-         AND e.cliente_id = $2`,
-      [fichaId, clienteId]
+         AND e.cliente_id = $2
+         AND lower(trim(m.email_cliente)) = $3`,
+      [fichaId, clienteId, portalEmail]
     );
 
     if (result.rowCount === 0) {

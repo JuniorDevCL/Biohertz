@@ -161,13 +161,21 @@
       width: 100%;
       border-collapse: collapse;
       table-layout: fixed;
+      border: 1px solid #000;
     }
     .checks td {
-      border: 1px solid #000;
+      border: none;
+      border-right: 1px solid #000;
       padding: 2px 5px;
       font-size: 7.6pt;
       vertical-align: middle;
       width: 50%;
+    }
+    .checks tr:first-child td {
+      border-bottom: 1px solid #000;
+    }
+    .checks td:last-child {
+      border-right: none;
     }
     .checks .item {
       display: flex;
@@ -196,15 +204,15 @@
     }
     .sig {
       border: 1.5px solid #000;
-      min-height: 108px;
-      padding: 6px 8px;
+      min-height: 72px;
+      padding: 4px 8px 6px;
       display: flex;
       flex-direction: column;
     }
     .sig + .sig { border-left: none; }
     .sig .who { font-size: 7.5pt; font-weight: 800; text-transform: uppercase; }
-    .sig img { max-height: 58px; max-width: 100%; object-fit: contain; margin: 8px auto; background: #fff; }
-    .sig .name { margin-top: auto; font-size: 9pt; font-weight: 700; border-top: 1px solid #000; padding-top: 4px; }
+    .sig img { max-height: 42px; max-width: 100%; object-fit: contain; margin: 4px auto; background: #fff; }
+    .sig .name { margin-top: auto; font-size: 9pt; font-weight: 700; padding-top: 2px; }
     .foot {
       margin-top: 8px;
       border: 1.5px solid #000;

@@ -64,12 +64,18 @@ async function canAccessFichaFoto(req, fichaId) {
   const portal = req.session?.portalUser;
   if (!portal?.cliente_id) return false;
 
+  const portalEmail = String(portal.email || '').trim().toLowerCase();
+  if (!portalEmail) return false;
+
   const r = await pool.query(
     `SELECT m.id
      FROM mantenciones_fichas m
      INNER JOIN equipos e ON e.id = m.equipo_id
-     WHERE m.id = $1 AND e.cliente_id = $2 AND m.estado = 'firmada'`,
-    [fichaId, portal.cliente_id]
+     WHERE m.id = $1
+       AND e.cliente_id = $2
+       AND m.estado = 'firmada'
+       AND lower(trim(m.email_cliente)) = $3`,
+    [fichaId, portal.cliente_id, portalEmail]
   );
   return r.rowCount > 0;
 }
