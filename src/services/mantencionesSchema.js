@@ -27,11 +27,11 @@ const PREVENTIVA_CHECKLIST = [
 export const CATEGORIAS_ATENCION = [
   { id: 'facturable', label: 'Facturable' },
   { id: 'garantia', label: 'Garantía' },
-  { id: 'mantencion', label: 'Mantención' },
-  { id: 'reparacion', label: 'Reparación' },
+  { id: 'mantencion', label: 'Mantención Preventiva' },
+  { id: 'reparacion', label: 'Mantención Correctiva' },
   { id: 'visita_tecnica', label: 'Visita Técnica' },
-  { id: 'rep_s_tecnico', label: 'Rep. S. Técnico' },
-  { id: 'rep_terreno', label: 'Rep. Terreno' },
+  { id: 'rep_s_tecnico', label: 'Reparación BH' },
+  { id: 'rep_terreno', label: 'Reparación In-Situ' },
 ];
 
 const DEFAULT_PROTOCOLS = {

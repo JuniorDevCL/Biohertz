@@ -6,7 +6,7 @@ import {
   touchPortalAccess,
   authenticatePortalUser,
 } from '../services/portalSchema.js';
-import { ensureMantencionesSchema } from '../services/mantencionesSchema.js';
+import { ensureMantencionesSchema, CATEGORIAS_ATENCION } from '../services/mantencionesSchema.js';
 import { attachFichaFotos } from '../services/mantencionesFotos.js';
 
 const router = Router();
@@ -228,15 +228,7 @@ router.get('/fichas/:id', portalRequired, async (req, res) => {
       ficha,
       user: null,
       portalBack: '/portal/equipos/' + ficha.equipo_id,
-      categoriasAtencion: [
-        { id: 'facturable', label: 'Facturable' },
-        { id: 'garantia', label: 'Garantía' },
-        { id: 'mantencion', label: 'Mantención' },
-        { id: 'reparacion', label: 'Reparación' },
-        { id: 'visita_tecnica', label: 'Visita Técnica' },
-        { id: 'rep_s_tecnico', label: 'Rep. S. Técnico' },
-        { id: 'rep_terreno', label: 'Rep. Terreno' },
-      ],
+      categoriasAtencion: CATEGORIAS_ATENCION,
     });
   } catch (err) {
     console.error('Error portal ficha:', err);
