@@ -54,8 +54,37 @@ function parseJsonArray(value, fallback = []) {
 
 const CATEGORIA_IDS = new Set(CATEGORIAS_ATENCION.map((c) => c.id));
 
+/** Campos de texto editables en fichas firmadas (nunca firmas/fotos/checklist/estado). */
+const TEXTO_EDITABLE_FIELDS = [
+  'rut_cliente',
+  'senores',
+  'direccion',
+  'ciudad_comuna',
+  'telefono_cliente',
+  'contacto_nombre',
+  'email_cliente',
+  'version_sw',
+  'motivo_atencion',
+  'dano_descripcion',
+  'trabajo',
+  'nota',
+  'realizado_por',
+  'firmante_cliente',
+  'proxima_mantencion',
+];
+
 function sanitizeCategorias(value) {
   return parseJsonArray(value).filter((id) => CATEGORIA_IDS.has(String(id))).slice(0, 8);
+}
+
+function pickTextoEdits(body = {}) {
+  const out = {};
+  for (const key of TEXTO_EDITABLE_FIELDS) {
+    if (Object.prototype.hasOwnProperty.call(body, key)) {
+      out[key] = body[key];
+    }
+  }
+  return out;
 }
 
 async function canAccessFichaFoto(req, fichaId) {
@@ -308,6 +337,42 @@ router.get('/fotos/:fichaId/:archivo', async (req, res) => {
   }
 });
 
+router.get('/:id/editar-textos', authRequired, async (req, res) => {
+  try {
+    await ensureMantencionesSchema();
+    const { id } = req.params;
+    const result = await pool.query(
+      `SELECT m.*,
+              e.nombre AS equipo_nombre,
+              e.marca AS equipo_marca,
+              e.modelo AS equipo_modelo,
+              e.numero_serie AS equipo_serie,
+              e.cliente AS equipo_cliente
+       FROM mantenciones_fichas m
+       LEFT JOIN equipos e ON e.id = m.equipo_id
+       WHERE m.id = $1`,
+      [id]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).send('Ficha no encontrada');
+    }
+
+    const ficha = mapFichaRow(result.rows[0], { withFotos: false });
+    if (ficha.estado !== 'firmada') {
+      return res.redirect('/mantenciones/' + id);
+    }
+
+    res.render('mantencion_editar_textos', {
+      title: `Editar textos Nº ${String(ficha.id).padStart(5, '0')} - Biohertz`,
+      user: req.user || req.session.user,
+      ficha,
+    });
+  } catch (err) {
+    console.error('Error abriendo edición de textos:', err);
+    res.status(500).send('Error al abrir edición de textos');
+  }
+});
+
 router.get('/:id', authRequired, async (req, res) => {
   try {
     await ensureMantencionesSchema();
@@ -524,6 +589,107 @@ router.post('/', authRequired, async (req, res) => {
   }
 });
 
+router.patch('/:id/textos', authRequired, async (req, res) => {
+  try {
+    await ensureMantencionesSchema();
+    const { id } = req.params;
+    const current = await pool.query('SELECT * FROM mantenciones_fichas WHERE id = $1', [id]);
+    if (current.rowCount === 0) {
+      return res.status(404).json({ error: 'Ficha no encontrada' });
+    }
+    if (current.rows[0].estado !== 'firmada') {
+      return res.status(400).json({
+        error: 'Usa la edición normal del borrador; este endpoint es solo para fichas firmadas',
+      });
+    }
+
+    const edits = pickTextoEdits(req.body || {});
+    if (!Object.keys(edits).length) {
+      return res.status(400).json({ error: 'No hay textos para actualizar' });
+    }
+
+    const row = current.rows[0];
+    const next = { ...row };
+    for (const key of TEXTO_EDITABLE_FIELDS) {
+      if (!Object.prototype.hasOwnProperty.call(edits, key)) continue;
+      if (key === 'email_cliente') {
+        next.email_cliente = normalizeEmail(edits.email_cliente);
+      } else if (key === 'proxima_mantencion') {
+        const raw = edits.proxima_mantencion;
+        next.proxima_mantencion = raw === null || raw === undefined || String(raw).trim() === ''
+          ? null
+          : String(raw).slice(0, 10);
+      } else {
+        const val = edits[key];
+        next[key] = val === null || val === undefined ? '' : String(val);
+      }
+    }
+
+    const updated = await pool.query(
+      `UPDATE mantenciones_fichas SET
+         rut_cliente = $1,
+         senores = $2,
+         direccion = $3,
+         ciudad_comuna = $4,
+         telefono_cliente = $5,
+         contacto_nombre = $6,
+         email_cliente = $7,
+         version_sw = $8,
+         motivo_atencion = $9,
+         dano_descripcion = $10,
+         trabajo = $11,
+         nota = $12,
+         realizado_por = $13,
+         firmante_cliente = $14,
+         proxima_mantencion = $15::date,
+         actualizado_en = NOW()
+       WHERE id = $16
+         AND estado = 'firmada'
+       RETURNING *`,
+      [
+        next.rut_cliente || null,
+        next.senores || null,
+        next.direccion || null,
+        next.ciudad_comuna || null,
+        next.telefono_cliente || null,
+        next.contacto_nombre || null,
+        next.email_cliente || null,
+        next.version_sw || null,
+        next.motivo_atencion || null,
+        next.dano_descripcion || null,
+        next.trabajo || null,
+        next.nota || null,
+        next.realizado_por || null,
+        next.firmante_cliente || null,
+        next.proxima_mantencion || null,
+        id,
+      ]
+    );
+
+    if (updated.rowCount === 0) {
+      return res.status(409).json({ error: 'No se pudo actualizar: la ficha ya no está firmada' });
+    }
+
+    const updatedRow = updated.rows[0];
+    // Garantía: este UPDATE no toca firmas ni estado
+    if (
+      updatedRow.estado !== 'firmada' ||
+      updatedRow.firma_tecnico !== row.firma_tecnico ||
+      updatedRow.firma_cliente !== row.firma_cliente
+    ) {
+      console.error('[mantenciones] integridad textos: se detectó cambio inesperado en ficha', id);
+      return res.status(500).json({ error: 'Error de integridad al guardar textos' });
+    }
+
+    const ficha = mapFichaRow(updatedRow);
+    await prepareFichaFotos(ficha);
+    res.json(ficha);
+  } catch (err) {
+    console.error('Error actualizando textos de mantención:', err);
+    res.status(500).json({ error: 'Error al actualizar textos' });
+  }
+});
+
 router.patch('/:id', authRequired, async (req, res) => {
   try {
     await ensureMantencionesSchema();
@@ -531,7 +697,9 @@ router.patch('/:id', authRequired, async (req, res) => {
     const current = await pool.query('SELECT * FROM mantenciones_fichas WHERE id = $1', [id]);
     if (current.rowCount === 0) return res.status(404).json({ error: 'Ficha no encontrada' });
     if (current.rows[0].estado === 'firmada') {
-      return res.status(403).json({ error: 'La ficha firmada no se puede editar' });
+      return res.status(403).json({
+        error: 'La ficha firmada no se puede editar por completo. Usa /mantenciones/' + id + '/editar-textos',
+      });
     }
 
     const {

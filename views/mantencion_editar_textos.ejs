@@ -1,0 +1,179 @@
+<%
+  const f = ficha;
+  const nro = String(f.id).padStart(5, '0');
+%>
+<div class="max-w-3xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
+  <div class="mb-6">
+    <a href="/mantenciones/<%= f.id %>" class="text-slate-400 hover:text-white text-sm inline-flex items-center mb-3">
+      <i class="ph ph-arrow-left mr-1.5"></i> Volver a la ficha
+    </a>
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Editar textos · Nº <%= nro %></h1>
+        <p class="text-slate-400 text-sm mt-1">
+          Solo se actualizan los textos. Firmas, fotos, checklist y estado firmado se mantienen intactos.
+        </p>
+      </div>
+      <span class="inline-flex self-start px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+        Firmada · firmas bloqueadas
+      </span>
+    </div>
+  </div>
+
+  <form id="editar-textos-form" class="space-y-5">
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+      <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Datos del cliente</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 uppercase">RUT</label>
+          <input type="text" name="rut_cliente" value="<%= f.rut_cliente || '' %>"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 uppercase">Señor(es)</label>
+          <input type="text" name="senores" value="<%= f.senores || '' %>"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 uppercase">Dirección</label>
+          <input type="text" name="direccion" value="<%= f.direccion || '' %>"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 uppercase">Ciudad - Comuna</label>
+          <input type="text" name="ciudad_comuna" value="<%= f.ciudad_comuna || '' %>"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 uppercase">Teléfono</label>
+          <input type="text" name="telefono_cliente" value="<%= f.telefono_cliente || '' %>"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 uppercase">Contacto</label>
+          <input type="text" name="contacto_nombre" value="<%= f.contacto_nombre || '' %>"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs text-slate-400 mb-1 uppercase">E-mail</label>
+          <input type="email" name="email_cliente" value="<%= f.email_cliente || '' %>"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+      <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Motivo y descripción</h2>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1 uppercase">Versión S/W</label>
+        <input type="text" name="version_sw" value="<%= f.version_sw || '' %>"
+          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1 uppercase">Motivo de atención</label>
+        <input type="text" name="motivo_atencion" value="<%= f.motivo_atencion || '' %>"
+          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+      </div>
+      <% if (f.tipo === 'correctiva') { %>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 uppercase">Daño / motivo (correctiva)</label>
+          <textarea name="dano_descripcion" rows="3"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f.dano_descripcion || '' %></textarea>
+        </div>
+      <% } else { %>
+        <input type="hidden" name="dano_descripcion" value="<%= f.dano_descripcion || '' %>">
+      <% } %>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1 uppercase">Descripción de trabajos</label>
+        <textarea name="trabajo" rows="4"
+          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f.trabajo || '' %></textarea>
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1 uppercase">Observaciones</label>
+        <textarea name="nota" rows="2"
+          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f.nota || '' %></textarea>
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1 uppercase">Realizado por</label>
+        <input type="text" name="realizado_por" value="<%= f.realizado_por || '' %>"
+          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1 uppercase">Nombre del cliente que firmó</label>
+        <input type="text" name="firmante_cliente" value="<%= f.firmante_cliente || '' %>"
+          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+        <p class="text-[11px] text-slate-500 mt-1">Solo el nombre visible. La firma gráfica no se modifica.</p>
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1 uppercase">Próxima mantención</label>
+        <input type="date" name="proxima_mantencion"
+          value="<%= f.proxima_mantencion ? String(f.proxima_mantencion).slice(0,10) : '' %>"
+          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
+      </div>
+    </section>
+
+    <div class="sticky bottom-0 -mx-4 sm:mx-0 px-4 sm:px-0 py-3 bg-gradient-to-t from-[#070b12] via-[#070b12] to-transparent">
+      <div class="flex flex-col sm:flex-row gap-2">
+        <a href="/mantenciones/<%= f.id %>" class="flex-1 text-center px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-sm font-medium">
+          Cancelar
+        </a>
+        <button type="submit" id="btn-guardar-textos" class="flex-1 px-4 py-3 rounded-xl text-sm font-semibold" style="background:linear-gradient(180deg,#2dd4bf,#14b8a6);color:#042f2e">
+          Guardar textos
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+(() => {
+  const fichaId = <%= Number(f.id) %>;
+  const form = document.getElementById('editar-textos-form');
+  const btn = document.getElementById('btn-guardar-textos');
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const fd = new FormData(form);
+    const payload = {
+      rut_cliente: fd.get('rut_cliente') || '',
+      senores: fd.get('senores') || '',
+      direccion: fd.get('direccion') || '',
+      ciudad_comuna: fd.get('ciudad_comuna') || '',
+      telefono_cliente: fd.get('telefono_cliente') || '',
+      contacto_nombre: fd.get('contacto_nombre') || '',
+      email_cliente: fd.get('email_cliente') || '',
+      version_sw: fd.get('version_sw') || '',
+      motivo_atencion: fd.get('motivo_atencion') || '',
+      dano_descripcion: fd.get('dano_descripcion') || '',
+      trabajo: fd.get('trabajo') || '',
+      nota: fd.get('nota') || '',
+      realizado_por: fd.get('realizado_por') || '',
+      firmante_cliente: fd.get('firmante_cliente') || '',
+      proxima_mantencion: fd.get('proxima_mantencion') || '',
+    };
+
+    btn.disabled = true;
+    btn.textContent = 'Guardando…';
+    try {
+      const res = await fetch('/mantenciones/' + fichaId + '/textos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || ('Error ' + res.status));
+        btn.disabled = false;
+        btn.textContent = 'Guardar textos';
+        return;
+      }
+      window.location.href = '/mantenciones/' + fichaId;
+    } catch (e) {
+      console.error(e);
+      alert('Error de conexión');
+      btn.disabled = false;
+      btn.textContent = 'Guardar textos';
+    }
+  });
+})();
+</script>

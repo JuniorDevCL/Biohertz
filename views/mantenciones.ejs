@@ -91,11 +91,17 @@
                                 </td>
                                 <td class="py-3 px-4 text-slate-300"><%= f.realizado_por || '-' %></td>
                                 <td class="py-3 px-4 text-right">
-                                    <div class="inline-flex items-center gap-2">
+                                    <div class="inline-flex items-center gap-2 flex-wrap justify-end">
                                         <a href="/mantenciones/<%= f.id %>" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs border border-slate-600">
                                             <i class="ph <%= f.estado === 'firmada' ? 'ph-file-pdf' : 'ph-pencil-simple' %> mr-1.5"></i>
                                             <%= f.estado === 'firmada' ? 'Ver ficha' : 'Continuar' %>
                                         </a>
+                                        <% if (f.estado === 'firmada') { %>
+                                            <a href="/mantenciones/<%= f.id %>/editar-textos" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-teal-600/20 hover:bg-teal-600/40 text-teal-200 text-xs border border-teal-500/40">
+                                                <i class="ph ph-text-aa mr-1.5"></i>
+                                                Editar textos
+                                            </a>
+                                        <% } %>
                                         <button
                                             type="button"
                                             onclick="eliminarFicha(<%= f.id %>)"

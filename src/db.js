@@ -27,14 +27,16 @@ function loadStore() {
     if (typeof obj.seq.comentarios !== 'number') obj.seq.comentarios = 1;
     if (typeof obj.seq.equipos !== 'number') obj.seq.equipos = 1;
     if (typeof obj.seq.clientes !== 'number') obj.seq.clientes = 1;
+    if (typeof obj.seq.mantenciones_fichas !== 'number') obj.seq.mantenciones_fichas = 1;
     if (!Array.isArray(obj.usuarios)) obj.usuarios = [];
     if (!Array.isArray(obj.tickets)) obj.tickets = [];
     if (!Array.isArray(obj.comentarios)) obj.comentarios = [];
     if (!Array.isArray(obj.equipos)) obj.equipos = [];
     if (!Array.isArray(obj.clientes)) obj.clientes = [];
+    if (!Array.isArray(obj.mantenciones_fichas)) obj.mantenciones_fichas = [];
     return obj;
   } catch {
-    return { seq: { usuarios: 1, tickets: 1, comentarios: 1, equipos: 1, clientes: 1 }, usuarios: [], tickets: [], comentarios: [], equipos: [], clientes: [] };
+    return { seq: { usuarios: 1, tickets: 1, comentarios: 1, equipos: 1, clientes: 1, mantenciones_fichas: 1 }, usuarios: [], tickets: [], comentarios: [], equipos: [], clientes: [], mantenciones_fichas: [] };
   }
 }
 
@@ -511,6 +513,107 @@ if (isOffline) {
         c.actualizado_en = nowISO();
         saveStore(store);
         return { rows: [c], rowCount: 1 };
+      }
+
+      // --- Mantenciones fichas (offline mínimo) ---
+      if (!Array.isArray(store.mantenciones_fichas)) store.mantenciones_fichas = [];
+      if (typeof store.seq.mantenciones_fichas !== 'number') store.seq.mantenciones_fichas = 1;
+
+      if (s.includes('CREATE TABLE IF NOT EXISTS protocolos_marca') || s.includes('CREATE TABLE IF NOT EXISTS mantenciones_fichas')) {
+        return { rows: [], rowCount: 0 };
+      }
+      if (s.includes('ALTER TABLE mantenciones_fichas')) {
+        return { rows: [], rowCount: 0 };
+      }
+      if (s.includes('INSERT INTO protocolos_marca') || s.includes('FROM protocolos_marca')) {
+        return { rows: [], rowCount: 0 };
+      }
+
+      if (s.startsWith('SELECT * FROM mantenciones_fichas WHERE id =')) {
+        const [id] = params;
+        const m = store.mantenciones_fichas.find(x => String(x.id) === String(id));
+        return { rows: m ? [m] : [], rowCount: m ? 1 : 0 };
+      }
+
+      if (s.includes('FROM mantenciones_fichas m') && s.includes('WHERE m.id =')) {
+        const [id] = params;
+        const m = store.mantenciones_fichas.find(x => String(x.id) === String(id));
+        if (!m) return { rows: [], rowCount: 0 };
+        const e = store.equipos.find(x => String(x.id) === String(m.equipo_id));
+        const row = {
+          ...m,
+          equipo_nombre: e?.nombre || null,
+          equipo_marca: e?.marca || null,
+          equipo_modelo: e?.modelo || null,
+          equipo_serie: e?.numero_serie || null,
+          equipo_cliente: e?.cliente || null,
+          equipo_cliente_id: e?.cliente_id ?? null,
+        };
+        return { rows: [row], rowCount: 1 };
+      }
+
+      if (s.includes('FROM mantenciones_fichas m') && s.includes('ORDER BY')) {
+        const rows = store.mantenciones_fichas.slice().sort((a, b) => Number(b.id) - Number(a.id)).map(m => {
+          const e = store.equipos.find(x => String(x.id) === String(m.equipo_id));
+          return {
+            ...m,
+            equipo_nombre: e?.nombre || null,
+            equipo_marca: e?.marca || null,
+            equipo_modelo: e?.modelo || null,
+            equipo_serie: e?.numero_serie || null,
+            equipo_cliente: e?.cliente || null,
+          };
+        });
+        return { rows, rowCount: rows.length };
+      }
+
+      if (s.startsWith('UPDATE mantenciones_fichas SET') && s.includes('rut_cliente = $1') && s.includes("estado = 'firmada'")) {
+        const id = params[15];
+        const m = store.mantenciones_fichas.find(x => String(x.id) === String(id) && x.estado === 'firmada');
+        if (!m) return { rows: [], rowCount: 0 };
+        const firmaT = m.firma_tecnico;
+        const firmaC = m.firma_cliente;
+        const estado = m.estado;
+        const checklist = m.checklist;
+        const fotos = m.fotos;
+        const categorias = m.categorias;
+        Object.assign(m, {
+          rut_cliente: params[0],
+          senores: params[1],
+          direccion: params[2],
+          ciudad_comuna: params[3],
+          telefono_cliente: params[4],
+          contacto_nombre: params[5],
+          email_cliente: params[6],
+          version_sw: params[7],
+          motivo_atencion: params[8],
+          dano_descripcion: params[9],
+          trabajo: params[10],
+          nota: params[11],
+          realizado_por: params[12],
+          firmante_cliente: params[13],
+          proxima_mantencion: params[14],
+          actualizado_en: nowISO(),
+        });
+        // Preservar bloqueados
+        m.firma_tecnico = firmaT;
+        m.firma_cliente = firmaC;
+        m.estado = estado;
+        m.checklist = checklist;
+        m.fotos = fotos;
+        m.categorias = categorias;
+        saveStore(store);
+        return { rows: [m], rowCount: 1 };
+      }
+
+      if (s.startsWith('DELETE FROM mantenciones_fichas')) {
+        const [id] = params;
+        const idx = store.mantenciones_fichas.findIndex(x => String(x.id) === String(id));
+        if (idx === -1) return { rows: [], rowCount: 0 };
+        const deleted = store.mantenciones_fichas[idx];
+        store.mantenciones_fichas.splice(idx, 1);
+        saveStore(store);
+        return { rows: [deleted], rowCount: 1 };
       }
 
 
