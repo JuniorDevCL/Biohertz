@@ -26,11 +26,11 @@ function mapFichaRow(row, { withFotos = true } = {}) {
   if (!row) return null;
   const ficha = {
     ...row,
-    checklist: Array.isArray(row.checklist) ? row.checklist : [],
-    categorias: Array.isArray(row.categorias) ? row.categorias : [],
+    checklist: parseJsonArray(row.checklist, []),
+    categorias: parseJsonArray(row.categorias, []),
   };
   if (withFotos) {
-    ficha.fotos = Array.isArray(row.fotos) ? row.fotos : [];
+    ficha.fotos = parseJsonArray(row.fotos, []);
   }
   return ficha;
 }
@@ -41,6 +41,10 @@ async function prepareFichaFotos(ficha) {
 
 function parseJsonArray(value, fallback = []) {
   if (Array.isArray(value)) return value;
+  if (value && typeof value === 'object') {
+    // pg a veces entrega objetos indexados; no es array
+    return fallback;
+  }
   if (typeof value === 'string') {
     try {
       const parsed = JSON.parse(value);
@@ -449,13 +453,24 @@ router.get('/:id', authRequired, async (req, res) => {
       cliente_id: ficha.equipo_cliente_id,
     };
 
+    let checklistEdit = Array.isArray(ficha.checklist) ? ficha.checklist : [];
+    // Borrador preventiva sin ítems: rehidratar protocolo para que se pueda marcar
+    if (
+      ficha.estado === 'borrador' &&
+      ficha.tipo !== 'correctiva' &&
+      (!checklistEdit.length)
+    ) {
+      const protocolo = await getProtocoloByMarca(equipo.marca);
+      checklistEdit = checklistTemplateFromProtocolo(protocolo);
+    }
+
     res.render('mantencion_ficha', {
       title: `Mantención #${ficha.id} - Biohertz`,
       user: req.user || req.session.user,
       ficha,
       equipos: equiposRes.rows,
       equipo,
-      checklist: ficha.checklist || [],
+      checklist: checklistEdit,
       emailClientePrefill: ficha.email_cliente || '',
       clientePrefill: {},
       categoriasAtencion: CATEGORIAS_ATENCION,
