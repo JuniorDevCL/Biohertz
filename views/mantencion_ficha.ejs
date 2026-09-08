@@ -36,9 +36,13 @@
         <i class="ph ph-arrow-left mr-1.5"></i> Volver a Mantenciones
       </a>
       <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-        <%= f ? (isReadonly ? 'Ficha firmada' : 'Continuar ficha') : 'Nueva ficha de mantención' %>
+        <%= f ? (isReadonly ? 'Ficha firmada' : ('Continuar ficha Nº ' + String(f.id).padStart(5, '0'))) : 'Nueva ficha de mantención' %>
       </h1>
-      <p class="text-slate-400 text-sm mt-1">Ficha tipo Atención a clientes Biohertz: checklist, fotos y firmas en tablet.</p>
+      <p class="text-slate-400 text-sm mt-1">
+        <%= f && f.estado === 'borrador'
+          ? 'Borrador editable: puedes cambiar cualquier campo, guardar firmas parciales y firmar cuando esté listo.'
+          : 'Ficha tipo Atención a clientes Biohertz: checklist, fotos y firmas en tablet.' %>
+      </p>
     </div>
     <% if (f && f.estado === 'firmada') { %>
       <span class="inline-flex self-start px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Firmada · bloqueada</span>
@@ -52,14 +56,14 @@
       <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Equipo y tipo</h2>
       <div class="space-y-2">
         <label class="block text-xs text-slate-400 mb-1 uppercase">Equipo</label>
-        <% if (isReadonly || f) { %>
+        <% if (isReadonly) { %>
           <input type="hidden" name="equipo_id" id="equipo_id" value="<%= f ? f.equipo_id : (equipo ? equipo.id : '') %>">
           <div class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
             <% const eqLocked = equipo || (f && { nombre: f.equipo_nombre, marca: f.equipo_marca, modelo: f.equipo_modelo, numero_serie: f.equipo_serie }); %>
             <%= eqLocked ? ([eqLocked.nombre, [eqLocked.marca, eqLocked.modelo].filter(Boolean).join(' '), eqLocked.numero_serie ? 'Serie: ' + eqLocked.numero_serie : ''].filter(Boolean).join(' · ')) : 'Equipo' %>
           </div>
         <% } else { %>
-          <input type="hidden" name="equipo_id" id="equipo_id" value="<%= equipo ? equipo.id : '' %>" required>
+          <input type="hidden" name="equipo_id" id="equipo_id" value="<%= f ? f.equipo_id : (equipo ? equipo.id : '') %>" required>
           <div class="relative">
             <div class="flex gap-2">
               <div class="relative flex-1">
@@ -69,20 +73,21 @@
                   id="equipo-serie-search"
                   autocomplete="off"
                   placeholder="Buscar por número de serie, nombre o marca…"
-                  value="<%= equipo && equipo.numero_serie ? equipo.numero_serie : '' %>"
+                  value="<%= (equipo && equipo.numero_serie) ? equipo.numero_serie : (f && f.equipo_serie ? f.equipo_serie : '') %>"
                   class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-3 py-3 text-sm text-white focus:outline-none focus:border-teal-400"
                 >
               </div>
             </div>
             <div id="equipo-search-results" class="hidden absolute z-20 mt-1 w-full max-h-56 overflow-y-auto rounded-xl border border-slate-700 bg-slate-950 shadow-xl"></div>
           </div>
-          <div id="equipo-selected" class="<%= equipo ? '' : 'hidden' %> rounded-xl border border-teal-500/30 bg-teal-500/10 px-3 py-2.5 text-sm">
+          <% const eqSel = equipo || (f && { id: f.equipo_id, nombre: f.equipo_nombre, marca: f.equipo_marca, modelo: f.equipo_modelo, numero_serie: f.equipo_serie }); %>
+          <div id="equipo-selected" class="<%= eqSel && eqSel.id ? '' : 'hidden' %> rounded-xl border border-teal-500/30 bg-teal-500/10 px-3 py-2.5 text-sm">
             <div class="flex items-start justify-between gap-2">
               <div>
-                <p id="equipo-selected-nombre" class="text-white font-medium"><%= equipo ? (equipo.nombre || '') : '' %></p>
+                <p id="equipo-selected-nombre" class="text-white font-medium"><%= eqSel ? (eqSel.nombre || '') : '' %></p>
                 <p id="equipo-selected-meta" class="text-xs text-slate-400 mt-0.5">
-                  <% if (equipo) { %>
-                    <%= [equipo.marca, equipo.modelo].filter(Boolean).join(' ') || 's/marca' %><%= equipo.numero_serie ? ' · Serie: ' + equipo.numero_serie : '' %>
+                  <% if (eqSel) { %>
+                    <%= [eqSel.marca, eqSel.modelo].filter(Boolean).join(' ') || 's/marca' %><%= eqSel.numero_serie ? ' · Serie: ' + eqSel.numero_serie : '' %>
                   <% } %>
                 </p>
               </div>
@@ -248,7 +253,7 @@
 
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
       <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Firmas</h2>
-      <p class="text-xs text-slate-500">Firma con el dedo o el lápiz de la tablet. Al firmar ambas, la ficha queda bloqueada.</p>
+      <p class="text-xs text-slate-500">Firma con el dedo o el lápiz de la tablet. Puedes guardar firmas en el borrador y completarlas después. Al firmar ambas y cerrar, la ficha queda bloqueada.</p>
 
       <div>
         <div class="flex items-center justify-between mb-2">

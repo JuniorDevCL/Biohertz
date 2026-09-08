@@ -114,6 +114,17 @@ function normalizeEmail(email) {
   return e || null;
 }
 
+/** Persiste firmas también en borrador; ignora pads vacíos / data URLs inválidas. */
+function normalizeFirmaDataUrl(value) {
+  if (value == null) return null;
+  const s = String(value).trim();
+  if (!s || s === 'null' || s === 'undefined') return null;
+  if (!s.startsWith('data:image/')) return null;
+  // Canvas en blanco suele ser muy corto; firmas reales son más largas
+  if (s.length < 80) return null;
+  return s;
+}
+
 async function maybeGrantPortalAccess(ficha, firmanteNombre) {
   try {
     await ensurePortalSchema();
@@ -155,14 +166,20 @@ router.get('/', authRequired, async (req, res) => {
     }
     if (q) {
       values.push(`%${q}%`);
-      where.push(`(
-        e.nombre ILIKE $${values.length}
-        OR e.marca ILIKE $${values.length}
-        OR e.modelo ILIKE $${values.length}
-        OR e.numero_serie ILIKE $${values.length}
-        OR m.trabajo ILIKE $${values.length}
-        OR m.realizado_por ILIKE $${values.length}
-      )`);
+      const qIdx = values.length;
+      const clauses = [
+        `e.nombre ILIKE $${qIdx}`,
+        `e.marca ILIKE $${qIdx}`,
+        `e.modelo ILIKE $${qIdx}`,
+        `e.numero_serie ILIKE $${qIdx}`,
+        `e.cliente ILIKE $${qIdx}`,
+        `c.nombre ILIKE $${qIdx}`,
+        `m.senores ILIKE $${qIdx}`,
+        `m.trabajo ILIKE $${qIdx}`,
+        `m.realizado_por ILIKE $${qIdx}`,
+        `CAST(m.id AS TEXT) ILIKE $${qIdx}`,
+      ];
+      where.push(`(${clauses.join(' OR ')})`);
     }
 
     const sql = `
@@ -506,8 +523,10 @@ router.post('/', authRequired, async (req, res) => {
     }
 
     const firmar = String(guardar_y_firmar) === 'true' || String(guardar_y_firmar) === '1';
+    const firmaTecnicoSave = normalizeFirmaDataUrl(firma_tecnico);
+    const firmaClienteSave = normalizeFirmaDataUrl(firma_cliente);
     if (firmar) {
-      if (!firma_tecnico || !firma_cliente) {
+      if (!firmaTecnicoSave || !firmaClienteSave) {
         return res.status(400).json({ error: 'Se requieren ambas firmas para cerrar la ficha' });
       }
     }
@@ -543,8 +562,8 @@ router.post('/', authRequired, async (req, res) => {
         JSON.stringify(checklistData),
         realizado_por || (req.user && req.user.nombre) || null,
         req.user?.id || null,
-        firmar ? firma_tecnico : null,
-        firmar ? firma_cliente : null,
+        firmaTecnicoSave,
+        firmaClienteSave,
         firmante_cliente || null,
         emailNorm,
         proxima_mantencion || null,
@@ -703,6 +722,7 @@ router.patch('/:id', authRequired, async (req, res) => {
     }
 
     const {
+      equipo_id,
       tipo,
       fecha,
       hora,
@@ -729,6 +749,15 @@ router.patch('/:id', authRequired, async (req, res) => {
       fotos,
     } = req.body;
 
+    let nextEquipoId = current.rows[0].equipo_id;
+    let nextClienteId = current.rows[0].cliente_id;
+    if (equipo_id !== undefined && equipo_id !== null && Number(equipo_id) !== Number(current.rows[0].equipo_id)) {
+      const eq = await pool.query('SELECT id, cliente_id FROM equipos WHERE id = $1', [Number(equipo_id)]);
+      if (eq.rowCount === 0) return res.status(404).json({ error: 'Equipo no encontrado' });
+      nextEquipoId = eq.rows[0].id;
+      nextClienteId = eq.rows[0].cliente_id || null;
+    }
+
     let checklistData = current.rows[0].checklist;
     if (checklist !== undefined) {
       if (typeof checklist === 'string') {
@@ -739,10 +768,17 @@ router.patch('/:id', authRequired, async (req, res) => {
     }
 
     const firmar = String(guardar_y_firmar) === 'true' || String(guardar_y_firmar) === '1';
-    const nextFirmaTecnico = firma_tecnico || current.rows[0].firma_tecnico;
-    const nextFirmaCliente = firma_cliente || current.rows[0].firma_cliente;
+    // El front siempre reenvía la firma existente al guardar; si el pad se limpió, manda null.
+    const hasFirmaTecnico = Object.prototype.hasOwnProperty.call(req.body, 'firma_tecnico');
+    const hasFirmaCliente = Object.prototype.hasOwnProperty.call(req.body, 'firma_cliente');
+    const firmaTecnicoSave = firmar
+      ? (normalizeFirmaDataUrl(firma_tecnico) || current.rows[0].firma_tecnico)
+      : (hasFirmaTecnico ? normalizeFirmaDataUrl(firma_tecnico) : current.rows[0].firma_tecnico);
+    const firmaClienteSave = firmar
+      ? (normalizeFirmaDataUrl(firma_cliente) || current.rows[0].firma_cliente)
+      : (hasFirmaCliente ? normalizeFirmaDataUrl(firma_cliente) : current.rows[0].firma_cliente);
 
-    if (firmar && (!nextFirmaTecnico || !nextFirmaCliente)) {
+    if (firmar && (!firmaTecnicoSave || !firmaClienteSave)) {
       return res.status(400).json({ error: 'Se requieren ambas firmas para cerrar la ficha' });
     }
 
@@ -766,6 +802,8 @@ router.patch('/:id', authRequired, async (req, res) => {
     const estado = firmar ? 'firmada' : 'borrador';
     const updated = await pool.query(
       `UPDATE mantenciones_fichas SET
+         equipo_id = $26,
+         cliente_id = $27,
          tipo = COALESCE($1, tipo),
          fecha = COALESCE(NULLIF($2,'')::date, fecha),
          hora = COALESCE(NULLIF($3,'')::time, hora),
@@ -775,8 +813,8 @@ router.patch('/:id', authRequired, async (req, res) => {
          checklist = COALESCE($7::jsonb, checklist),
          realizado_por = COALESCE($8, realizado_por),
          firmante_cliente = COALESCE($9, firmante_cliente),
-         firma_tecnico = COALESCE($10, firma_tecnico),
-         firma_cliente = COALESCE($11, firma_cliente),
+         firma_tecnico = $10,
+         firma_cliente = $11,
          email_cliente = COALESCE($12, email_cliente),
          proxima_mantencion = COALESCE(NULLIF($13,'')::date, proxima_mantencion),
          estado = $14,
@@ -804,8 +842,8 @@ router.patch('/:id', authRequired, async (req, res) => {
         JSON.stringify(checklistData),
         realizado_por || null,
         firmante_cliente || null,
-        firmar ? nextFirmaTecnico : (firma_tecnico || null),
-        firmar ? nextFirmaCliente : (firma_cliente || null),
+        firmaTecnicoSave,
+        firmaClienteSave,
         emailNorm,
         proxima_mantencion ?? null,
         estado,
@@ -820,6 +858,8 @@ router.patch('/:id', authRequired, async (req, res) => {
         JSON.stringify(categoriasData),
         JSON.stringify(fotosStored),
         id,
+        nextEquipoId,
+        nextClienteId,
       ]
     );
 
