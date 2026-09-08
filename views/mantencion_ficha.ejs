@@ -189,8 +189,21 @@
         <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Checklist preventiva</h2>
         <span id="checklist-marca" class="text-[11px] text-teal-300/80"></span>
       </div>
-      <p class="text-xs text-slate-500">19 ítems de protocolo preventiva. Márcalos al completarlos.</p>
-      <div id="checklist-list" class="space-y-2"></div>
+      <p class="text-xs text-slate-500" id="checklist-hint">
+        <% const checklistCount = Array.isArray(checklist) ? checklist.length : 0; %>
+        <%= checklistCount ? (checklistCount + ' ítems de protocolo preventiva. Márcalos al completarlos.') : 'Selecciona un equipo para cargar el protocolo preventiva.' %>
+      </p>
+      <div id="checklist-list" class="space-y-2">
+        <% if (Array.isArray(checklist) && checklist.length && initialTipo !== 'correctiva') { %>
+          <% checklist.forEach(function(item, idx) { %>
+            <label class="check-item flex items-start gap-3 p-3 rounded-xl border border-slate-700 bg-slate-950/40 cursor-pointer">
+              <input type="checkbox" class="mt-1 accent-teal-400 scale-125" data-idx="<%= idx %>"
+                <%= item.checked ? 'checked' : '' %> <%= isReadonly ? 'disabled' : '' %>>
+              <span class="text-sm text-slate-200 leading-snug"><%= item.label || '' %></span>
+            </label>
+          <% }) %>
+        <% } %>
+      </div>
     </section>
 
     <section id="section-dano" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 <%= initialTipo === 'correctiva' ? '' : 'hidden' %>">
@@ -301,7 +314,7 @@
 <script>
 (() => {
   const readonly = <%= isReadonly ? 'true' : 'false' %>;
-  let checklist = <%= checklistJson %>;
+  let checklist = <%- checklistJson %>;
   const existingFirmaTecnico = <%- f && f.firma_tecnico ? JSON.stringify(f.firma_tecnico) : 'null' %>;
   const existingFirmaCliente = <%- f && f.firma_cliente ? JSON.stringify(f.firma_cliente) : 'null' %>;
   let fotos = <%- JSON.stringify(fotosIniciales.map(p => ({
@@ -342,10 +355,16 @@
   }
 
   function renderChecklist() {
+    if (!listEl) return;
     listEl.innerHTML = '';
+    const hint = document.getElementById('checklist-hint');
     if (!checklist.length) {
       listEl.innerHTML = '<p class="text-xs text-slate-500">Sin ítems de protocolo para esta marca.</p>';
+      if (hint) hint.textContent = 'Selecciona un equipo para cargar el protocolo preventiva.';
       return;
+    }
+    if (hint) {
+      hint.textContent = checklist.length + ' ítems de protocolo preventiva. Márcalos al completarlos.';
     }
     checklist.forEach((item, idx) => {
       const row = document.createElement('label');
