@@ -18,6 +18,16 @@ import {
   attachFichaFotos,
   getFotosStorageStats,
 } from '../services/mantencionesFotos.js';
+import {
+  VARCHAR_LIMITS,
+  toDateParam,
+  toTimeParam,
+  clipVarchar,
+  jsonbParam,
+  publicUpdateError,
+  formatFechaForInput,
+  formatHoraForInput,
+} from '../services/mantencionesDraft.js';
 import fs from 'fs';
 
 const router = Router();
@@ -26,6 +36,9 @@ function mapFichaRow(row, { withFotos = true } = {}) {
   if (!row) return null;
   const ficha = {
     ...row,
+    fecha: formatFechaForInput(row.fecha) || null,
+    hora: formatHoraForInput(row.hora) || null,
+    proxima_mantencion: formatFechaForInput(row.proxima_mantencion) || null,
     checklist: parseJsonArray(row.checklist, []),
     categorias: parseJsonArray(row.categorias, []),
   };
@@ -33,6 +46,12 @@ function mapFichaRow(row, { withFotos = true } = {}) {
     ficha.fotos = parseJsonArray(row.fotos, []);
   }
   return ficha;
+}
+
+function clipField(value, key) {
+  const max = VARCHAR_LIMITS[key];
+  if (!max) return value == null ? null : String(value);
+  return clipVarchar(value, max);
 }
 
 async function prepareFichaFotos(ficha) {
@@ -85,7 +104,15 @@ function pickTextoEdits(body = {}) {
   const out = {};
   for (const key of TEXTO_EDITABLE_FIELDS) {
     if (Object.prototype.hasOwnProperty.call(body, key)) {
-      out[key] = body[key];
+      if (key === 'proxima_mantencion') {
+        out[key] = toDateParam(body[key]);
+      } else if (key === 'email_cliente') {
+        out[key] = clipField(body[key], 'email_cliente');
+      } else if (VARCHAR_LIMITS[key]) {
+        out[key] = clipField(body[key], key);
+      } else {
+        out[key] = body[key];
+      }
     }
   }
   return out;
@@ -546,7 +573,7 @@ router.post('/', authRequired, async (req, res) => {
       }
     }
 
-    const emailNorm = normalizeEmail(email_cliente);
+    const emailNorm = clipField(normalizeEmail(email_cliente), 'email_cliente');
     const categoriasData = sanitizeCategorias(categorias);
     const fotosInput = parseFotosInput(fotos);
     const estado = firmar ? 'firmada' : 'borrador';
@@ -558,9 +585,9 @@ router.post('/', authRequired, async (req, res) => {
         rut_cliente, senores, direccion, ciudad_comuna, telefono_cliente, contacto_nombre,
         version_sw, motivo_atencion, categorias, fotos
       ) VALUES (
-        $1, $2, $3, $4, NULLIF($5,'')::date, NULLIF($6,'')::time, $7, $8, $9,
+        $1, $2, $3, $4, $5::date, $6::time, $7, $8, $9,
         $10::jsonb, $11, $12, $13, $14, $15,
-        $16, NULLIF($17,'')::date, $18,
+        $16, $17::date, $18,
         $19, $20, $21, $22, $23, $24,
         $25, $26, $27::jsonb, '[]'::jsonb
       ) RETURNING *`,
@@ -569,44 +596,49 @@ router.post('/', authRequired, async (req, res) => {
         eq.rows[0].cliente_id || null,
         tipo,
         estado,
-        fecha || null,
-        hora || null,
+        toDateParam(fecha),
+        toTimeParam(hora),
         trabajo || '',
         nota || '',
         dano_descripcion || '',
-        JSON.stringify(checklistData),
-        realizado_por || (req.user && req.user.nombre) || null,
+        jsonbParam(checklistData, []),
+        clipField(realizado_por || (req.user && req.user.nombre) || null, 'realizado_por'),
         req.user?.id || null,
         firmaTecnicoSave,
         firmaClienteSave,
-        firmante_cliente || null,
+        clipField(firmante_cliente, 'firmante_cliente'),
         emailNorm,
-        proxima_mantencion || null,
+        toDateParam(proxima_mantencion),
         firmar ? new Date() : null,
-        rut_cliente || null,
-        senores || eq.rows[0].cliente || null,
-        direccion || null,
-        ciudad_comuna || null,
-        telefono_cliente || null,
-        contacto_nombre || null,
-        version_sw || null,
+        clipField(rut_cliente, 'rut_cliente'),
+        clipField(senores || eq.rows[0].cliente || null, 'senores'),
+        clipField(direccion, 'direccion'),
+        clipField(ciudad_comuna, 'ciudad_comuna'),
+        clipField(telefono_cliente, 'telefono_cliente'),
+        clipField(contacto_nombre, 'contacto_nombre'),
+        clipField(version_sw, 'version_sw'),
         motivo_atencion || '',
-        JSON.stringify(categoriasData),
+        jsonbParam(categoriasData, []),
       ]
     );
 
     const fichaId = insert.rows[0].id;
-    const fotosStored = await persistFotosFromPayload(fichaId, fotosInput, []);
+    let fotosStored = [];
+    try {
+      fotosStored = await persistFotosFromPayload(fichaId, fotosInput, []);
+    } catch (fotoErr) {
+      console.warn('Fotos al crear ficha:', fotoErr.message);
+    }
     if (fotosStored.length) {
       await pool.query('UPDATE mantenciones_fichas SET fotos = $1::jsonb WHERE id = $2', [
-        JSON.stringify(fotosStored),
+        jsonbParam(fotosStored, []),
         fichaId,
       ]);
       insert.rows[0].fotos = fotosStored;
     }
 
     const ficha = mapFichaRow(insert.rows[0]);
-    await prepareFichaFotos(ficha);
+    try { await prepareFichaFotos(ficha); } catch (e) { console.warn('prepareFichaFotos:', e.message); }
     if (firmar) {
       await maybeGrantPortalAccess(ficha, firmante_cliente);
     }
@@ -619,7 +651,7 @@ router.post('/', authRequired, async (req, res) => {
     if (err.code === 'DISK_FULL') {
       return res.status(507).json({ error: err.message });
     }
-    res.status(500).json({ error: 'Error al crear mantención: ' + err.message });
+    res.status(500).json({ error: 'Error al crear mantención: ' + (err.message || 'error interno') });
   }
 });
 
@@ -798,30 +830,40 @@ router.patch('/:id', authRequired, async (req, res) => {
     }
 
     const emailNorm = email_cliente !== undefined
-      ? normalizeEmail(email_cliente)
+      ? clipField(normalizeEmail(email_cliente), 'email_cliente')
       : current.rows[0].email_cliente;
 
     const categoriasData = categorias !== undefined
       ? sanitizeCategorias(categorias)
       : (current.rows[0].categorias || []);
 
-    let fotosStored = current.rows[0].fotos || [];
+    let fotosStored = parseJsonArray(current.rows[0].fotos, []);
+    let fotoWarning = null;
     if (fotos !== undefined) {
-      fotosStored = await persistFotosFromPayload(
-        Number(id),
-        parseFotosInput(fotos),
-        current.rows[0].fotos || []
-      );
+      try {
+        fotosStored = await persistFotosFromPayload(
+          Number(id),
+          parseFotosInput(fotos),
+          parseJsonArray(current.rows[0].fotos, [])
+        );
+      } catch (fotoErr) {
+        console.warn('Fotos en borrador (se guarda el resto):', fotoErr.message);
+        fotoWarning = fotoErr.code === 'DISK_FULL'
+          ? fotoErr.message
+          : 'No se pudieron guardar las fotos nuevas; el resto del borrador sí se guardó.';
+        fotosStored = parseJsonArray(current.rows[0].fotos, []);
+      }
     }
 
     const estado = firmar ? 'firmada' : 'borrador';
+    const nextTipo = ['preventiva', 'correctiva'].includes(tipo) ? tipo : null;
     const updated = await pool.query(
       `UPDATE mantenciones_fichas SET
          equipo_id = $26,
          cliente_id = $27,
          tipo = COALESCE($1, tipo),
-         fecha = COALESCE(NULLIF($2,'')::date, fecha),
-         hora = COALESCE(NULLIF($3,'')::time, hora),
+         fecha = COALESCE($2::date, fecha),
+         hora = COALESCE($3::time, hora),
          trabajo = COALESCE($4, trabajo),
          nota = COALESCE($5, nota),
          dano_descripcion = COALESCE($6, dano_descripcion),
@@ -831,7 +873,7 @@ router.patch('/:id', authRequired, async (req, res) => {
          firma_tecnico = $10,
          firma_cliente = $11,
          email_cliente = COALESCE($12, email_cliente),
-         proxima_mantencion = COALESCE(NULLIF($13,'')::date, proxima_mantencion),
+         proxima_mantencion = COALESCE($13::date, proxima_mantencion),
          estado = $14,
          firmada_en = CASE WHEN $14 = 'firmada' THEN COALESCE(firmada_en, NOW()) ELSE firmada_en END,
          rut_cliente = COALESCE($15, rut_cliente),
@@ -846,50 +888,58 @@ router.patch('/:id', authRequired, async (req, res) => {
          fotos = $24::jsonb,
          actualizado_en = NOW()
        WHERE id = $25
+         AND estado = 'borrador'
        RETURNING *`,
       [
-        tipo || null,
-        fecha || null,
-        hora || null,
+        nextTipo,
+        toDateParam(fecha),
+        toTimeParam(hora),
         trabajo ?? null,
         nota ?? null,
         dano_descripcion ?? null,
-        JSON.stringify(checklistData),
-        realizado_por || null,
-        firmante_cliente || null,
-        firmaTecnicoSave,
-        firmaClienteSave,
+        jsonbParam(checklistData, []),
+        clipField(realizado_por, 'realizado_por'),
+        clipField(firmante_cliente, 'firmante_cliente'),
+        firmaTecnicoSave ?? null,
+        firmaClienteSave ?? null,
         emailNorm,
-        proxima_mantencion ?? null,
+        toDateParam(proxima_mantencion),
         estado,
-        rut_cliente ?? null,
-        senores ?? null,
-        direccion ?? null,
-        ciudad_comuna ?? null,
-        telefono_cliente ?? null,
-        contacto_nombre ?? null,
-        version_sw ?? null,
+        clipField(rut_cliente, 'rut_cliente'),
+        clipField(senores, 'senores'),
+        clipField(direccion, 'direccion'),
+        clipField(ciudad_comuna, 'ciudad_comuna'),
+        clipField(telefono_cliente, 'telefono_cliente'),
+        clipField(contacto_nombre, 'contacto_nombre'),
+        clipField(version_sw, 'version_sw'),
         motivo_atencion ?? null,
-        JSON.stringify(categoriasData),
-        JSON.stringify(fotosStored),
+        jsonbParam(categoriasData, []),
+        jsonbParam(fotosStored, []),
         id,
-        nextEquipoId,
-        nextClienteId,
+        nextEquipoId ?? null,
+        nextClienteId ?? null,
       ]
     );
 
+    if (updated.rowCount === 0) {
+      return res.status(409).json({
+        error: 'No se pudo guardar: la ficha ya no está en borrador',
+      });
+    }
+
     const ficha = mapFichaRow(updated.rows[0]);
-    await prepareFichaFotos(ficha);
+    try { await prepareFichaFotos(ficha); } catch (e) { console.warn('prepareFichaFotos:', e.message); }
     if (firmar) {
       await maybeGrantPortalAccess(ficha, firmante_cliente || ficha.firmante_cliente);
     }
+    if (fotoWarning) ficha.foto_warning = fotoWarning;
     res.json(ficha);
   } catch (err) {
     console.error('Error actualizando mantención:', err);
     if (err.code === 'DISK_FULL') {
       return res.status(507).json({ error: err.message });
     }
-    res.status(500).json({ error: 'Error al actualizar mantención' });
+    res.status(500).json({ error: publicUpdateError(err) });
   }
 });
 

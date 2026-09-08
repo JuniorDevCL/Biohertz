@@ -112,12 +112,12 @@
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Fecha</label>
-          <input type="date" name="fecha" value="<%= f && f.fecha ? String(f.fecha).slice(0,10) : today %>" <%= isReadonly ? 'disabled' : '' %>
+          <input type="date" name="fecha" value="<%= f && f.fecha ? f.fecha : today %>" <%= isReadonly ? 'disabled' : '' %>
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Hora</label>
-          <input type="time" name="hora" value="<%= f && f.hora ? String(f.hora).slice(0,5) : nowTime %>" <%= isReadonly ? 'disabled' : '' %>
+          <input type="time" name="hora" value="<%= f && f.hora ? f.hora : nowTime %>" <%= isReadonly ? 'disabled' : '' %>
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
       </div>
@@ -141,43 +141,43 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">RUT</label>
-          <input type="text" name="rut_cliente" <%= isReadonly ? 'disabled' : '' %>
+          <input type="text" name="rut_cliente" maxlength="30" <%= isReadonly ? 'disabled' : '' %>
             value="<%= f ? (f.rut_cliente || '') : '' %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Señor(es)</label>
-          <input type="text" name="senores" <%= isReadonly ? 'disabled' : '' %>
+          <input type="text" name="senores" maxlength="200" <%= isReadonly ? 'disabled' : '' %>
             value="<%= f ? (f.senores || '') : (pre.senores || '') %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Dirección</label>
-          <input type="text" name="direccion" <%= isReadonly ? 'disabled' : '' %>
+          <input type="text" name="direccion" maxlength="250" <%= isReadonly ? 'disabled' : '' %>
             value="<%= f ? (f.direccion || '') : (pre.direccion || '') %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Ciudad - Comuna</label>
-          <input type="text" name="ciudad_comuna" <%= isReadonly ? 'disabled' : '' %>
+          <input type="text" name="ciudad_comuna" maxlength="150" <%= isReadonly ? 'disabled' : '' %>
             value="<%= f ? (f.ciudad_comuna || '') : '' %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Teléfono</label>
-          <input type="text" name="telefono_cliente" <%= isReadonly ? 'disabled' : '' %>
+          <input type="text" name="telefono_cliente" maxlength="50" <%= isReadonly ? 'disabled' : '' %>
             value="<%= f ? (f.telefono_cliente || '') : (pre.telefono_cliente || '') %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Contacto</label>
-          <input type="text" name="contacto_nombre" <%= isReadonly ? 'disabled' : '' %>
+          <input type="text" name="contacto_nombre" maxlength="150" <%= isReadonly ? 'disabled' : '' %>
             value="<%= f ? (f.contacto_nombre || '') : '' %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div class="sm:col-span-2">
           <label class="block text-xs text-slate-400 mb-1 uppercase">Versión S/W</label>
-          <input type="text" name="version_sw" <%= isReadonly ? 'disabled' : '' %>
+          <input type="text" name="version_sw" maxlength="80" <%= isReadonly ? 'disabled' : '' %>
             value="<%= f ? (f.version_sw || '') : '' %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
@@ -217,7 +217,7 @@
         class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f ? (f.nota || '') : '' %></textarea>
       <div>
         <label class="block text-xs text-slate-400 mb-1 uppercase">Realizado por (servicio técnico)</label>
-        <input type="text" name="realizado_por" <%= isReadonly ? 'disabled' : '' %>
+        <input type="text" name="realizado_por" maxlength="150" <%= isReadonly ? 'disabled' : '' %>
           value="<%= f ? (f.realizado_por || '') : (user && user.nombre ? user.nombre : '') %>"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
       </div>
@@ -238,7 +238,7 @@
       <p class="text-xs text-slate-500">Al firmar, se crea una clave cifrada y se envía por correo al cliente (solo la primera vez o si aún no tenía acceso).</p>
       <div>
         <label class="block text-xs text-slate-400 mb-1 uppercase">Correo electrónico del cliente</label>
-        <input type="email" name="email_cliente" <%= isReadonly ? 'disabled' : '' %>
+        <input type="email" name="email_cliente" maxlength="150" <%= isReadonly ? 'disabled' : '' %>
           value="<%= f ? (f.email_cliente || '') : (typeof emailClientePrefill !== 'undefined' && emailClientePrefill ? emailClientePrefill : (pre.email_cliente || '')) %>"
           placeholder="cliente@empresa.cl"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
@@ -246,7 +246,7 @@
       <div>
         <label class="block text-xs text-slate-400 mb-1 uppercase">Próxima mantención</label>
         <input type="date" name="proxima_mantencion" <%= isReadonly ? 'disabled' : '' %>
-          value="<%= f && f.proxima_mantencion ? String(f.proxima_mantencion).slice(0,10) : '' %>"
+          value="<%= f && f.proxima_mantencion ? f.proxima_mantencion : '' %>"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
       </div>
     </section>
@@ -267,7 +267,7 @@
 
       <div>
         <label class="block text-xs text-slate-400 mb-1 uppercase">Nombre del cliente que firma</label>
-        <input type="text" name="firmante_cliente" <%= isReadonly ? 'disabled' : '' %>
+        <input type="text" name="firmante_cliente" maxlength="150" <%= isReadonly ? 'disabled' : '' %>
           value="<%= f ? (f.firmante_cliente || '') : '' %>"
           placeholder="Nombre y apellido"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white mb-3">
@@ -290,6 +290,8 @@
           <button type="button" id="btn-firmar" class="flex-1 px-4 py-3 rounded-xl text-sm font-semibold" style="background:linear-gradient(180deg,#2dd4bf,#14b8a6);color:#042f2e">
             Firmar y cerrar ficha
           </button>
+        </div>
+        <p id="borrador-status" class="hidden text-center text-xs text-emerald-300 mt-2">Borrador guardado</p>
         </div>
       </div>
     <% } else if (f && f.equipo_id) { %>
@@ -673,18 +675,21 @@
     const fd = new FormData(form);
     const equipoId = fd.get('equipo_id') || (equipoIdInput ? equipoIdInput.value : null);
     const categorias = Array.from(document.querySelectorAll('input[name="categoria"]:checked')).map((el) => el.value);
+    const fechaRaw = String(fd.get('fecha') || '').trim();
+    const horaRaw = String(fd.get('hora') || '').trim();
+    const proxRaw = String(fd.get('proxima_mantencion') || '').trim();
     return {
       equipo_id: equipoId,
       tipo: currentTipo(),
-      fecha: fd.get('fecha'),
-      hora: fd.get('hora'),
+      fecha: /^\d{4}-\d{2}-\d{2}$/.test(fechaRaw) ? fechaRaw : '',
+      hora: /^\d{1,2}:\d{2}/.test(horaRaw) ? horaRaw.slice(0, 5) : '',
       trabajo: fd.get('trabajo'),
       nota: fd.get('nota'),
       dano_descripcion: fd.get('dano_descripcion'),
       realizado_por: fd.get('realizado_por'),
       firmante_cliente: fd.get('firmante_cliente'),
       email_cliente: fd.get('email_cliente'),
-      proxima_mantencion: fd.get('proxima_mantencion'),
+      proxima_mantencion: /^\d{4}-\d{2}-\d{2}$/.test(proxRaw) ? proxRaw : '',
       rut_cliente: fd.get('rut_cliente'),
       senores: fd.get('senores'),
       direccion: fd.get('direccion'),
@@ -723,9 +728,13 @@
       }
     }
 
-    const fichaId = document.getElementById('ficha-id')?.value;
+    const fichaIdEl = document.getElementById('ficha-id');
+    const fichaId = fichaIdEl?.value;
     const url = fichaId ? '/mantenciones/' + fichaId : '/mantenciones';
     const method = fichaId ? 'PATCH' : 'POST';
+    const btnBorrador = document.getElementById('btn-borrador');
+    const statusEl = document.getElementById('borrador-status');
+    if (btnBorrador) btnBorrador.disabled = true;
 
     try {
       const res = await fetch(url, {
@@ -738,10 +747,31 @@
         alert(data.error || ('Error ' + res.status));
         return;
       }
-      window.location.href = '/mantenciones/' + data.id;
+      if (data.foto_warning) alert(data.foto_warning);
+      if (firmar || !fichaId) {
+        window.location.href = '/mantenciones/' + data.id;
+        return;
+      }
+      if (fichaIdEl && data.id) fichaIdEl.value = data.id;
+      if (Array.isArray(data.fotos)) {
+        fotos = data.fotos.map((p) => ({
+          nombre: p.nombre || 'foto',
+          archivo: p.archivo || null,
+          url: p.url || null,
+          data: p.data || null,
+        }));
+        renderFotos();
+      }
+      if (statusEl) {
+        statusEl.textContent = 'Borrador guardado';
+        statusEl.classList.remove('hidden');
+        setTimeout(() => statusEl.classList.add('hidden'), 2500);
+      }
     } catch (e) {
       console.error(e);
       alert('Error de conexión');
+    } finally {
+      if (btnBorrador) btnBorrador.disabled = false;
     }
   }
 
