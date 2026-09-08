@@ -107,7 +107,7 @@
       <div>
         <label class="block text-xs text-slate-400 mb-1 uppercase">Próxima mantención</label>
         <input type="date" name="proxima_mantencion"
-          value="<%= f.proxima_mantencion ? String(f.proxima_mantencion).slice(0,10) : '' %>"
+          value="<%= f.proxima_mantencion ? f.proxima_mantencion : '' %>"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
       </div>
     </section>
