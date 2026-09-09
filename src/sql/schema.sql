@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS equipos (
   marca VARCHAR(100),
   modelo VARCHAR(100),
   numero_serie VARCHAR(150) UNIQUE,
+  numero_orden VARCHAR(150),
+  fecha_embarque DATE,
   ubicacion VARCHAR(150),
   estado VARCHAR(50) NOT NULL DEFAULT 'activo',
   creado_en TIMESTAMP NOT NULL DEFAULT NOW(),

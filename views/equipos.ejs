@@ -20,7 +20,7 @@
                         type="text" 
                         name="q" 
                         value="<%= typeof query !== 'undefined' ? query : '' %>" 
-                        placeholder="Buscar por nombre, marca, modelo o serie" 
+                        placeholder="Buscar por marca, modelo, serie o Nº orden" 
                         class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     >
                 </div>
@@ -43,6 +43,8 @@
                             <th class="py-3 px-4">Marca</th>
                             <th class="py-3 px-4">Modelo</th>
                             <th class="py-3 px-4">Serie</th>
+                            <th class="py-3 px-4">Nº Orden</th>
+                            <th class="py-3 px-4">Fecha embarque</th>
                             <th class="py-3 px-4">Cliente</th>
                             <th class="py-3 px-4">Ubicación</th>
                             <th class="py-3 px-4">Fecha Inst.</th>
@@ -56,6 +58,8 @@
                                 <td class="py-3 px-4 font-medium text-white"><%= equipo.marca || '-' %></td>
                                 <td class="py-3 px-4 text-slate-300"><%= equipo.modelo || '-' %></td>
                                 <td class="py-3 px-4 text-slate-400"><%= equipo.numero_serie || '-' %></td>
+                                <td class="py-3 px-4 text-slate-400"><%= equipo.numero_orden || '-' %></td>
+                                <td class="py-3 px-4 text-slate-400"><%= equipo.fecha_embarque ? new Date(equipo.fecha_embarque).toLocaleDateString() : '-' %></td>
                                 <td class="py-3 px-4 text-slate-300">
                                     <% if (equipo.cliente) { %>
                                         <span class="inline-flex items-center px-2 py-1 rounded-full bg-slate-800 text-xs text-slate-200">
@@ -131,10 +135,6 @@
         <form action="/equipos" method="POST">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="block text-slate-400 text-sm mb-2">Nombre</label>
-                    <input type="text" name="nombre" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
                     <label class="block text-slate-400 text-sm mb-2">Marca</label>
                     <input type="text" name="marca" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
@@ -143,35 +143,16 @@
                     <input type="text" name="modelo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-slate-400 text-sm mb-2">N° Serie</label>
+                    <label class="block text-slate-400 text-sm mb-2">Serie</label>
                     <input type="text" name="numero_serie" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-slate-400 text-sm mb-2">Ubicación</label>
-                    <input type="text" name="ubicacion" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                    <label class="block text-slate-400 text-sm mb-2">Nº Orden</label>
+                    <input type="text" name="numero_orden" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
-                <div>
-                    <label class="block text-slate-400 text-sm mb-2">Cliente (Opcional)</label>
-                    <select name="cliente_id" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-                        <option value="">Seleccionar Cliente</option>
-                        <% if (typeof clientes !== 'undefined') { %>
-                            <% clientes.forEach(c => { %>
-                                <option value="<%= c.id %>"><%= c.nombre %></option>
-                            <% }); %>
-                        <% } %>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-slate-400 text-sm mb-2">Estado</label>
-                    <select name="estado" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-                        <option value="operativo">Operativo</option>
-                        <option value="en_reparacion">En Reparación</option>
-                        <option value="baja">De Baja</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-slate-400 text-sm mb-2">Fecha de Instalación</label>
-                    <input type="date" name="fecha_instalacion" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                <div class="md:col-span-2">
+                    <label class="block text-slate-400 text-sm mb-2">Fecha de embarque</label>
+                    <input type="date" name="fecha_embarque" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
             </div>
             <div class="flex justify-end gap-3 mt-6">
@@ -203,6 +184,14 @@
                 <div>
                     <label class="block text-slate-400 text-sm mb-2">N° Serie</label>
                     <input type="text" id="edit-equipo-numero_serie" name="numero_serie" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Nº Orden</label>
+                    <input type="text" id="edit-equipo-numero_orden" name="numero_orden" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Fecha de embarque</label>
+                    <input type="date" id="edit-equipo-fecha_embarque" name="fecha_embarque" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-slate-400 text-sm mb-2">Ubicación</label>
@@ -311,6 +300,14 @@
                 <div>
                     <p class="text-xs text-slate-500 mb-1">Número de serie</p>
                     <p id="detalle-equipo-serie" class="text-slate-200"></p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 mb-1">Nº Orden</p>
+                    <p id="detalle-equipo-orden" class="text-slate-200"></p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 mb-1">Fecha de embarque</p>
+                    <p id="detalle-equipo-embarque" class="text-slate-200"></p>
                 </div>
                 <div>
                     <p class="text-xs text-slate-500 mb-1">Ubicación</p>
@@ -454,6 +451,8 @@ async function openDetalleEquipo(id) {
         const nombreEl = document.getElementById('detalle-equipo-nombre');
         const marcaEl = document.getElementById('detalle-equipo-marca');
         const serieEl = document.getElementById('detalle-equipo-serie');
+        const ordenEl = document.getElementById('detalle-equipo-orden');
+        const embarqueEl = document.getElementById('detalle-equipo-embarque');
         const ubicacionEl = document.getElementById('detalle-equipo-ubicacion');
         const clienteEl = document.getElementById('detalle-equipo-cliente');
         const aplicacionEl = document.getElementById('detalle-equipo-aplicacion');
@@ -467,6 +466,8 @@ async function openDetalleEquipo(id) {
         nombreEl.textContent = e.nombre || '';
         marcaEl.textContent = [e.marca || '', e.modelo || ''].filter(Boolean).join(' - ') || '-';
         serieEl.textContent = e.numero_serie || '-';
+        ordenEl.textContent = e.numero_orden || '-';
+        embarqueEl.textContent = e.fecha_embarque ? new Date(e.fecha_embarque).toLocaleDateString('es-CL') : '-';
         ubicacionEl.textContent = e.ubicacion || '-';
         clienteEl.textContent = e.cliente || 'Sin asignar';
         aplicacionEl.textContent = e.aplicacion || '-';
@@ -626,6 +627,14 @@ async function openEditEquipo(id) {
         document.getElementById('edit-equipo-marca').value = e.marca || '';
         document.getElementById('edit-equipo-modelo').value = e.modelo || '';
         document.getElementById('edit-equipo-numero_serie').value = e.numero_serie || '';
+        const ordenInput = document.getElementById('edit-equipo-numero_orden');
+        if (ordenInput) {
+            ordenInput.value = e.numero_orden || '';
+        }
+        const fechaEmbarqueInput = document.getElementById('edit-equipo-fecha_embarque');
+        if (fechaEmbarqueInput) {
+            fechaEmbarqueInput.value = e.fecha_embarque ? String(e.fecha_embarque).split('T')[0] : '';
+        }
         document.getElementById('edit-equipo-ubicacion').value = e.ubicacion || '';
         document.getElementById('edit-equipo-estado').value = e.estado || 'operativo';
         const clienteSelect = document.getElementById('edit-equipo-cliente');

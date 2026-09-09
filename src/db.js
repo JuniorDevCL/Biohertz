@@ -365,6 +365,7 @@ if (isOffline) {
                 (e.marca && e.marca.toLowerCase().includes(val)) ||
                 (e.modelo && e.modelo.toLowerCase().includes(val)) ||
                 (e.numero_serie && e.numero_serie.toLowerCase().includes(val)) ||
+                (e.numero_orden && e.numero_orden.toLowerCase().includes(val)) ||
                 (e.ubicacion && e.ubicacion.toLowerCase().includes(val))
              );
          }
@@ -400,29 +401,37 @@ if (isOffline) {
         return { rows: e ? [e] : [], rowCount: e ? 1 : 0 };
       }
       if (s.startsWith('INSERT INTO equipos')) {
-        const [nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, mantenciones] = params;
-        // if (!cliente_id) return { rows: [], rowCount: 0 }; // Permitir nulos (STOCK)
         const id = store.seq.equipos++;
-        const m = mantenciones ? JSON.parse(mantenciones) : [];
-        const e = { id, nombre, marca, modelo, numero_serie, ubicacion, estado: estado || 'activo', aplicacion, cliente, cliente_id: cliente_id ? Number(cliente_id) : null, anio_venta: anio_venta ? Number(anio_venta) : null, mantenciones: Array.isArray(m) ? m : [], creado_en: nowISO(), actualizado_en: nowISO() };
+        let e;
+        if (s.includes('numero_orden')) {
+          const [nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones] = params;
+          const m = mantenciones ? JSON.parse(mantenciones) : [];
+          e = { id, nombre, marca, modelo, numero_serie, numero_orden: numero_orden || null, fecha_embarque: fecha_embarque || null, ubicacion, estado: estado || 'activo', aplicacion, cliente, cliente_id: cliente_id ? Number(cliente_id) : null, anio_venta: anio_venta ? Number(anio_venta) : null, fecha_instalacion: fecha_instalacion || null, mantenciones: Array.isArray(m) ? m : [], creado_en: nowISO(), actualizado_en: nowISO() };
+        } else {
+          const [nombre, modelo, numero_serie, cliente_id, cliente, marca, ubicacion] = params;
+          e = { id, nombre, marca: marca || null, modelo, numero_serie, numero_orden: null, fecha_embarque: null, ubicacion: ubicacion || null, estado: 'activo', aplicacion: null, cliente, cliente_id: cliente_id ? Number(cliente_id) : null, anio_venta: null, fecha_instalacion: null, mantenciones: [], creado_en: nowISO(), actualizado_en: nowISO() };
+        }
         store.equipos.push(e);
         saveStore(store);
         return { rows: [e], rowCount: 1 };
       }
       if (s.startsWith('UPDATE equipos') && s.includes('SET nombre')) {
-        const [nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, mantenciones, id] = params;
+        const [nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones, id] = params;
         const e = store.equipos.find(x => String(x.id) === String(id));
         if (!e) return { rows: [], rowCount: 0 };
         if (typeof nombre !== 'undefined') e.nombre = nombre ?? e.nombre;
         if (typeof marca !== 'undefined') e.marca = marca ?? e.marca;
         if (typeof modelo !== 'undefined') e.modelo = modelo ?? e.modelo;
         if (typeof numero_serie !== 'undefined') e.numero_serie = numero_serie ?? e.numero_serie;
+        if (typeof numero_orden !== 'undefined') e.numero_orden = numero_orden ?? e.numero_orden;
+        if (typeof fecha_embarque !== 'undefined') e.fecha_embarque = fecha_embarque ?? e.fecha_embarque;
         if (typeof ubicacion !== 'undefined') e.ubicacion = ubicacion ?? e.ubicacion;
         if (typeof estado !== 'undefined') e.estado = estado ?? e.estado;
         if (typeof aplicacion !== 'undefined') e.aplicacion = aplicacion ?? e.aplicacion;
         if (typeof cliente !== 'undefined') e.cliente = cliente ?? e.cliente;
         if (typeof cliente_id !== 'undefined') e.cliente_id = cliente_id ?? e.cliente_id;
         if (typeof anio_venta !== 'undefined') e.anio_venta = anio_venta ?? e.anio_venta;
+        if (typeof fecha_instalacion !== 'undefined') e.fecha_instalacion = fecha_instalacion ?? e.fecha_instalacion;
         if (typeof mantenciones !== 'undefined' && mantenciones !== null) {
           try { e.mantenciones = JSON.parse(mantenciones); } catch {}
         }

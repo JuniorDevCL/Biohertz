@@ -35,6 +35,25 @@ const mantencionesUpload = multer({
   }
 });
 
+function buildEquipoNombre({ nombre, marca, modelo, numero_serie }) {
+  const explicit = typeof nombre === 'string' ? nombre.trim() : '';
+  if (explicit) return explicit.slice(0, 150);
+  const fromMarcaModelo = [marca, modelo]
+    .map((v) => String(v || '').trim())
+    .filter(Boolean)
+    .join(' ');
+  if (fromMarcaModelo) return fromMarcaModelo.slice(0, 150);
+  const serie = String(numero_serie || '').trim();
+  if (serie) return `Equipo ${serie}`.slice(0, 150);
+  return 'Equipo';
+}
+
+function trimOrNull(value) {
+  if (typeof value !== 'string') return value ?? null;
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
 let extendedReady = false;
 async function ensureExtendedSchema() {
   if (extendedReady) return;
@@ -45,6 +64,8 @@ async function ensureExtendedSchema() {
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS anio_venta INTEGER;
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS cliente_id INTEGER;
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_instalacion DATE;
+      ALTER TABLE equipos ADD COLUMN IF NOT EXISTS numero_orden VARCHAR(150);
+      ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_embarque DATE;
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS mantenciones JSONB DEFAULT '[]'::jsonb;
     `);
   } catch {}
@@ -83,7 +104,7 @@ router.get('/', authRequired, async (req, res) => {
     }
     if (q) {
       values.push(`%${q}%`);
-      where.push(`(nombre ILIKE $${values.length} OR marca ILIKE $${values.length} OR modelo ILIKE $${values.length} OR numero_serie ILIKE $${values.length} OR ubicacion ILIKE $${values.length})`);
+      where.push(`(nombre ILIKE $${values.length} OR marca ILIKE $${values.length} OR modelo ILIKE $${values.length} OR numero_serie ILIKE $${values.length} OR numero_orden ILIKE $${values.length} OR ubicacion ILIKE $${values.length})`);
     }
     if (marca) { values.push(`%${marca}%`); where.push(`marca ILIKE $${values.length}`); }
     if (aplicacion) { values.push(`%${aplicacion}%`); where.push(`aplicacion ILIKE $${values.length}`); }
@@ -97,7 +118,7 @@ router.get('/', authRequired, async (req, res) => {
     if (limit > 100) limit = 100;
     if (isNaN(offset) || offset < 0) offset = 0;
 
-    const sql = `SELECT id, nombre, marca, modelo, numero_serie, ubicacion, estado, cliente, cliente_id, anio_venta, fecha_instalacion, actualizado_en FROM equipos${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+    const sql = `SELECT id, nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, ubicacion, estado, cliente, cliente_id, anio_venta, fecha_instalacion, actualizado_en FROM equipos${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
     const result = await pool.query(sql, [...values, limit, offset]);
 
     const totalSql = 'SELECT COUNT(*) FROM equipos';
@@ -136,7 +157,7 @@ router.get('/count', authRequired, async (req, res) => {
     const where = [];
     const values = [];
     if (estado) { values.push(estado); where.push(`estado = $${values.length}`); }
-    if (q) { values.push(`%${q}%`); where.push(`(nombre ILIKE $${values.length} OR marca ILIKE $${values.length} OR modelo ILIKE $${values.length} OR numero_serie ILIKE $${values.length} OR ubicacion ILIKE $${values.length})`); }
+    if (q) { values.push(`%${q}%`); where.push(`(nombre ILIKE $${values.length} OR marca ILIKE $${values.length} OR modelo ILIKE $${values.length} OR numero_serie ILIKE $${values.length} OR numero_orden ILIKE $${values.length} OR ubicacion ILIKE $${values.length})`); }
     if (marca) { values.push(`%${marca}%`); where.push(`marca ILIKE $${values.length}`); }
     if (aplicacion) { values.push(`%${aplicacion}%`); where.push(`aplicacion ILIKE $${values.length}`); }
     if (modelo) { values.push(`%${modelo}%`); where.push(`modelo ILIKE $${values.length}`); }
@@ -154,6 +175,7 @@ router.get('/count', authRequired, async (req, res) => {
 
 router.get('/:id', authRequired, async (req, res) => {
   try {
+    await ensureExtendedSchema();
     const { id } = req.params;
     const result = await pool.query(`SELECT * FROM equipos WHERE id = $1`, [id]);
     if (result.rowCount === 0) return res.status(404).json({ error: 'Equipo no encontrado' });
@@ -213,9 +235,12 @@ router.get('/:id', authRequired, async (req, res) => {
 router.post('/', authRequired, async (req, res) => {
   try {
     await ensureExtendedSchema();
-    let { nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones } = req.body;
+    let { nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones } = req.body;
+    marca = trimOrNull(marca);
+    modelo = trimOrNull(modelo);
     if (typeof numero_serie === 'string') numero_serie = numero_serie.trim() || null;
-    if (!nombre) return res.status(400).json({ error: 'Nombre es obligatorio' });
+    if (typeof numero_orden === 'string') numero_orden = numero_orden.trim() || null;
+    nombre = buildEquipoNombre({ nombre, marca, modelo, numero_serie });
     // if (!cliente_id) return res.status(400).json({ error: 'Debe seleccionar un cliente' }); // Permitir STOCK (null)
 
     let finalClienteName = cliente;
@@ -233,10 +258,10 @@ router.post('/', authRequired, async (req, res) => {
     }
 
     const insert = await pool.query(
-      `INSERT INTO equipos (nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones, creado_en, actualizado_en)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, COALESCE($12::jsonb, '[]'::jsonb), NOW(), NOW())
+      `INSERT INTO equipos (nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones, creado_en, actualizado_en)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, COALESCE($14::jsonb, '[]'::jsonb), NOW(), NOW())
        RETURNING *`,
-      [nombre, marca || null, modelo || null, numero_serie || null, ubicacion || null, estado || 'activo', aplicacion || null, finalClienteName || null, finalClienteId, anio_venta ? parseInt(anio_venta) : null, fecha_instalacion || null, mantenciones ? JSON.stringify(mantenciones) : null]
+      [nombre, marca || null, modelo || null, numero_serie || null, numero_orden || null, fecha_embarque || null, ubicacion || null, estado || 'activo', aplicacion || null, finalClienteName || null, finalClienteId, anio_venta ? parseInt(anio_venta) : null, fecha_instalacion || null, mantenciones ? JSON.stringify(mantenciones) : null]
     );
 
     const io = req.app.get('io');
@@ -257,8 +282,9 @@ router.patch('/:id', authRequired, async (req, res) => {
   try {
     const { id } = req.params;
     await ensureExtendedSchema();
-    let { nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones } = req.body;
+    let { nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones } = req.body;
     if (typeof numero_serie === 'string') numero_serie = numero_serie.trim() || null;
+    if (typeof numero_orden === 'string') numero_orden = numero_orden.trim() || null;
 
     let finalClienteName = cliente;
     let finalClienteId = cliente_id;
@@ -285,18 +311,20 @@ router.patch('/:id', authRequired, async (req, res) => {
            marca = COALESCE($2, marca),
            modelo = COALESCE($3, modelo),
            numero_serie = COALESCE($4, numero_serie),
-           ubicacion = COALESCE($5, ubicacion),
-           estado = COALESCE($6, estado),
-           aplicacion = COALESCE($7, aplicacion),
-           cliente = COALESCE($8, cliente),
-           cliente_id = COALESCE($9, cliente_id),
-           anio_venta = COALESCE($10, anio_venta),
-           fecha_instalacion = COALESCE($11, fecha_instalacion),
-           mantenciones = COALESCE($12::jsonb, mantenciones),
+           numero_orden = COALESCE($5, numero_orden),
+           fecha_embarque = COALESCE($6, fecha_embarque),
+           ubicacion = COALESCE($7, ubicacion),
+           estado = COALESCE($8, estado),
+           aplicacion = COALESCE($9, aplicacion),
+           cliente = COALESCE($10, cliente),
+           cliente_id = COALESCE($11, cliente_id),
+           anio_venta = COALESCE($12, anio_venta),
+           fecha_instalacion = COALESCE($13, fecha_instalacion),
+           mantenciones = COALESCE($14::jsonb, mantenciones),
            actualizado_en = NOW()
-       WHERE id = $13
+       WHERE id = $15
        RETURNING *`,
-      [nombre, marca, modelo, numero_serie, ubicacion, estado, aplicacion, finalClienteName, (finalClienteId && finalClienteId !== 'STOCK') ? parseInt(finalClienteId) : (finalClienteId === null || finalClienteId === 'STOCK' ? null : undefined), anio_venta ? parseInt(anio_venta) : null, fecha_instalacion || null, mantenciones ? JSON.stringify(mantenciones) : null, id]
+      [nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque || null, ubicacion, estado, aplicacion, finalClienteName, (finalClienteId && finalClienteId !== 'STOCK') ? parseInt(finalClienteId) : (finalClienteId === null || finalClienteId === 'STOCK' ? null : undefined), anio_venta ? parseInt(anio_venta) : null, fecha_instalacion || null, mantenciones ? JSON.stringify(mantenciones) : null, id]
     );
 
     if (update.rowCount === 0) return res.status(404).json({ error: 'Equipo no encontrado' });

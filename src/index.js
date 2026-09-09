@@ -197,6 +197,8 @@ async function ensureBaseSchema() {
         marca VARCHAR(100),
         modelo VARCHAR(100),
         numero_serie VARCHAR(150),
+        numero_orden VARCHAR(150),
+        fecha_embarque DATE,
         ubicacion VARCHAR(150),
         estado VARCHAR(20) NOT NULL DEFAULT 'activo',
         aplicacion VARCHAR(150),
@@ -250,6 +252,13 @@ async function ensureBaseSchema() {
     try {
       await pool.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS telefono VARCHAR(50);`);
     } catch (e) { console.log('Columna telefono ya existe o error:', e.message); }
+
+    try {
+      await pool.query(`
+        ALTER TABLE equipos ADD COLUMN IF NOT EXISTS numero_orden VARCHAR(150);
+        ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_embarque DATE;
+      `);
+    } catch (e) { console.log('Columnas de equipo numero_orden/fecha_embarque:', e.message); }
 
   } catch (e) {
     console.warn('ensureBaseSchema error:', e && e.message ? e.message : e);
