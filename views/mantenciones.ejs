@@ -2,7 +2,7 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div class="space-y-2">
             <div class="flex items-center gap-3 flex-wrap">
-                <h1 class="text-3xl font-bold text-white tracking-tight">Mantenciones</h1>
+                <h1 class="text-3xl font-bold text-white tracking-tight">Informes Técnicos</h1>
                 <span class="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-800 text-xs text-slate-200 border border-slate-700">
                     <i class="ph ph-clipboard-text text-sm mr-1.5"></i>
                     Fichas: <span class="ml-1 font-semibold"><%= fichas && fichas.length ? fichas.length : 0 %></span>
@@ -15,7 +15,7 @@
                 </span>
                 <% } %>
             </div>
-            <p class="text-slate-400 text-sm">Fichas de mantención preventiva y correctiva, con checklist y firmas en tablet.</p>
+            <p class="text-slate-400 text-sm">Informes técnicos de mantención preventiva y correctiva, con checklist y firmas en tablet.</p>
         </div>
         <a href="/mantenciones/nueva" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl transition-colors flex items-center justify-center text-sm font-medium shadow-sm">
             <i class="ph ph-plus mr-2 text-base"></i> Nueva ficha
@@ -132,7 +132,7 @@
             <div class="text-center py-14 text-slate-400">
                 <i class="ph ph-clipboard-text text-4xl text-slate-600 mb-3 block"></i>
                 <p class="font-medium text-white mb-1">Aún no hay fichas</p>
-                <p class="text-sm mb-4">Crea la primera mantención desde aquí o desde un equipo.</p>
+                <p class="text-sm mb-4">Crea el primer informe técnico desde aquí o desde un equipo.</p>
                 <a href="/mantenciones/nueva" class="inline-flex items-center text-teal-300 hover:text-cyan-300 text-sm font-medium">Nueva ficha →</a>
             </div>
         <% } %>

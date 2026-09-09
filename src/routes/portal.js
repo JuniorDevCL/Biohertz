@@ -224,7 +224,7 @@ router.get('/fichas/:id', portalRequired, async (req, res) => {
     await attachFichaFotos(ficha, pool);
     res.render('mantencion_print', {
       layout: false,
-      title: `Atención a clientes Nº ${String(ficha.id).padStart(5, '0')} - Biohertz`,
+      title: `Informes Técnicos Nº ${String(ficha.id).padStart(5, '0')} - Biohertz`,
       ficha,
       user: null,
       portalBack: '/portal/equipos/' + ficha.equipo_id,

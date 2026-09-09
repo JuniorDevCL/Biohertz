@@ -240,7 +240,7 @@ router.get('/', authRequired, async (req, res) => {
     }
 
     res.render('mantenciones', {
-      title: 'Mantenciones - BIODATA',
+      title: 'Informes Técnicos - BIODATA',
       user: req.user || req.session.user,
       fichas,
       fotoStorage,
@@ -300,7 +300,7 @@ router.get('/nueva', authRequired, async (req, res) => {
     }
 
     res.render('mantencion_ficha', {
-      title: 'Nueva mantención - Biohertz',
+      title: 'Nuevo informe técnico - Biohertz',
       user: req.user || req.session.user,
       ficha: null,
       equipos: equiposRes.rows,
@@ -455,7 +455,7 @@ router.get('/:id', authRequired, async (req, res) => {
     if (ficha.estado === 'firmada') {
       return res.render('mantencion_print', {
         layout: false,
-        title: `Atención a clientes Nº ${String(ficha.id).padStart(5, '0')} - Biohertz`,
+        title: `Informes Técnicos Nº ${String(ficha.id).padStart(5, '0')} - Biohertz`,
         ficha,
         user: req.user || req.session.user,
         categoriasAtencion: CATEGORIAS_ATENCION,
@@ -492,7 +492,7 @@ router.get('/:id', authRequired, async (req, res) => {
     }
 
     res.render('mantencion_ficha', {
-      title: `Mantención #${ficha.id} - Biohertz`,
+      title: `Informe técnico #${ficha.id} - Biohertz`,
       user: req.user || req.session.user,
       ficha,
       equipos: equiposRes.rows,

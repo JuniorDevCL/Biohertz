@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Atención a clientes Nº <%= String(ficha.id).padStart(5, '0') %> — Biohertz</title>
+  <title>Informes Técnicos Nº <%= String(ficha.id).padStart(5, '0') %> — Biohertz</title>
   <style>
     :root {
       --ink: #1a1a1a;
@@ -60,10 +60,10 @@
     }
     .head {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
+      justify-content: flex-end;
+      align-items: flex-start;
       gap: 12px;
-      margin-bottom: 6px;
+      margin-bottom: 10mm;
     }
     .logo-box {
       display: inline-flex;
@@ -270,7 +270,7 @@
       </header>
 
       <div class="title-bar">
-        <div class="t">Atención a clientes</div>
+        <div class="t">Informes Técnicos</div>
         <div class="n">Nº <span><%= nro %></span></div>
       </div>
 
