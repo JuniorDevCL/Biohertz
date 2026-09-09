@@ -27,14 +27,16 @@ function loadStore() {
     if (typeof obj.seq.comentarios !== 'number') obj.seq.comentarios = 1;
     if (typeof obj.seq.equipos !== 'number') obj.seq.equipos = 1;
     if (typeof obj.seq.clientes !== 'number') obj.seq.clientes = 1;
+    if (typeof obj.seq.mantenciones_fichas !== 'number') obj.seq.mantenciones_fichas = 1;
     if (!Array.isArray(obj.usuarios)) obj.usuarios = [];
     if (!Array.isArray(obj.tickets)) obj.tickets = [];
     if (!Array.isArray(obj.comentarios)) obj.comentarios = [];
     if (!Array.isArray(obj.equipos)) obj.equipos = [];
     if (!Array.isArray(obj.clientes)) obj.clientes = [];
+    if (!Array.isArray(obj.mantenciones_fichas)) obj.mantenciones_fichas = [];
     return obj;
   } catch {
-    return { seq: { usuarios: 1, tickets: 1, comentarios: 1, equipos: 1, clientes: 1 }, usuarios: [], tickets: [], comentarios: [], equipos: [], clientes: [] };
+    return { seq: { usuarios: 1, tickets: 1, comentarios: 1, equipos: 1, clientes: 1, mantenciones_fichas: 1 }, usuarios: [], tickets: [], comentarios: [], equipos: [], clientes: [], mantenciones_fichas: [] };
   }
 }
 
@@ -395,7 +397,7 @@ if (isOffline) {
         const page = list.slice(offset, offset + limit);
         return { rows: page, rowCount: page.length };
       }
-      if (s.startsWith('SELECT * FROM equipos WHERE id =')) {
+      if (s.startsWith('SELECT * FROM equipos WHERE id =') || s.startsWith('SELECT id, cliente_id FROM equipos WHERE id =')) {
         const [id] = params;
         const e = store.equipos.find(x => String(x.id) === String(id));
         return { rows: e ? [e] : [], rowCount: e ? 1 : 0 };
@@ -520,6 +522,203 @@ if (isOffline) {
         c.actualizado_en = nowISO();
         saveStore(store);
         return { rows: [c], rowCount: 1 };
+      }
+
+      // --- Mantenciones fichas (offline mínimo) ---
+      if (!Array.isArray(store.mantenciones_fichas)) store.mantenciones_fichas = [];
+      if (typeof store.seq.mantenciones_fichas !== 'number') store.seq.mantenciones_fichas = 1;
+
+      if (s.includes('CREATE TABLE IF NOT EXISTS protocolos_marca') || s.includes('CREATE TABLE IF NOT EXISTS mantenciones_fichas')) {
+        return { rows: [], rowCount: 0 };
+      }
+      if (s.includes('ALTER TABLE mantenciones_fichas')) {
+        return { rows: [], rowCount: 0 };
+      }
+      if (s.includes('INSERT INTO protocolos_marca') || s.includes('FROM protocolos_marca')) {
+        return { rows: [], rowCount: 0 };
+      }
+
+      if (s.startsWith('SELECT * FROM mantenciones_fichas WHERE id =')) {
+        const [id] = params;
+        const m = store.mantenciones_fichas.find(x => String(x.id) === String(id));
+        return { rows: m ? [m] : [], rowCount: m ? 1 : 0 };
+      }
+
+      if (s.includes('FROM mantenciones_fichas m') && s.includes('WHERE m.id =')) {
+        const [id] = params;
+        const m = store.mantenciones_fichas.find(x => String(x.id) === String(id));
+        if (!m) return { rows: [], rowCount: 0 };
+        const e = store.equipos.find(x => String(x.id) === String(m.equipo_id));
+        const row = {
+          ...m,
+          equipo_nombre: e?.nombre || null,
+          equipo_marca: e?.marca || null,
+          equipo_modelo: e?.modelo || null,
+          equipo_serie: e?.numero_serie || null,
+          equipo_cliente: e?.cliente || null,
+          equipo_cliente_id: e?.cliente_id ?? null,
+        };
+        return { rows: [row], rowCount: 1 };
+      }
+
+      if (s.includes('FROM mantenciones_fichas m') && s.includes('ORDER BY')) {
+        const rows = store.mantenciones_fichas.slice().sort((a, b) => Number(b.id) - Number(a.id)).map(m => {
+          const e = store.equipos.find(x => String(x.id) === String(m.equipo_id));
+          return {
+            ...m,
+            equipo_nombre: e?.nombre || null,
+            equipo_marca: e?.marca || null,
+            equipo_modelo: e?.modelo || null,
+            equipo_serie: e?.numero_serie || null,
+            equipo_cliente: e?.cliente || null,
+          };
+        });
+        return { rows, rowCount: rows.length };
+      }
+
+      if (s.startsWith('INSERT INTO mantenciones_fichas')) {
+        const parseMaybeJson = (v, fb) => {
+          if (v == null) return fb;
+          if (typeof v === 'object') return v;
+          try { return JSON.parse(v); } catch { return fb; }
+        };
+        const id = store.seq.mantenciones_fichas++;
+        const row = {
+          id,
+          equipo_id: params[0] != null ? Number(params[0]) : null,
+          cliente_id: params[1] != null ? Number(params[1]) : null,
+          tipo: params[2] || 'preventiva',
+          estado: params[3] || 'borrador',
+          fecha: params[4] || null,
+          hora: params[5] || null,
+          trabajo: params[6] || '',
+          nota: params[7] || '',
+          dano_descripcion: params[8] || '',
+          checklist: parseMaybeJson(params[9], []),
+          realizado_por: params[10] || null,
+          tecnico_id: params[11] || null,
+          firma_tecnico: params[12] || null,
+          firma_cliente: params[13] || null,
+          firmante_cliente: params[14] || null,
+          email_cliente: params[15] || null,
+          proxima_mantencion: params[16] || null,
+          firmada_en: params[17] || null,
+          rut_cliente: params[18] || null,
+          senores: params[19] || null,
+          direccion: params[20] || null,
+          ciudad_comuna: params[21] || null,
+          telefono_cliente: params[22] || null,
+          contacto_nombre: params[23] || null,
+          version_sw: params[24] || null,
+          motivo_atencion: params[25] || '',
+          categorias: parseMaybeJson(params[26], []),
+          fotos: [],
+          creado_en: nowISO(),
+          actualizado_en: nowISO(),
+        };
+        store.mantenciones_fichas.push(row);
+        saveStore(store);
+        return { rows: [row], rowCount: 1 };
+      }
+
+      if (s.startsWith('UPDATE mantenciones_fichas SET fotos')) {
+        const [fotos, id] = params;
+        const m = store.mantenciones_fichas.find(x => String(x.id) === String(id));
+        if (!m) return { rows: [], rowCount: 0 };
+        try { m.fotos = typeof fotos === 'string' ? JSON.parse(fotos) : (fotos || []); } catch { m.fotos = []; }
+        saveStore(store);
+        return { rows: [m], rowCount: 1 };
+      }
+
+      if (s.startsWith('UPDATE mantenciones_fichas SET') && s.includes('equipo_id = $26')) {
+        const id = params[24];
+        const m = store.mantenciones_fichas.find(x => String(x.id) === String(id) && x.estado === 'borrador');
+        if (!m) return { rows: [], rowCount: 0 };
+        const parseMaybeJson = (v, fb) => {
+          if (v == null) return fb;
+          if (typeof v === 'object') return v;
+          try { return JSON.parse(v); } catch { return fb; }
+        };
+        const keep = (incoming, prev) => (incoming == null || incoming === '' ? prev : incoming);
+        m.tipo = params[0] || m.tipo;
+        m.fecha = keep(params[1], m.fecha);
+        m.hora = keep(params[2], m.hora);
+        m.trabajo = params[3] ?? m.trabajo;
+        m.nota = params[4] ?? m.nota;
+        m.dano_descripcion = params[5] ?? m.dano_descripcion;
+        m.checklist = params[6] == null ? m.checklist : parseMaybeJson(params[6], m.checklist);
+        m.realizado_por = params[7] ?? m.realizado_por;
+        m.firmante_cliente = params[8] ?? m.firmante_cliente;
+        m.firma_tecnico = params[9];
+        m.firma_cliente = params[10];
+        m.email_cliente = params[11] ?? m.email_cliente;
+        m.proxima_mantencion = keep(params[12], m.proxima_mantencion);
+        m.estado = params[13] || m.estado;
+        if (params[13] === 'firmada') m.firmada_en = m.firmada_en || nowISO();
+        m.rut_cliente = params[14] ?? m.rut_cliente;
+        m.senores = params[15] ?? m.senores;
+        m.direccion = params[16] ?? m.direccion;
+        m.ciudad_comuna = params[17] ?? m.ciudad_comuna;
+        m.telefono_cliente = params[18] ?? m.telefono_cliente;
+        m.contacto_nombre = params[19] ?? m.contacto_nombre;
+        m.version_sw = params[20] ?? m.version_sw;
+        m.motivo_atencion = params[21] ?? m.motivo_atencion;
+        m.categorias = params[22] == null ? m.categorias : parseMaybeJson(params[22], m.categorias || []);
+        m.fotos = params[23] == null ? m.fotos : parseMaybeJson(params[23], m.fotos || []);
+        m.equipo_id = params[25] ?? m.equipo_id;
+        m.cliente_id = params[26] ?? m.cliente_id;
+        m.actualizado_en = nowISO();
+        saveStore(store);
+        return { rows: [m], rowCount: 1 };
+      }
+
+      if (s.startsWith('UPDATE mantenciones_fichas SET') && s.includes('rut_cliente = $1') && s.includes("estado = 'firmada'")) {
+        const id = params[15];
+        const m = store.mantenciones_fichas.find(x => String(x.id) === String(id) && x.estado === 'firmada');
+        if (!m) return { rows: [], rowCount: 0 };
+        const firmaT = m.firma_tecnico;
+        const firmaC = m.firma_cliente;
+        const estado = m.estado;
+        const checklist = m.checklist;
+        const fotos = m.fotos;
+        const categorias = m.categorias;
+        Object.assign(m, {
+          rut_cliente: params[0],
+          senores: params[1],
+          direccion: params[2],
+          ciudad_comuna: params[3],
+          telefono_cliente: params[4],
+          contacto_nombre: params[5],
+          email_cliente: params[6],
+          version_sw: params[7],
+          motivo_atencion: params[8],
+          dano_descripcion: params[9],
+          trabajo: params[10],
+          nota: params[11],
+          realizado_por: params[12],
+          firmante_cliente: params[13],
+          proxima_mantencion: params[14],
+          actualizado_en: nowISO(),
+        });
+        // Preservar bloqueados
+        m.firma_tecnico = firmaT;
+        m.firma_cliente = firmaC;
+        m.estado = estado;
+        m.checklist = checklist;
+        m.fotos = fotos;
+        m.categorias = categorias;
+        saveStore(store);
+        return { rows: [m], rowCount: 1 };
+      }
+
+      if (s.startsWith('DELETE FROM mantenciones_fichas')) {
+        const [id] = params;
+        const idx = store.mantenciones_fichas.findIndex(x => String(x.id) === String(id));
+        if (idx === -1) return { rows: [], rowCount: 0 };
+        const deleted = store.mantenciones_fichas[idx];
+        store.mantenciones_fichas.splice(idx, 1);
+        saveStore(store);
+        return { rows: [deleted], rowCount: 1 };
       }
 
 

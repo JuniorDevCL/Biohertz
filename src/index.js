@@ -49,7 +49,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(process.cwd(), 'views'));
 
 app.use(express.urlencoded({ extended: true, limit: '8mb' }));
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '8mb' }));
 
 app.use(session({
   secret: process.env.JWT_SECRET || 'secret_key_biohertz',
@@ -157,6 +157,21 @@ app.use('/clientes', clientesRoutes);
 app.use('/calendario', calendarioRoutes);
 app.use('/usuarios', usuariosRoutes);
 app.use('/mantenciones', mantencionesRoutes);
+
+app.use((err, req, res, next) => {
+  if (err && (err.status === 413 || err.type === 'entity.too.large')) {
+    return res.status(413).json({
+      error: 'El contenido es demasiado grande (firmas o fotos). Quita fotos e intenta de nuevo.',
+    });
+  }
+  if (!err) return next();
+  console.error('Unhandled:', err);
+  const wantsJson = String(req.headers.accept || '').includes('application/json');
+  if (wantsJson) {
+    return res.status(500).json({ error: err.message || 'Error interno' });
+  }
+  res.status(500).send('Error interno');
+});
 
 // Inicializar servidor HTTP
 const server = createServer(app);

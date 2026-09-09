@@ -36,9 +36,13 @@
         <i class="ph ph-arrow-left mr-1.5"></i> Volver a Mantenciones
       </a>
       <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-        <%= f ? (isReadonly ? 'Ficha firmada' : 'Continuar ficha') : 'Nueva ficha de mantención' %>
+        <%= f ? (isReadonly ? 'Ficha firmada' : ('Continuar ficha Nº ' + String(f.id).padStart(5, '0'))) : 'Nueva ficha de mantención' %>
       </h1>
-      <p class="text-slate-400 text-sm mt-1">Ficha tipo Atención a clientes Biohertz: checklist, fotos y firmas en tablet.</p>
+      <p class="text-slate-400 text-sm mt-1">
+        <%= f && f.estado === 'borrador'
+          ? 'Borrador editable: puedes cambiar cualquier campo, guardar firmas parciales y firmar cuando esté listo.'
+          : 'Ficha tipo Atención a clientes Biohertz: checklist, fotos y firmas en tablet.' %>
+      </p>
     </div>
     <% if (f && f.estado === 'firmada') { %>
       <span class="inline-flex self-start px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Firmada · bloqueada</span>
@@ -52,44 +56,45 @@
       <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Equipo y tipo</h2>
       <div class="space-y-2">
         <label class="block text-xs text-slate-400 mb-1 uppercase">Equipo</label>
-        <% if (isReadonly || f) { %>
+        <% if (isReadonly) { %>
           <input type="hidden" name="equipo_id" id="equipo_id" value="<%= f ? f.equipo_id : (equipo ? equipo.id : '') %>">
           <div class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
             <% const eqLocked = equipo || (f && { nombre: f.equipo_nombre, marca: f.equipo_marca, modelo: f.equipo_modelo, numero_serie: f.equipo_serie }); %>
             <%= eqLocked ? ([eqLocked.nombre, [eqLocked.marca, eqLocked.modelo].filter(Boolean).join(' '), eqLocked.numero_serie ? 'Serie: ' + eqLocked.numero_serie : ''].filter(Boolean).join(' · ')) : 'Equipo' %>
           </div>
         <% } else { %>
-          <input type="hidden" name="equipo_id" id="equipo_id" value="<%= equipo ? equipo.id : '' %>" required>
-          <div class="relative">
-            <div class="flex gap-2">
-              <div class="relative flex-1">
+          <% const eqSel = equipo || (f && { id: f.equipo_id, nombre: f.equipo_nombre, marca: f.equipo_marca, modelo: f.equipo_modelo, numero_serie: f.equipo_serie }); %>
+          <input type="hidden" name="equipo_id" id="equipo_id" value="<%= f ? f.equipo_id : (equipo ? equipo.id : '') %>" required>
+          <div id="equipo-picker" class="relative space-y-2">
+            <div id="equipo-search-wrap" class="<%= eqSel && eqSel.id ? 'hidden' : '' %>">
+              <div class="relative">
                 <i class="ph ph-barcode absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg pointer-events-none"></i>
                 <input
                   type="search"
                   id="equipo-serie-search"
                   autocomplete="off"
                   placeholder="Buscar por número de serie, nombre o marca…"
-                  value="<%= equipo && equipo.numero_serie ? equipo.numero_serie : '' %>"
+                  value=""
                   class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-3 py-3 text-sm text-white focus:outline-none focus:border-teal-400"
                 >
+                <div id="equipo-search-results" class="hidden absolute z-30 mt-1 w-full max-h-56 overflow-y-auto rounded-xl border border-slate-700 bg-slate-950 shadow-xl"></div>
+              </div>
+              <p id="equipo-search-hint" class="text-[11px] text-slate-500 mt-1">Escribe el N° de serie para encontrar el equipo rápido en terreno.</p>
+            </div>
+            <div id="equipo-selected" class="<%= eqSel && eqSel.id ? '' : 'hidden' %> rounded-xl border border-teal-500/30 bg-teal-500/10 px-3 py-2.5 text-sm">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <p id="equipo-selected-nombre" class="text-white font-medium"><%= eqSel ? (eqSel.nombre || '') : '' %></p>
+                  <p id="equipo-selected-meta" class="text-xs text-slate-400 mt-0.5">
+                    <% if (eqSel) { %>
+                      <%= [eqSel.marca, eqSel.modelo].filter(Boolean).join(' ') || 's/marca' %><%= eqSel.numero_serie ? ' · Serie: ' + eqSel.numero_serie : '' %>
+                    <% } %>
+                  </p>
+                </div>
+                <button type="button" id="equipo-clear" class="text-xs text-teal-300 hover:text-white shrink-0 font-medium">Cambiar</button>
               </div>
             </div>
-            <div id="equipo-search-results" class="hidden absolute z-20 mt-1 w-full max-h-56 overflow-y-auto rounded-xl border border-slate-700 bg-slate-950 shadow-xl"></div>
           </div>
-          <div id="equipo-selected" class="<%= equipo ? '' : 'hidden' %> rounded-xl border border-teal-500/30 bg-teal-500/10 px-3 py-2.5 text-sm">
-            <div class="flex items-start justify-between gap-2">
-              <div>
-                <p id="equipo-selected-nombre" class="text-white font-medium"><%= equipo ? (equipo.nombre || '') : '' %></p>
-                <p id="equipo-selected-meta" class="text-xs text-slate-400 mt-0.5">
-                  <% if (equipo) { %>
-                    <%= [equipo.marca, equipo.modelo].filter(Boolean).join(' ') || 's/marca' %><%= equipo.numero_serie ? ' · Serie: ' + equipo.numero_serie : '' %>
-                  <% } %>
-                </p>
-              </div>
-              <button type="button" id="equipo-clear" class="text-xs text-slate-400 hover:text-white shrink-0">Cambiar</button>
-            </div>
-          </div>
-          <p id="equipo-search-hint" class="text-[11px] text-slate-500">Escribe el N° de serie para encontrar el equipo rápido en terreno.</p>
         <% } %>
       </div>
 
@@ -107,12 +112,12 @@
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Fecha</label>
-          <input type="date" name="fecha" value="<%= f && f.fecha ? String(f.fecha).slice(0,10) : today %>" <%= isReadonly ? 'disabled' : '' %>
+          <input type="date" name="fecha" value="<%= f && f.fecha ? f.fecha : today %>" <%= isReadonly ? 'disabled' : '' %>
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Hora</label>
-          <input type="time" name="hora" value="<%= f && f.hora ? String(f.hora).slice(0,5) : nowTime %>" <%= isReadonly ? 'disabled' : '' %>
+          <input type="time" name="hora" value="<%= f && f.hora ? f.hora : nowTime %>" <%= isReadonly ? 'disabled' : '' %>
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
       </div>
@@ -136,43 +141,43 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">RUT</label>
-          <input type="text" name="rut_cliente" <%= isReadonly ? 'disabled' : '' %>
+          <input type="text" name="rut_cliente" maxlength="30" <%= isReadonly ? 'disabled' : '' %>
             value="<%= f ? (f.rut_cliente || '') : '' %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Señor(es)</label>
-          <input type="text" name="senores" <%= isReadonly ? 'disabled' : '' %>
+          <input type="text" name="senores" maxlength="200" <%= isReadonly ? 'disabled' : '' %>
             value="<%= f ? (f.senores || '') : (pre.senores || '') %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Dirección</label>
-          <input type="text" name="direccion" <%= isReadonly ? 'disabled' : '' %>
+          <input type="text" name="direccion" maxlength="250" <%= isReadonly ? 'disabled' : '' %>
             value="<%= f ? (f.direccion || '') : (pre.direccion || '') %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Ciudad - Comuna</label>
-          <input type="text" name="ciudad_comuna" <%= isReadonly ? 'disabled' : '' %>
+          <input type="text" name="ciudad_comuna" maxlength="150" <%= isReadonly ? 'disabled' : '' %>
             value="<%= f ? (f.ciudad_comuna || '') : '' %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Teléfono</label>
-          <input type="text" name="telefono_cliente" <%= isReadonly ? 'disabled' : '' %>
+          <input type="text" name="telefono_cliente" maxlength="50" <%= isReadonly ? 'disabled' : '' %>
             value="<%= f ? (f.telefono_cliente || '') : (pre.telefono_cliente || '') %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Contacto</label>
-          <input type="text" name="contacto_nombre" <%= isReadonly ? 'disabled' : '' %>
+          <input type="text" name="contacto_nombre" maxlength="150" <%= isReadonly ? 'disabled' : '' %>
             value="<%= f ? (f.contacto_nombre || '') : '' %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div class="sm:col-span-2">
           <label class="block text-xs text-slate-400 mb-1 uppercase">Versión S/W</label>
-          <input type="text" name="version_sw" <%= isReadonly ? 'disabled' : '' %>
+          <input type="text" name="version_sw" maxlength="80" <%= isReadonly ? 'disabled' : '' %>
             value="<%= f ? (f.version_sw || '') : '' %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
@@ -184,8 +189,21 @@
         <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Checklist preventiva</h2>
         <span id="checklist-marca" class="text-[11px] text-teal-300/80"></span>
       </div>
-      <p class="text-xs text-slate-500">19 ítems de protocolo preventiva. Márcalos al completarlos.</p>
-      <div id="checklist-list" class="space-y-2"></div>
+      <p class="text-xs text-slate-500" id="checklist-hint">
+        <% const checklistCount = Array.isArray(checklist) ? checklist.length : 0; %>
+        <%= checklistCount ? (checklistCount + ' ítems de protocolo preventiva. Márcalos al completarlos.') : 'Selecciona un equipo para cargar el protocolo preventiva.' %>
+      </p>
+      <div id="checklist-list" class="space-y-2">
+        <% if (Array.isArray(checklist) && checklist.length && initialTipo !== 'correctiva') { %>
+          <% checklist.forEach(function(item, idx) { %>
+            <label class="check-item flex items-start gap-3 p-3 rounded-xl border border-slate-700 bg-slate-950/40 cursor-pointer">
+              <input type="checkbox" class="mt-1 accent-teal-400 scale-125" data-idx="<%= idx %>"
+                <%= item.checked ? 'checked' : '' %> <%= isReadonly ? 'disabled' : '' %>>
+              <span class="text-sm text-slate-200 leading-snug"><%= item.label || '' %></span>
+            </label>
+          <% }) %>
+        <% } %>
+      </div>
     </section>
 
     <section id="section-dano" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 <%= initialTipo === 'correctiva' ? '' : 'hidden' %>">
@@ -212,7 +230,7 @@
         class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f ? (f.nota || '') : '' %></textarea>
       <div>
         <label class="block text-xs text-slate-400 mb-1 uppercase">Realizado por (servicio técnico)</label>
-        <input type="text" name="realizado_por" <%= isReadonly ? 'disabled' : '' %>
+        <input type="text" name="realizado_por" maxlength="150" <%= isReadonly ? 'disabled' : '' %>
           value="<%= f ? (f.realizado_por || '') : (user && user.nombre ? user.nombre : '') %>"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
       </div>
@@ -233,7 +251,7 @@
       <p class="text-xs text-slate-500">Al firmar, se crea una clave cifrada y se envía por correo al cliente (solo la primera vez o si aún no tenía acceso).</p>
       <div>
         <label class="block text-xs text-slate-400 mb-1 uppercase">Correo electrónico del cliente</label>
-        <input type="email" name="email_cliente" <%= isReadonly ? 'disabled' : '' %>
+        <input type="email" name="email_cliente" maxlength="150" <%= isReadonly ? 'disabled' : '' %>
           value="<%= f ? (f.email_cliente || '') : (typeof emailClientePrefill !== 'undefined' && emailClientePrefill ? emailClientePrefill : (pre.email_cliente || '')) %>"
           placeholder="cliente@empresa.cl"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
@@ -241,14 +259,14 @@
       <div>
         <label class="block text-xs text-slate-400 mb-1 uppercase">Próxima mantención</label>
         <input type="date" name="proxima_mantencion" <%= isReadonly ? 'disabled' : '' %>
-          value="<%= f && f.proxima_mantencion ? String(f.proxima_mantencion).slice(0,10) : '' %>"
+          value="<%= f && f.proxima_mantencion ? f.proxima_mantencion : '' %>"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
       </div>
     </section>
 
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
       <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Firmas</h2>
-      <p class="text-xs text-slate-500">Firma con el dedo o el lápiz de la tablet. Al firmar ambas, la ficha queda bloqueada.</p>
+      <p class="text-xs text-slate-500">Firma con el dedo o el lápiz de la tablet. Puedes guardar firmas en el borrador y completarlas después. Al firmar ambas y cerrar, la ficha queda bloqueada.</p>
 
       <div>
         <div class="flex items-center justify-between mb-2">
@@ -262,7 +280,7 @@
 
       <div>
         <label class="block text-xs text-slate-400 mb-1 uppercase">Nombre del cliente que firma</label>
-        <input type="text" name="firmante_cliente" <%= isReadonly ? 'disabled' : '' %>
+        <input type="text" name="firmante_cliente" maxlength="150" <%= isReadonly ? 'disabled' : '' %>
           value="<%= f ? (f.firmante_cliente || '') : '' %>"
           placeholder="Nombre y apellido"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white mb-3">
@@ -286,6 +304,8 @@
             Firmar y cerrar ficha
           </button>
         </div>
+        <p id="borrador-status" class="hidden text-center text-xs text-emerald-300 mt-2">Borrador guardado</p>
+        </div>
       </div>
     <% } else if (f && f.equipo_id) { %>
       <a href="/equipos" class="inline-flex text-sm text-teal-300 hover:text-cyan-300">Ver equipos →</a>
@@ -296,7 +316,7 @@
 <script>
 (() => {
   const readonly = <%= isReadonly ? 'true' : 'false' %>;
-  let checklist = <%= checklistJson %>;
+  let checklist = <%- checklistJson %>;
   const existingFirmaTecnico = <%- f && f.firma_tecnico ? JSON.stringify(f.firma_tecnico) : 'null' %>;
   const existingFirmaCliente = <%- f && f.firma_cliente ? JSON.stringify(f.firma_cliente) : 'null' %>;
   let fotos = <%- JSON.stringify(fotosIniciales.map(p => ({
@@ -337,10 +357,16 @@
   }
 
   function renderChecklist() {
+    if (!listEl) return;
     listEl.innerHTML = '';
+    const hint = document.getElementById('checklist-hint');
     if (!checklist.length) {
       listEl.innerHTML = '<p class="text-xs text-slate-500">Sin ítems de protocolo para esta marca.</p>';
+      if (hint) hint.textContent = 'Selecciona un equipo para cargar el protocolo preventiva.';
       return;
+    }
+    if (hint) {
+      hint.textContent = checklist.length + ' ítems de protocolo preventiva. Márcalos al completarlos.';
     }
     checklist.forEach((item, idx) => {
       const row = document.createElement('label');
@@ -383,6 +409,7 @@
     equipoIdInput.value = eq.id;
     selectedEquipoMarca = eq.marca || '';
     const selectedBox = document.getElementById('equipo-selected');
+    const searchWrap = document.getElementById('equipo-search-wrap');
     const nombreEl = document.getElementById('equipo-selected-nombre');
     const metaEl = document.getElementById('equipo-selected-meta');
     const searchEl = document.getElementById('equipo-serie-search');
@@ -394,7 +421,8 @@
         (eq.numero_serie ? ' · Serie: ' + eq.numero_serie : '');
     }
     if (selectedBox) selectedBox.classList.remove('hidden');
-    if (searchEl) searchEl.value = eq.numero_serie || eq.nombre || '';
+    if (searchWrap) searchWrap.classList.add('hidden');
+    if (searchEl) searchEl.value = '';
     if (resultsEl) {
       resultsEl.classList.add('hidden');
       resultsEl.innerHTML = '';
@@ -414,9 +442,11 @@
     if (equipoIdInput) equipoIdInput.value = '';
     selectedEquipoMarca = '';
     const selectedBox = document.getElementById('equipo-selected');
+    const searchWrap = document.getElementById('equipo-search-wrap');
     const searchEl = document.getElementById('equipo-serie-search');
     const resultsEl = document.getElementById('equipo-search-results');
     if (selectedBox) selectedBox.classList.add('hidden');
+    if (searchWrap) searchWrap.classList.remove('hidden');
     if (searchEl) {
       searchEl.value = '';
       searchEl.focus();
@@ -425,6 +455,9 @@
       resultsEl.classList.add('hidden');
       resultsEl.innerHTML = '';
     }
+    checklist = [];
+    if (marcaEl) marcaEl.textContent = '';
+    renderChecklist();
   }
 
   function renderEquipoResults(query) {
@@ -462,7 +495,8 @@
     }).join('');
     resultsEl.classList.remove('hidden');
     resultsEl.querySelectorAll('.equipo-result').forEach((btn) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('mousedown', (ev) => {
+        ev.preventDefault();
         const eq = equiposData.find((e) => String(e.id) === String(btn.dataset.id));
         if (eq) selectEquipo(eq);
       });
@@ -480,9 +514,9 @@
       if (searchInput.value.trim()) renderEquipoResults(searchInput.value);
     });
     document.addEventListener('click', (ev) => {
-      const wrap = searchInput.closest('.relative');
+      const picker = document.getElementById('equipo-picker');
       const resultsEl = document.getElementById('equipo-search-results');
-      if (resultsEl && wrap && !wrap.contains(ev.target)) {
+      if (resultsEl && picker && !picker.contains(ev.target)) {
         resultsEl.classList.add('hidden');
       }
     });
@@ -660,18 +694,21 @@
     const fd = new FormData(form);
     const equipoId = fd.get('equipo_id') || (equipoIdInput ? equipoIdInput.value : null);
     const categorias = Array.from(document.querySelectorAll('input[name="categoria"]:checked')).map((el) => el.value);
+    const fechaRaw = String(fd.get('fecha') || '').trim();
+    const horaRaw = String(fd.get('hora') || '').trim();
+    const proxRaw = String(fd.get('proxima_mantencion') || '').trim();
     return {
       equipo_id: equipoId,
       tipo: currentTipo(),
-      fecha: fd.get('fecha'),
-      hora: fd.get('hora'),
+      fecha: /^\d{4}-\d{2}-\d{2}$/.test(fechaRaw) ? fechaRaw : '',
+      hora: /^\d{1,2}:\d{2}/.test(horaRaw) ? horaRaw.slice(0, 5) : '',
       trabajo: fd.get('trabajo'),
       nota: fd.get('nota'),
       dano_descripcion: fd.get('dano_descripcion'),
       realizado_por: fd.get('realizado_por'),
       firmante_cliente: fd.get('firmante_cliente'),
       email_cliente: fd.get('email_cliente'),
-      proxima_mantencion: fd.get('proxima_mantencion'),
+      proxima_mantencion: /^\d{4}-\d{2}-\d{2}$/.test(proxRaw) ? proxRaw : '',
       rut_cliente: fd.get('rut_cliente'),
       senores: fd.get('senores'),
       direccion: fd.get('direccion'),
@@ -710,9 +747,13 @@
       }
     }
 
-    const fichaId = document.getElementById('ficha-id')?.value;
+    const fichaIdEl = document.getElementById('ficha-id');
+    const fichaId = fichaIdEl?.value;
     const url = fichaId ? '/mantenciones/' + fichaId : '/mantenciones';
     const method = fichaId ? 'PATCH' : 'POST';
+    const btnBorrador = document.getElementById('btn-borrador');
+    const statusEl = document.getElementById('borrador-status');
+    if (btnBorrador) btnBorrador.disabled = true;
 
     try {
       const res = await fetch(url, {
@@ -725,10 +766,31 @@
         alert(data.error || ('Error ' + res.status));
         return;
       }
-      window.location.href = '/mantenciones/' + data.id;
+      if (data.foto_warning) alert(data.foto_warning);
+      if (firmar || !fichaId) {
+        window.location.href = '/mantenciones/' + data.id;
+        return;
+      }
+      if (fichaIdEl && data.id) fichaIdEl.value = data.id;
+      if (Array.isArray(data.fotos)) {
+        fotos = data.fotos.map((p) => ({
+          nombre: p.nombre || 'foto',
+          archivo: p.archivo || null,
+          url: p.url || null,
+          data: p.data || null,
+        }));
+        renderFotos();
+      }
+      if (statusEl) {
+        statusEl.textContent = 'Borrador guardado';
+        statusEl.classList.remove('hidden');
+        setTimeout(() => statusEl.classList.add('hidden'), 2500);
+      }
     } catch (e) {
       console.error(e);
       alert('Error de conexión');
+    } finally {
+      if (btnBorrador) btnBorrador.disabled = false;
     }
   }
 
@@ -801,9 +863,9 @@
 
   toggleTipoUI();
   if (checklist && checklist.length) {
-    marcaEl.textContent = selectedEquipoMarca ? ('Marca: ' + selectedEquipoMarca) : '';
+    if (marcaEl) marcaEl.textContent = selectedEquipoMarca ? ('Marca: ' + selectedEquipoMarca) : '';
     renderChecklist();
-  } else if (!readonly && equipoIdInput && equipoIdInput.value) {
+  } else if (!readonly && currentTipo() === 'preventiva' && equipoIdInput && equipoIdInput.value) {
     loadProtocoloForMarca(selectedEquipoMarca);
   } else {
     renderChecklist();

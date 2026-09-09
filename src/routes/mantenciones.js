@@ -18,6 +18,16 @@ import {
   attachFichaFotos,
   getFotosStorageStats,
 } from '../services/mantencionesFotos.js';
+import {
+  VARCHAR_LIMITS,
+  toDateParam,
+  toTimeParam,
+  clipVarchar,
+  jsonbParam,
+  publicUpdateError,
+  formatFechaForInput,
+  formatHoraForInput,
+} from '../services/mantencionesDraft.js';
 import fs from 'fs';
 
 const router = Router();
@@ -26,13 +36,22 @@ function mapFichaRow(row, { withFotos = true } = {}) {
   if (!row) return null;
   const ficha = {
     ...row,
-    checklist: Array.isArray(row.checklist) ? row.checklist : [],
-    categorias: Array.isArray(row.categorias) ? row.categorias : [],
+    fecha: formatFechaForInput(row.fecha) || null,
+    hora: formatHoraForInput(row.hora) || null,
+    proxima_mantencion: formatFechaForInput(row.proxima_mantencion) || null,
+    checklist: parseJsonArray(row.checklist, []),
+    categorias: parseJsonArray(row.categorias, []),
   };
   if (withFotos) {
-    ficha.fotos = Array.isArray(row.fotos) ? row.fotos : [];
+    ficha.fotos = parseJsonArray(row.fotos, []);
   }
   return ficha;
+}
+
+function clipField(value, key) {
+  const max = VARCHAR_LIMITS[key];
+  if (!max) return value == null ? null : String(value);
+  return clipVarchar(value, max);
 }
 
 async function prepareFichaFotos(ficha) {
@@ -41,6 +60,10 @@ async function prepareFichaFotos(ficha) {
 
 function parseJsonArray(value, fallback = []) {
   if (Array.isArray(value)) return value;
+  if (value && typeof value === 'object') {
+    // pg a veces entrega objetos indexados; no es array
+    return fallback;
+  }
   if (typeof value === 'string') {
     try {
       const parsed = JSON.parse(value);
@@ -54,8 +77,45 @@ function parseJsonArray(value, fallback = []) {
 
 const CATEGORIA_IDS = new Set(CATEGORIAS_ATENCION.map((c) => c.id));
 
+/** Campos de texto editables en fichas firmadas (nunca firmas/fotos/checklist/estado). */
+const TEXTO_EDITABLE_FIELDS = [
+  'rut_cliente',
+  'senores',
+  'direccion',
+  'ciudad_comuna',
+  'telefono_cliente',
+  'contacto_nombre',
+  'email_cliente',
+  'version_sw',
+  'motivo_atencion',
+  'dano_descripcion',
+  'trabajo',
+  'nota',
+  'realizado_por',
+  'firmante_cliente',
+  'proxima_mantencion',
+];
+
 function sanitizeCategorias(value) {
   return parseJsonArray(value).filter((id) => CATEGORIA_IDS.has(String(id))).slice(0, 8);
+}
+
+function pickTextoEdits(body = {}) {
+  const out = {};
+  for (const key of TEXTO_EDITABLE_FIELDS) {
+    if (Object.prototype.hasOwnProperty.call(body, key)) {
+      if (key === 'proxima_mantencion') {
+        out[key] = toDateParam(body[key]);
+      } else if (key === 'email_cliente') {
+        out[key] = clipField(body[key], 'email_cliente');
+      } else if (VARCHAR_LIMITS[key]) {
+        out[key] = clipField(body[key], key);
+      } else {
+        out[key] = body[key];
+      }
+    }
+  }
+  return out;
 }
 
 async function canAccessFichaFoto(req, fichaId) {
@@ -64,12 +124,18 @@ async function canAccessFichaFoto(req, fichaId) {
   const portal = req.session?.portalUser;
   if (!portal?.cliente_id) return false;
 
+  const portalEmail = String(portal.email || '').trim().toLowerCase();
+  if (!portalEmail) return false;
+
   const r = await pool.query(
     `SELECT m.id
      FROM mantenciones_fichas m
      INNER JOIN equipos e ON e.id = m.equipo_id
-     WHERE m.id = $1 AND e.cliente_id = $2 AND m.estado = 'firmada'`,
-    [fichaId, portal.cliente_id]
+     WHERE m.id = $1
+       AND e.cliente_id = $2
+       AND m.estado = 'firmada'
+       AND lower(trim(m.email_cliente)) = $3`,
+    [fichaId, portal.cliente_id, portalEmail]
   );
   return r.rowCount > 0;
 }
@@ -77,6 +143,17 @@ async function canAccessFichaFoto(req, fichaId) {
 function normalizeEmail(email) {
   const e = String(email || '').trim().toLowerCase();
   return e || null;
+}
+
+/** Persiste firmas también en borrador; ignora pads vacíos / data URLs inválidas. */
+function normalizeFirmaDataUrl(value) {
+  if (value == null) return null;
+  const s = String(value).trim();
+  if (!s || s === 'null' || s === 'undefined') return null;
+  if (!s.startsWith('data:image/')) return null;
+  // Canvas en blanco suele ser muy corto; firmas reales son más largas
+  if (s.length < 80) return null;
+  return s;
 }
 
 async function maybeGrantPortalAccess(ficha, firmanteNombre) {
@@ -120,14 +197,20 @@ router.get('/', authRequired, async (req, res) => {
     }
     if (q) {
       values.push(`%${q}%`);
-      where.push(`(
-        e.nombre ILIKE $${values.length}
-        OR e.marca ILIKE $${values.length}
-        OR e.modelo ILIKE $${values.length}
-        OR e.numero_serie ILIKE $${values.length}
-        OR m.trabajo ILIKE $${values.length}
-        OR m.realizado_por ILIKE $${values.length}
-      )`);
+      const qIdx = values.length;
+      const clauses = [
+        `e.nombre ILIKE $${qIdx}`,
+        `e.marca ILIKE $${qIdx}`,
+        `e.modelo ILIKE $${qIdx}`,
+        `e.numero_serie ILIKE $${qIdx}`,
+        `e.cliente ILIKE $${qIdx}`,
+        `c.nombre ILIKE $${qIdx}`,
+        `m.senores ILIKE $${qIdx}`,
+        `m.trabajo ILIKE $${qIdx}`,
+        `m.realizado_por ILIKE $${qIdx}`,
+        `CAST(m.id AS TEXT) ILIKE $${qIdx}`,
+      ];
+      where.push(`(${clauses.join(' OR ')})`);
     }
 
     const sql = `
@@ -302,6 +385,42 @@ router.get('/fotos/:fichaId/:archivo', async (req, res) => {
   }
 });
 
+router.get('/:id/editar-textos', authRequired, async (req, res) => {
+  try {
+    await ensureMantencionesSchema();
+    const { id } = req.params;
+    const result = await pool.query(
+      `SELECT m.*,
+              e.nombre AS equipo_nombre,
+              e.marca AS equipo_marca,
+              e.modelo AS equipo_modelo,
+              e.numero_serie AS equipo_serie,
+              e.cliente AS equipo_cliente
+       FROM mantenciones_fichas m
+       LEFT JOIN equipos e ON e.id = m.equipo_id
+       WHERE m.id = $1`,
+      [id]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).send('Ficha no encontrada');
+    }
+
+    const ficha = mapFichaRow(result.rows[0], { withFotos: false });
+    if (ficha.estado !== 'firmada') {
+      return res.redirect('/mantenciones/' + id);
+    }
+
+    res.render('mantencion_editar_textos', {
+      title: `Editar textos Nº ${String(ficha.id).padStart(5, '0')} - Biohertz`,
+      user: req.user || req.session.user,
+      ficha,
+    });
+  } catch (err) {
+    console.error('Error abriendo edición de textos:', err);
+    res.status(500).send('Error al abrir edición de textos');
+  }
+});
+
 router.get('/:id', authRequired, async (req, res) => {
   try {
     await ensureMantencionesSchema();
@@ -361,13 +480,24 @@ router.get('/:id', authRequired, async (req, res) => {
       cliente_id: ficha.equipo_cliente_id,
     };
 
+    let checklistEdit = Array.isArray(ficha.checklist) ? ficha.checklist : [];
+    // Borrador preventiva sin ítems: rehidratar protocolo para que se pueda marcar
+    if (
+      ficha.estado === 'borrador' &&
+      ficha.tipo !== 'correctiva' &&
+      (!checklistEdit.length)
+    ) {
+      const protocolo = await getProtocoloByMarca(equipo.marca);
+      checklistEdit = checklistTemplateFromProtocolo(protocolo);
+    }
+
     res.render('mantencion_ficha', {
       title: `Mantención #${ficha.id} - Biohertz`,
       user: req.user || req.session.user,
       ficha,
       equipos: equiposRes.rows,
       equipo,
-      checklist: ficha.checklist || [],
+      checklist: checklistEdit,
       emailClientePrefill: ficha.email_cliente || '',
       clientePrefill: {},
       categoriasAtencion: CATEGORIAS_ATENCION,
@@ -435,13 +565,15 @@ router.post('/', authRequired, async (req, res) => {
     }
 
     const firmar = String(guardar_y_firmar) === 'true' || String(guardar_y_firmar) === '1';
+    const firmaTecnicoSave = normalizeFirmaDataUrl(firma_tecnico);
+    const firmaClienteSave = normalizeFirmaDataUrl(firma_cliente);
     if (firmar) {
-      if (!firma_tecnico || !firma_cliente) {
+      if (!firmaTecnicoSave || !firmaClienteSave) {
         return res.status(400).json({ error: 'Se requieren ambas firmas para cerrar la ficha' });
       }
     }
 
-    const emailNorm = normalizeEmail(email_cliente);
+    const emailNorm = clipField(normalizeEmail(email_cliente), 'email_cliente');
     const categoriasData = sanitizeCategorias(categorias);
     const fotosInput = parseFotosInput(fotos);
     const estado = firmar ? 'firmada' : 'borrador';
@@ -453,9 +585,9 @@ router.post('/', authRequired, async (req, res) => {
         rut_cliente, senores, direccion, ciudad_comuna, telefono_cliente, contacto_nombre,
         version_sw, motivo_atencion, categorias, fotos
       ) VALUES (
-        $1, $2, $3, $4, NULLIF($5,'')::date, NULLIF($6,'')::time, $7, $8, $9,
+        $1, $2, $3, $4, $5::date, $6::time, $7, $8, $9,
         $10::jsonb, $11, $12, $13, $14, $15,
-        $16, NULLIF($17,'')::date, $18,
+        $16, $17::date, $18,
         $19, $20, $21, $22, $23, $24,
         $25, $26, $27::jsonb, '[]'::jsonb
       ) RETURNING *`,
@@ -464,44 +596,49 @@ router.post('/', authRequired, async (req, res) => {
         eq.rows[0].cliente_id || null,
         tipo,
         estado,
-        fecha || null,
-        hora || null,
+        toDateParam(fecha),
+        toTimeParam(hora),
         trabajo || '',
         nota || '',
         dano_descripcion || '',
-        JSON.stringify(checklistData),
-        realizado_por || (req.user && req.user.nombre) || null,
+        jsonbParam(checklistData, []),
+        clipField(realizado_por || (req.user && req.user.nombre) || null, 'realizado_por'),
         req.user?.id || null,
-        firmar ? firma_tecnico : null,
-        firmar ? firma_cliente : null,
-        firmante_cliente || null,
+        firmaTecnicoSave,
+        firmaClienteSave,
+        clipField(firmante_cliente, 'firmante_cliente'),
         emailNorm,
-        proxima_mantencion || null,
+        toDateParam(proxima_mantencion),
         firmar ? new Date() : null,
-        rut_cliente || null,
-        senores || eq.rows[0].cliente || null,
-        direccion || null,
-        ciudad_comuna || null,
-        telefono_cliente || null,
-        contacto_nombre || null,
-        version_sw || null,
+        clipField(rut_cliente, 'rut_cliente'),
+        clipField(senores || eq.rows[0].cliente || null, 'senores'),
+        clipField(direccion, 'direccion'),
+        clipField(ciudad_comuna, 'ciudad_comuna'),
+        clipField(telefono_cliente, 'telefono_cliente'),
+        clipField(contacto_nombre, 'contacto_nombre'),
+        clipField(version_sw, 'version_sw'),
         motivo_atencion || '',
-        JSON.stringify(categoriasData),
+        jsonbParam(categoriasData, []),
       ]
     );
 
     const fichaId = insert.rows[0].id;
-    const fotosStored = await persistFotosFromPayload(fichaId, fotosInput, []);
+    let fotosStored = [];
+    try {
+      fotosStored = await persistFotosFromPayload(fichaId, fotosInput, []);
+    } catch (fotoErr) {
+      console.warn('Fotos al crear ficha:', fotoErr.message);
+    }
     if (fotosStored.length) {
       await pool.query('UPDATE mantenciones_fichas SET fotos = $1::jsonb WHERE id = $2', [
-        JSON.stringify(fotosStored),
+        jsonbParam(fotosStored, []),
         fichaId,
       ]);
       insert.rows[0].fotos = fotosStored;
     }
 
     const ficha = mapFichaRow(insert.rows[0]);
-    await prepareFichaFotos(ficha);
+    try { await prepareFichaFotos(ficha); } catch (e) { console.warn('prepareFichaFotos:', e.message); }
     if (firmar) {
       await maybeGrantPortalAccess(ficha, firmante_cliente);
     }
@@ -514,7 +651,108 @@ router.post('/', authRequired, async (req, res) => {
     if (err.code === 'DISK_FULL') {
       return res.status(507).json({ error: err.message });
     }
-    res.status(500).json({ error: 'Error al crear mantención: ' + err.message });
+    res.status(500).json({ error: 'Error al crear mantención: ' + (err.message || 'error interno') });
+  }
+});
+
+router.patch('/:id/textos', authRequired, async (req, res) => {
+  try {
+    await ensureMantencionesSchema();
+    const { id } = req.params;
+    const current = await pool.query('SELECT * FROM mantenciones_fichas WHERE id = $1', [id]);
+    if (current.rowCount === 0) {
+      return res.status(404).json({ error: 'Ficha no encontrada' });
+    }
+    if (current.rows[0].estado !== 'firmada') {
+      return res.status(400).json({
+        error: 'Usa la edición normal del borrador; este endpoint es solo para fichas firmadas',
+      });
+    }
+
+    const edits = pickTextoEdits(req.body || {});
+    if (!Object.keys(edits).length) {
+      return res.status(400).json({ error: 'No hay textos para actualizar' });
+    }
+
+    const row = current.rows[0];
+    const next = { ...row };
+    for (const key of TEXTO_EDITABLE_FIELDS) {
+      if (!Object.prototype.hasOwnProperty.call(edits, key)) continue;
+      if (key === 'email_cliente') {
+        next.email_cliente = normalizeEmail(edits.email_cliente);
+      } else if (key === 'proxima_mantencion') {
+        const raw = edits.proxima_mantencion;
+        next.proxima_mantencion = raw === null || raw === undefined || String(raw).trim() === ''
+          ? null
+          : String(raw).slice(0, 10);
+      } else {
+        const val = edits[key];
+        next[key] = val === null || val === undefined ? '' : String(val);
+      }
+    }
+
+    const updated = await pool.query(
+      `UPDATE mantenciones_fichas SET
+         rut_cliente = $1,
+         senores = $2,
+         direccion = $3,
+         ciudad_comuna = $4,
+         telefono_cliente = $5,
+         contacto_nombre = $6,
+         email_cliente = $7,
+         version_sw = $8,
+         motivo_atencion = $9,
+         dano_descripcion = $10,
+         trabajo = $11,
+         nota = $12,
+         realizado_por = $13,
+         firmante_cliente = $14,
+         proxima_mantencion = $15::date,
+         actualizado_en = NOW()
+       WHERE id = $16
+         AND estado = 'firmada'
+       RETURNING *`,
+      [
+        next.rut_cliente || null,
+        next.senores || null,
+        next.direccion || null,
+        next.ciudad_comuna || null,
+        next.telefono_cliente || null,
+        next.contacto_nombre || null,
+        next.email_cliente || null,
+        next.version_sw || null,
+        next.motivo_atencion || null,
+        next.dano_descripcion || null,
+        next.trabajo || null,
+        next.nota || null,
+        next.realizado_por || null,
+        next.firmante_cliente || null,
+        next.proxima_mantencion || null,
+        id,
+      ]
+    );
+
+    if (updated.rowCount === 0) {
+      return res.status(409).json({ error: 'No se pudo actualizar: la ficha ya no está firmada' });
+    }
+
+    const updatedRow = updated.rows[0];
+    // Garantía: este UPDATE no toca firmas ni estado
+    if (
+      updatedRow.estado !== 'firmada' ||
+      updatedRow.firma_tecnico !== row.firma_tecnico ||
+      updatedRow.firma_cliente !== row.firma_cliente
+    ) {
+      console.error('[mantenciones] integridad textos: se detectó cambio inesperado en ficha', id);
+      return res.status(500).json({ error: 'Error de integridad al guardar textos' });
+    }
+
+    const ficha = mapFichaRow(updatedRow);
+    await prepareFichaFotos(ficha);
+    res.json(ficha);
+  } catch (err) {
+    console.error('Error actualizando textos de mantención:', err);
+    res.status(500).json({ error: 'Error al actualizar textos' });
   }
 });
 
@@ -525,10 +763,13 @@ router.patch('/:id', authRequired, async (req, res) => {
     const current = await pool.query('SELECT * FROM mantenciones_fichas WHERE id = $1', [id]);
     if (current.rowCount === 0) return res.status(404).json({ error: 'Ficha no encontrada' });
     if (current.rows[0].estado === 'firmada') {
-      return res.status(403).json({ error: 'La ficha firmada no se puede editar' });
+      return res.status(403).json({
+        error: 'La ficha firmada no se puede editar por completo. Usa /mantenciones/' + id + '/editar-textos',
+      });
     }
 
     const {
+      equipo_id,
       tipo,
       fecha,
       hora,
@@ -555,6 +796,15 @@ router.patch('/:id', authRequired, async (req, res) => {
       fotos,
     } = req.body;
 
+    let nextEquipoId = current.rows[0].equipo_id;
+    let nextClienteId = current.rows[0].cliente_id;
+    if (equipo_id !== undefined && equipo_id !== null && Number(equipo_id) !== Number(current.rows[0].equipo_id)) {
+      const eq = await pool.query('SELECT id, cliente_id FROM equipos WHERE id = $1', [Number(equipo_id)]);
+      if (eq.rowCount === 0) return res.status(404).json({ error: 'Equipo no encontrado' });
+      nextEquipoId = eq.rows[0].id;
+      nextClienteId = eq.rows[0].cliente_id || null;
+    }
+
     let checklistData = current.rows[0].checklist;
     if (checklist !== undefined) {
       if (typeof checklist === 'string') {
@@ -565,48 +815,67 @@ router.patch('/:id', authRequired, async (req, res) => {
     }
 
     const firmar = String(guardar_y_firmar) === 'true' || String(guardar_y_firmar) === '1';
-    const nextFirmaTecnico = firma_tecnico || current.rows[0].firma_tecnico;
-    const nextFirmaCliente = firma_cliente || current.rows[0].firma_cliente;
+    // El front siempre reenvía la firma existente al guardar; si el pad se limpió, manda null.
+    const hasFirmaTecnico = Object.prototype.hasOwnProperty.call(req.body, 'firma_tecnico');
+    const hasFirmaCliente = Object.prototype.hasOwnProperty.call(req.body, 'firma_cliente');
+    const firmaTecnicoSave = firmar
+      ? (normalizeFirmaDataUrl(firma_tecnico) || current.rows[0].firma_tecnico)
+      : (hasFirmaTecnico ? normalizeFirmaDataUrl(firma_tecnico) : current.rows[0].firma_tecnico);
+    const firmaClienteSave = firmar
+      ? (normalizeFirmaDataUrl(firma_cliente) || current.rows[0].firma_cliente)
+      : (hasFirmaCliente ? normalizeFirmaDataUrl(firma_cliente) : current.rows[0].firma_cliente);
 
-    if (firmar && (!nextFirmaTecnico || !nextFirmaCliente)) {
+    if (firmar && (!firmaTecnicoSave || !firmaClienteSave)) {
       return res.status(400).json({ error: 'Se requieren ambas firmas para cerrar la ficha' });
     }
 
     const emailNorm = email_cliente !== undefined
-      ? normalizeEmail(email_cliente)
+      ? clipField(normalizeEmail(email_cliente), 'email_cliente')
       : current.rows[0].email_cliente;
 
     const categoriasData = categorias !== undefined
       ? sanitizeCategorias(categorias)
       : (current.rows[0].categorias || []);
 
-    let fotosStored = current.rows[0].fotos || [];
+    let fotosStored = parseJsonArray(current.rows[0].fotos, []);
+    let fotoWarning = null;
     if (fotos !== undefined) {
-      fotosStored = await persistFotosFromPayload(
-        Number(id),
-        parseFotosInput(fotos),
-        current.rows[0].fotos || []
-      );
+      try {
+        fotosStored = await persistFotosFromPayload(
+          Number(id),
+          parseFotosInput(fotos),
+          parseJsonArray(current.rows[0].fotos, [])
+        );
+      } catch (fotoErr) {
+        console.warn('Fotos en borrador (se guarda el resto):', fotoErr.message);
+        fotoWarning = fotoErr.code === 'DISK_FULL'
+          ? fotoErr.message
+          : 'No se pudieron guardar las fotos nuevas; el resto del borrador sí se guardó.';
+        fotosStored = parseJsonArray(current.rows[0].fotos, []);
+      }
     }
 
     const estado = firmar ? 'firmada' : 'borrador';
+    const nextTipo = ['preventiva', 'correctiva'].includes(tipo) ? tipo : null;
     const updated = await pool.query(
       `UPDATE mantenciones_fichas SET
-         tipo = COALESCE($1, tipo),
-         fecha = COALESCE(NULLIF($2,'')::date, fecha),
-         hora = COALESCE(NULLIF($3,'')::time, hora),
+         equipo_id = $26,
+         cliente_id = $27,
+         tipo = COALESCE($1::varchar, tipo),
+         fecha = COALESCE($2::date, fecha),
+         hora = COALESCE($3::time, hora),
          trabajo = COALESCE($4, trabajo),
          nota = COALESCE($5, nota),
          dano_descripcion = COALESCE($6, dano_descripcion),
          checklist = COALESCE($7::jsonb, checklist),
          realizado_por = COALESCE($8, realizado_por),
          firmante_cliente = COALESCE($9, firmante_cliente),
-         firma_tecnico = COALESCE($10, firma_tecnico),
-         firma_cliente = COALESCE($11, firma_cliente),
+         firma_tecnico = $10,
+         firma_cliente = $11,
          email_cliente = COALESCE($12, email_cliente),
-         proxima_mantencion = COALESCE(NULLIF($13,'')::date, proxima_mantencion),
-         estado = $14,
-         firmada_en = CASE WHEN $14 = 'firmada' THEN COALESCE(firmada_en, NOW()) ELSE firmada_en END,
+         proxima_mantencion = COALESCE($13::date, proxima_mantencion),
+         estado = $14::varchar,
+         firmada_en = CASE WHEN $14::varchar = 'firmada' THEN COALESCE(firmada_en, NOW()) ELSE firmada_en END,
          rut_cliente = COALESCE($15, rut_cliente),
          senores = COALESCE($16, senores),
          direccion = COALESCE($17, direccion),
@@ -619,48 +888,58 @@ router.patch('/:id', authRequired, async (req, res) => {
          fotos = $24::jsonb,
          actualizado_en = NOW()
        WHERE id = $25
+         AND estado = 'borrador'
        RETURNING *`,
       [
-        tipo || null,
-        fecha || null,
-        hora || null,
+        nextTipo,
+        toDateParam(fecha),
+        toTimeParam(hora),
         trabajo ?? null,
         nota ?? null,
         dano_descripcion ?? null,
-        JSON.stringify(checklistData),
-        realizado_por || null,
-        firmante_cliente || null,
-        firmar ? nextFirmaTecnico : (firma_tecnico || null),
-        firmar ? nextFirmaCliente : (firma_cliente || null),
+        jsonbParam(checklistData, []),
+        clipField(realizado_por, 'realizado_por'),
+        clipField(firmante_cliente, 'firmante_cliente'),
+        firmaTecnicoSave ?? null,
+        firmaClienteSave ?? null,
         emailNorm,
-        proxima_mantencion ?? null,
+        toDateParam(proxima_mantencion),
         estado,
-        rut_cliente ?? null,
-        senores ?? null,
-        direccion ?? null,
-        ciudad_comuna ?? null,
-        telefono_cliente ?? null,
-        contacto_nombre ?? null,
-        version_sw ?? null,
+        clipField(rut_cliente, 'rut_cliente'),
+        clipField(senores, 'senores'),
+        clipField(direccion, 'direccion'),
+        clipField(ciudad_comuna, 'ciudad_comuna'),
+        clipField(telefono_cliente, 'telefono_cliente'),
+        clipField(contacto_nombre, 'contacto_nombre'),
+        clipField(version_sw, 'version_sw'),
         motivo_atencion ?? null,
-        JSON.stringify(categoriasData),
-        JSON.stringify(fotosStored),
+        jsonbParam(categoriasData, []),
+        jsonbParam(fotosStored, []),
         id,
+        nextEquipoId ?? null,
+        nextClienteId ?? null,
       ]
     );
 
+    if (updated.rowCount === 0) {
+      return res.status(409).json({
+        error: 'No se pudo guardar: la ficha ya no está en borrador',
+      });
+    }
+
     const ficha = mapFichaRow(updated.rows[0]);
-    await prepareFichaFotos(ficha);
+    try { await prepareFichaFotos(ficha); } catch (e) { console.warn('prepareFichaFotos:', e.message); }
     if (firmar) {
       await maybeGrantPortalAccess(ficha, firmante_cliente || ficha.firmante_cliente);
     }
+    if (fotoWarning) ficha.foto_warning = fotoWarning;
     res.json(ficha);
   } catch (err) {
     console.error('Error actualizando mantención:', err);
     if (err.code === 'DISK_FULL') {
       return res.status(507).json({ error: err.message });
     }
-    res.status(500).json({ error: 'Error al actualizar mantención' });
+    res.status(500).json({ error: publicUpdateError(err) });
   }
 });
 
