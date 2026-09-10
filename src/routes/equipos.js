@@ -4,6 +4,13 @@ import authRequired from '../middleware/authRequired.js';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
+import {
+  emptyToNull,
+  parseMonths,
+  addMonthsYmd,
+  parseMpFechas,
+  syncMpGarantiaEventos
+} from '../services/garantiaEquipo.js';
 
 const router = Router();
 
@@ -66,6 +73,10 @@ async function ensureExtendedSchema() {
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_instalacion DATE;
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS numero_orden VARCHAR(150);
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_embarque DATE;
+      ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_ingreso DATE;
+      ALTER TABLE equipos ADD COLUMN IF NOT EXISTS plazo_garantia_meses INTEGER;
+      ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_vencimiento_garantia DATE;
+      ALTER TABLE equipos ADD COLUMN IF NOT EXISTS mp_garantia_fechas JSONB DEFAULT '[]'::jsonb;
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS mantenciones JSONB DEFAULT '[]'::jsonb;
     `);
   } catch {}
@@ -118,7 +129,7 @@ router.get('/', authRequired, async (req, res) => {
     if (limit > 100) limit = 100;
     if (isNaN(offset) || offset < 0) offset = 0;
 
-    const sql = `SELECT id, nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, ubicacion, estado, cliente, cliente_id, anio_venta, fecha_instalacion, actualizado_en FROM equipos${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+    const sql = `SELECT id, nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, fecha_ingreso, ubicacion, estado, cliente, cliente_id, anio_venta, fecha_instalacion, plazo_garantia_meses, fecha_vencimiento_garantia, mp_garantia_fechas, actualizado_en FROM equipos${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
     const result = await pool.query(sql, [...values, limit, offset]);
 
     const totalSql = 'SELECT COUNT(*) FROM equipos';
@@ -127,7 +138,7 @@ router.get('/', authRequired, async (req, res) => {
 
     const clients = await getClientsCached();
 
-    if (req.accepts('json') && !req.accepts('html')) {
+    if (String(req.get('accept') || '').includes('application/json')) {
       return res.json({
         equipos: result.rows,
         total: totalEquipos,
@@ -235,12 +246,16 @@ router.get('/:id', authRequired, async (req, res) => {
 router.post('/', authRequired, async (req, res) => {
   try {
     await ensureExtendedSchema();
-    let { nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones } = req.body;
+    let { nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, fecha_ingreso, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, plazo_garantia_meses, mantenciones } = req.body;
     marca = trimOrNull(marca);
     modelo = trimOrNull(modelo);
     if (typeof numero_serie === 'string') numero_serie = numero_serie.trim() || null;
     if (typeof numero_orden === 'string') numero_orden = numero_orden.trim() || null;
     nombre = buildEquipoNombre({ nombre, marca, modelo, numero_serie });
+    const plazoMeses = parseMonths(plazo_garantia_meses);
+    const fechaInst = emptyToNull(fecha_instalacion);
+    const vencimiento = addMonthsYmd(fechaInst, plazoMeses);
+    const mpFechas = parseMpFechas(req.body);
     // if (!cliente_id) return res.status(400).json({ error: 'Debe seleccionar un cliente' }); // Permitir STOCK (null)
 
     let finalClienteName = cliente;
@@ -258,11 +273,23 @@ router.post('/', authRequired, async (req, res) => {
     }
 
     const insert = await pool.query(
-      `INSERT INTO equipos (nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones, creado_en, actualizado_en)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, COALESCE($14::jsonb, '[]'::jsonb), NOW(), NOW())
+      `INSERT INTO equipos (nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, fecha_ingreso, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, plazo_garantia_meses, fecha_vencimiento_garantia, mp_garantia_fechas, mantenciones, creado_en, actualizado_en)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, COALESCE($18::jsonb, '[]'::jsonb), NOW(), NOW())
        RETURNING *`,
-      [nombre, marca || null, modelo || null, numero_serie || null, numero_orden || null, fecha_embarque || null, ubicacion || null, estado || 'activo', aplicacion || null, finalClienteName || null, finalClienteId, anio_venta ? parseInt(anio_venta) : null, fecha_instalacion || null, mantenciones ? JSON.stringify(mantenciones) : null]
+      [nombre, marca || null, modelo || null, numero_serie || null, numero_orden || null, emptyToNull(fecha_embarque), emptyToNull(fecha_ingreso), ubicacion || null, estado || 'activo', aplicacion || null, finalClienteName || null, finalClienteId, anio_venta ? parseInt(anio_venta) : null, fechaInst, plazoMeses, vencimiento, JSON.stringify(mpFechas), mantenciones ? JSON.stringify(mantenciones) : null]
     );
+
+    try {
+      await syncMpGarantiaEventos({
+        equipoId: insert.rows[0].id,
+        clienteId: finalClienteId,
+        fechas: mpFechas,
+        tituloBase: `MP Garantía · ${insert.rows[0].numero_serie || insert.rows[0].nombre}`,
+        userId: req.user?.id
+      });
+    } catch (e) {
+      console.warn('No se pudieron crear eventos de MP garantía:', e.message);
+    }
 
     const io = req.app.get('io');
     io?.emit('equipo:created', insert.rows[0]);
@@ -282,9 +309,15 @@ router.patch('/:id', authRequired, async (req, res) => {
   try {
     const { id } = req.params;
     await ensureExtendedSchema();
-    let { nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones } = req.body;
+    let { nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, fecha_ingreso, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, plazo_garantia_meses, mantenciones } = req.body;
     if (typeof numero_serie === 'string') numero_serie = numero_serie.trim() || null;
     if (typeof numero_orden === 'string') numero_orden = numero_orden.trim() || null;
+    const plazoMeses = parseMonths(plazo_garantia_meses);
+    const fechaInst = emptyToNull(fecha_instalacion);
+    const vencimiento = addMonthsYmd(fechaInst, plazoMeses);
+    const hasMpFechas = Object.prototype.hasOwnProperty.call(req.body, 'mp_fechas')
+      || Object.prototype.hasOwnProperty.call(req.body, 'cant_mp_garantia');
+    const mpFechas = hasMpFechas ? parseMpFechas(req.body) : null;
 
     let finalClienteName = cliente;
     let finalClienteId = cliente_id;
@@ -313,21 +346,50 @@ router.patch('/:id', authRequired, async (req, res) => {
            numero_serie = COALESCE($4, numero_serie),
            numero_orden = COALESCE($5, numero_orden),
            fecha_embarque = COALESCE($6, fecha_embarque),
-           ubicacion = COALESCE($7, ubicacion),
-           estado = COALESCE($8, estado),
-           aplicacion = COALESCE($9, aplicacion),
-           cliente = COALESCE($10, cliente),
-           cliente_id = COALESCE($11, cliente_id),
-           anio_venta = COALESCE($12, anio_venta),
-           fecha_instalacion = COALESCE($13, fecha_instalacion),
-           mantenciones = COALESCE($14::jsonb, mantenciones),
+           fecha_ingreso = COALESCE($7, fecha_ingreso),
+           ubicacion = COALESCE($8, ubicacion),
+           estado = COALESCE($9, estado),
+           aplicacion = COALESCE($10, aplicacion),
+           cliente = COALESCE($11, cliente),
+           cliente_id = COALESCE($12, cliente_id),
+           anio_venta = COALESCE($13, anio_venta),
+           fecha_instalacion = COALESCE($14, fecha_instalacion),
+           plazo_garantia_meses = COALESCE($15, plazo_garantia_meses),
+           fecha_vencimiento_garantia = COALESCE($16, fecha_vencimiento_garantia),
+           mp_garantia_fechas = COALESCE($17::jsonb, mp_garantia_fechas),
+           mantenciones = COALESCE($18::jsonb, mantenciones),
            actualizado_en = NOW()
-       WHERE id = $15
+       WHERE id = $19
        RETURNING *`,
-      [nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque || null, ubicacion, estado, aplicacion, finalClienteName, (finalClienteId && finalClienteId !== 'STOCK') ? parseInt(finalClienteId) : (finalClienteId === null || finalClienteId === 'STOCK' ? null : undefined), anio_venta ? parseInt(anio_venta) : null, fecha_instalacion || null, mantenciones ? JSON.stringify(mantenciones) : null, id]
+      [
+        nombre, marca, modelo, numero_serie, numero_orden,
+        emptyToNull(fecha_embarque), emptyToNull(fecha_ingreso), ubicacion, estado, aplicacion, finalClienteName,
+        (finalClienteId && finalClienteId !== 'STOCK') ? parseInt(finalClienteId) : (finalClienteId === null || finalClienteId === 'STOCK' ? null : undefined),
+        anio_venta ? parseInt(anio_venta) : null,
+        fechaInst,
+        plazoMeses,
+        vencimiento,
+        mpFechas ? JSON.stringify(mpFechas) : null,
+        mantenciones ? JSON.stringify(mantenciones) : null,
+        id
+      ]
     );
 
     if (update.rowCount === 0) return res.status(404).json({ error: 'Equipo no encontrado' });
+
+    if (mpFechas) {
+      try {
+        await syncMpGarantiaEventos({
+          equipoId: update.rows[0].id,
+          clienteId: update.rows[0].cliente_id,
+          fechas: mpFechas,
+          tituloBase: `MP Garantía · ${update.rows[0].numero_serie || update.rows[0].nombre}`,
+          userId: req.user?.id
+        });
+      } catch (e) {
+        console.warn('No se pudieron actualizar eventos de MP garantía:', e.message);
+      }
+    }
 
     res.json({ mensaje: 'Equipo actualizado', equipo: update.rows[0] });
 

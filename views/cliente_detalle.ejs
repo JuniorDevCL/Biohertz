@@ -7,9 +7,14 @@
             <div>
                 <h2 class="text-3xl font-bold text-white mb-2"><%= cliente.nombre %></h2>
                 <div class="flex flex-wrap gap-4 text-slate-400">
-                    <% if (cliente.empresa) { %>
+                    <% if (cliente.rut) { %>
                         <div class="flex items-center">
-                            <i class="ph ph-buildings mr-2"></i> <%= cliente.empresa %>
+                            <i class="ph ph-identification-card mr-2"></i> <%= cliente.rut %>
+                        </div>
+                    <% } %>
+                    <% if (cliente.contacto) { %>
+                        <div class="flex items-center">
+                            <i class="ph ph-user mr-2"></i> <%= cliente.contacto %>
                         </div>
                     <% } %>
                     <% if (cliente.email) { %>
@@ -22,9 +27,10 @@
                             <i class="ph ph-phone mr-2"></i> <%= cliente.telefono %>
                         </div>
                     <% } %>
-                    <% if (cliente.ubicacion) { %>
+                    <% if (cliente.direccion || cliente.comuna || cliente.ciudad || cliente.ubicacion) { %>
                         <div class="flex items-center">
-                            <i class="ph ph-map-pin mr-2"></i> <%= cliente.ubicacion %>
+                            <i class="ph ph-map-pin mr-2"></i>
+                            <%= [cliente.direccion, cliente.comuna, cliente.ciudad, cliente.ubicacion].filter(Boolean).join(' · ') %>
                         </div>
                     <% } %>
                 </div>
@@ -148,33 +154,13 @@
 </div>
 
 <!-- Modal Editar Cliente -->
-<div id="edit-client-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
-    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-md shadow-2xl border border-slate-700">
+<div id="edit-client-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-2xl shadow-2xl border border-slate-700 overflow-y-auto max-h-[90vh]">
         <h3 class="text-xl font-bold text-white mb-4">Editar Cliente</h3>
         <form id="edit-client-form">
             <input type="hidden" id="edit-id" value="<%= cliente.id %>">
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Nombre</label>
-                <input type="text" name="nombre" value="<%= cliente.nombre %>" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-            </div>
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Empresa</label>
-                <input type="text" name="empresa" value="<%= cliente.empresa %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-            </div>
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Correo</label>
-                <input type="email" name="email" value="<%= cliente.email %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-            </div>
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Número</label>
-                <input type="text" name="telefono" value="<%= cliente.telefono %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-            </div>
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Ubicación</label>
-                <input type="text" name="ubicacion" value="<%= cliente.ubicacion %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-            </div>
+            <%- include('partials/cliente_form_fields', { idPrefix: 'edit-cli-', cliente: cliente, equipo: (typeof equipos !== 'undefined' && equipos[0]) ? equipos[0] : {} }) %>
 
-            <!-- Sección de Contactos -->
             <div class="mt-6 border-t border-slate-700 pt-4">
                 <div class="flex items-center justify-between mb-4">
                     <h4 class="text-sm font-semibold text-white">Contactos</h4>
@@ -182,8 +168,6 @@
                         + Agregar
                     </button>
                 </div>
-
-                <!-- Formulario para agregar contacto (oculto por defecto) -->
                 <div id="add-contact-form" class="hidden mb-4 bg-slate-900 p-3 rounded border border-slate-700">
                     <div class="grid grid-cols-2 gap-2 mb-2">
                         <input type="text" id="new-contact-nombre" placeholder="Nombre" class="bg-slate-800 border border-slate-700 rounded p-1 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
@@ -195,10 +179,7 @@
                         <button type="button" onclick="saveNewContact()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded text-xs">Guardar Contacto</button>
                     </div>
                 </div>
-
-                <!-- Lista de contactos -->
                 <div id="contacts-list" class="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
-                    <!-- Rendered dynamically -->
                     <p class="text-slate-500 text-sm italic text-center">Cargando contactos...</p>
                 </div>
             </div>
@@ -319,8 +300,7 @@ async function deleteContact(contactId) {
 
 document.getElementById('edit-client-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData.entries());
+    const data = collectClienteForm('edit-cli-', e.target);
     
     try {
         const res = await fetch('/clientes/<%= cliente.id %>', {
@@ -338,5 +318,12 @@ document.getElementById('edit-client-form').addEventListener('submit', async (e)
         console.error(err);
         alert('Error de conexión');
     }
+});
+</script>
+<%- include('partials/cliente_equipo_script') %>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    bindGarantiaBlock('edit-cli-');
+    bindSerieLookup('edit-cli-');
 });
 </script>

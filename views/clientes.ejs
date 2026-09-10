@@ -20,7 +20,7 @@
                         type="text" 
                         name="q" 
                         value="<%= typeof query !== 'undefined' ? query : '' %>" 
-                        placeholder="Buscar cliente por nombre, empresa o correo" 
+                        placeholder="Buscar por razón social, RUT o correo" 
                         class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     >
                 </div>
@@ -40,11 +40,11 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-800/30 text-xs uppercase text-slate-400 font-semibold tracking-wider">
-                            <th class="py-3 px-4">Nombre</th>
-                            <th class="py-3 px-4">Empresa</th>
+                            <th class="py-3 px-4">Razón social</th>
+                            <th class="py-3 px-4">RUT</th>
                             <th class="py-3 px-4">Correo</th>
-                            <th class="py-3 px-4">Número</th>
-                            <th class="py-3 px-4">Ubicación</th>
+                            <th class="py-3 px-4">Teléfono</th>
+                            <th class="py-3 px-4">Ciudad</th>
                             <th class="py-3 px-4">Fecha Registro</th>
                             <th class="py-3 px-4">Acciones</th>
                         </tr>
@@ -53,7 +53,7 @@
                         <% clientes.forEach(cliente => { %>
                             <tr class="hover:bg-slate-800/40 transition-colors group">
                                 <td class="py-3 px-4 font-medium text-white"><%= cliente.nombre %></td>
-                                <td class="py-3 px-4 text-slate-300"><%= cliente.empresa || '-' %></td>
+                                <td class="py-3 px-4 text-slate-300"><%= cliente.rut || '-' %></td>
                                 <td class="py-3 px-4 text-slate-300">
                                     <% if (cliente.email) { %>
                                         <span class="inline-flex items-center px-2 py-1 rounded-full bg-slate-800 text-xs text-slate-200">
@@ -65,11 +65,11 @@
                                     <% } %>
                                 </td>
                                 <td class="py-3 px-4 text-slate-300"><%= cliente.telefono || '-' %></td>
-                                <td class="py-3 px-4 text-slate-300"><%= cliente.ubicacion || '-' %></td>
+                                <td class="py-3 px-4 text-slate-300"><%= cliente.ciudad || cliente.ubicacion || '-' %></td>
                                 <td class="py-3 px-4 text-slate-400"><%= new Date(cliente.creado_en).toLocaleDateString() %></td>
                                 <td class="py-3 px-4">
                                     <div class="flex flex-wrap items-center justify-end gap-2">
-                                        <button onclick="openEditModal('<%= cliente.id %>', '<%= cliente.nombre %>', '<%= cliente.empresa || '' %>', '<%= cliente.email || '' %>', '<%= cliente.telefono || '' %>', '<%= cliente.ubicacion || '' %>')" class="inline-flex items-center px-3 py-1.5 rounded-full bg-yellow-600/20 hover:bg-yellow-500/30 text-yellow-200 text-xs font-medium border border-yellow-500/40 transition-colors" title="Editar cliente">
+                                        <button onclick="openEditModal('<%= cliente.id %>')" class="inline-flex items-center px-3 py-1.5 rounded-full bg-yellow-600/20 hover:bg-yellow-500/30 text-yellow-200 text-xs font-medium border border-yellow-500/40 transition-colors" title="Editar cliente">
                                             <i class="ph ph-pencil-simple text-sm mr-1.5"></i>
                                             Editar
                                         </button>
@@ -115,22 +115,25 @@ async function deleteClient(id) {
     }
 }
 
-function openEditModal(id, nombre, empresa, email, telefono, ubicacion) {
+function openEditModal(id) {
     document.getElementById('edit-id').value = id;
-    document.getElementById('edit-nombre').value = nombre;
-    document.getElementById('edit-empresa').value = empresa;
-    document.getElementById('edit-email').value = email;
-    document.getElementById('edit-telefono').value = telefono;
-    document.getElementById('edit-ubicacion').value = ubicacion;
-    
-    // Reset contacts UI
+
     const list = document.getElementById('contacts-list');
     if (list) {
         list.innerHTML = '<p class="text-slate-500 text-sm italic text-center">Cargando contactos...</p>';
         document.getElementById('add-contact-form').classList.add('hidden');
         loadContacts(id);
     }
-    
+
+    fetch('/clientes/' + id, { headers: { Accept: 'application/json' } })
+        .then(function (res) { return res.ok ? res.json() : null; })
+        .then(function (payload) {
+            const cliente = payload && payload.cliente ? payload.cliente : payload;
+            const equipos = payload && Array.isArray(payload.equipos) ? payload.equipos : [];
+            fillClienteForm('edit-cli-', cliente || {}, equipos[0] || {});
+        })
+        .catch(function (e) { console.error(e); });
+
     document.getElementById('edit-client-modal').classList.remove('hidden');
 }
 
@@ -228,8 +231,7 @@ async function deleteContact(contactId) {
 async function submitEditClient(e) {
     e.preventDefault();
     const id = document.getElementById('edit-id').value;
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData.entries());
+    const data = collectClienteForm('edit-cli-', e.target);
 
     try {
         const res = await fetch(`/clientes/${id}`, {
@@ -251,33 +253,13 @@ async function submitEditClient(e) {
 </script>
 
 <!-- Modal Editar Cliente -->
-<div id="edit-client-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
-    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-md shadow-2xl border border-slate-700">
+<div id="edit-client-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-2xl shadow-2xl border border-slate-700 overflow-y-auto max-h-[90vh]">
         <h3 class="text-xl font-bold text-white mb-4">Editar Cliente</h3>
         <form onsubmit="submitEditClient(event)">
             <input type="hidden" id="edit-id" name="id">
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Nombre</label>
-                <input type="text" id="edit-nombre" name="nombre" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-            </div>
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Empresa</label>
-                <input type="text" id="edit-empresa" name="empresa" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-            </div>
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Correo</label>
-                <input type="email" id="edit-email" name="email" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-            </div>
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Número</label>
-                <input type="text" id="edit-telefono" name="telefono" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-            </div>
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Ubicación</label>
-                <input type="text" id="edit-ubicacion" name="ubicacion" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-            </div>
+            <%- include('partials/cliente_form_fields', { idPrefix: 'edit-cli-', cliente: {}, equipo: {} }) %>
 
-            <!-- Sección de Contactos -->
             <div class="mt-6 border-t border-slate-700 pt-4">
                 <div class="flex items-center justify-between mb-4">
                     <h4 class="text-sm font-semibold text-white">Contactos</h4>
@@ -285,8 +267,6 @@ async function submitEditClient(e) {
                         + Agregar
                     </button>
                 </div>
-
-                <!-- Formulario para agregar contacto (oculto por defecto) -->
                 <div id="add-contact-form" class="hidden mb-4 bg-slate-900 p-3 rounded border border-slate-700">
                     <div class="grid grid-cols-2 gap-2 mb-2">
                         <input type="text" id="new-contact-nombre" placeholder="Nombre" class="bg-slate-800 border border-slate-700 rounded p-1 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
@@ -298,10 +278,7 @@ async function submitEditClient(e) {
                         <button type="button" onclick="saveNewContact()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded text-xs">Guardar Contacto</button>
                     </div>
                 </div>
-
-                <!-- Lista de contactos -->
                 <div id="contacts-list" class="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
-                    <!-- Rendered dynamically -->
                     <p class="text-slate-500 text-sm italic text-center">Cargando contactos...</p>
                 </div>
             </div>
@@ -315,30 +292,11 @@ async function submitEditClient(e) {
 </div>
 
 <!-- Modal Nuevo Cliente -->
-<div id="new-client-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
-    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-md shadow-2xl border border-slate-700">
+<div id="new-client-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-2xl shadow-2xl border border-slate-700 overflow-y-auto max-h-[90vh]">
         <h3 class="text-xl font-bold text-white mb-4">Nuevo Cliente</h3>
         <form action="/clientes" method="POST">
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Nombre</label>
-                <input type="text" name="nombre" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-            </div>
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Empresa</label>
-                <input type="text" name="empresa" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-            </div>
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Correo</label>
-                <input type="email" name="email" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-            </div>
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Número</label>
-                <input type="text" name="telefono" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-            </div>
-            <div class="mb-4">
-                <label class="block text-slate-400 text-sm mb-2">Ubicación</label>
-                <input type="text" name="ubicacion" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-            </div>
+            <%- include('partials/cliente_form_fields', { idPrefix: 'new-cli-', cliente: {}, equipo: {} }) %>
             <div class="flex justify-end gap-3 mt-6">
                 <button type="button" onclick="document.getElementById('new-client-modal').classList.add('hidden')" class="px-4 py-2 text-slate-300 hover:text-white">Cancelar</button>
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Guardar</button>
@@ -346,3 +304,13 @@ async function submitEditClient(e) {
         </form>
     </div>
 </div>
+
+<%- include('partials/cliente_equipo_script') %>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    bindGarantiaBlock('new-cli-');
+    bindSerieLookup('new-cli-');
+    bindGarantiaBlock('edit-cli-');
+    bindSerieLookup('edit-cli-');
+});
+</script>

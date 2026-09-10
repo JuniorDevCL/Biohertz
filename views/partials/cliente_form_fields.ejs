@@ -1,0 +1,82 @@
+<%
+  const p = typeof idPrefix !== 'undefined' ? idPrefix : '';
+  const c = typeof cliente !== 'undefined' && cliente ? cliente : {};
+  const eq = typeof equipo !== 'undefined' && equipo ? equipo : {};
+  const mpFechas = Array.isArray(eq.mp_garantia_fechas) ? eq.mp_garantia_fechas : [];
+%>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div>
+        <label class="block text-slate-400 text-sm mb-1">Razón social</label>
+        <input type="text" id="<%= p %>nombre" name="nombre" value="<%= c.nombre || '' %>" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+    </div>
+    <div>
+        <label class="block text-slate-400 text-sm mb-1">RUT</label>
+        <input type="text" id="<%= p %>rut" name="rut" value="<%= c.rut || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+    </div>
+    <div>
+        <label class="block text-slate-400 text-sm mb-1">Lugar de instalación</label>
+        <input type="text" id="<%= p %>ubicacion" name="ubicacion" value="<%= c.ubicacion || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+    </div>
+    <div>
+        <label class="block text-slate-400 text-sm mb-1">Dirección</label>
+        <input type="text" id="<%= p %>direccion" name="direccion" value="<%= c.direccion || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+    </div>
+    <div>
+        <label class="block text-slate-400 text-sm mb-1">Comuna</label>
+        <input type="text" id="<%= p %>comuna" name="comuna" value="<%= c.comuna || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+    </div>
+    <div>
+        <label class="block text-slate-400 text-sm mb-1">Ciudad</label>
+        <input type="text" id="<%= p %>ciudad" name="ciudad" value="<%= c.ciudad || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+    </div>
+    <div>
+        <label class="block text-slate-400 text-sm mb-1">Contacto</label>
+        <input type="text" id="<%= p %>contacto" name="contacto" value="<%= c.contacto || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+    </div>
+    <div>
+        <label class="block text-slate-400 text-sm mb-1">Teléfono</label>
+        <input type="text" id="<%= p %>telefono" name="telefono" value="<%= c.telefono || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+    </div>
+    <div class="md:col-span-2">
+        <label class="block text-slate-400 text-sm mb-1">Correo</label>
+        <input type="email" id="<%= p %>email" name="email" value="<%= c.email || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+    </div>
+</div>
+
+<div class="mt-5 pt-4 border-t border-slate-700">
+    <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">Datos del equipo</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="md:col-span-2">
+            <label class="block text-slate-400 text-sm mb-1">Serie del equipo</label>
+            <input type="text" id="<%= p %>numero_serie" name="numero_serie" value="<%= eq.numero_serie || '' %>" placeholder="Escribe la serie y se despliega el equipo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+            <p id="<%= p %>serie_msg" class="text-[10px] mt-1 h-4"></p>
+        </div>
+        <div>
+            <label class="block text-slate-400 text-sm mb-1">Marca</label>
+            <input type="text" id="<%= p %>marca" name="marca" value="<%= eq.marca || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+            <label class="block text-slate-400 text-sm mb-1">Modelo</label>
+            <input type="text" id="<%= p %>modelo" name="modelo" value="<%= eq.modelo || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+            <label class="block text-slate-400 text-sm mb-1">Fecha instalación</label>
+            <input type="date" id="<%= p %>fecha_instalacion" name="fecha_instalacion" value="<%= eq.fecha_instalacion ? String(eq.fecha_instalacion).slice(0,10) : '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+            <label class="block text-slate-400 text-sm mb-1">Plazo garantía (meses)</label>
+            <input type="number" min="1" max="120" id="<%= p %>plazo_garantia_meses" name="plazo_garantia_meses" value="<%= eq.plazo_garantia_meses || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+            <p id="<%= p %>vcto_msg" class="text-[11px] mt-1 text-emerald-400">
+                <% if (eq.fecha_vencimiento_garantia) { %>Vencimiento: <%= String(eq.fecha_vencimiento_garantia).slice(0,10) %><% } %>
+            </p>
+        </div>
+        <div class="md:col-span-2">
+            <label class="block text-slate-400 text-sm mb-1">Cant. MP Garantía</label>
+            <input type="number" min="0" max="24" id="<%= p %>cant_mp_garantia" name="cant_mp_garantia" value="<%= mpFechas.length || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+            <p class="text-[10px] text-slate-500 mt-1">Se abren fechas para cada mantención preventiva y aparecen en el calendario.</p>
+            <div id="<%= p %>mp_fechas_wrap" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2"
+                 data-fechas="<%= mpFechas.map(f => String(f).slice(0,10)).join(',') %>">
+            </div>
+        </div>
+    </div>
+</div>

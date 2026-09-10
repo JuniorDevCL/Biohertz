@@ -2,6 +2,11 @@ import { Router } from 'express';
 import pool from '../db.js';
 import authRequired from '../middleware/authRequired.js';
 import { clearEquiposClientsCache } from './equipos.js';
+import {
+  emptyToNull,
+  parseMpFechas,
+  upsertEquipoFromCliente
+} from '../services/garantiaEquipo.js';
 
 const router = Router();
 
@@ -25,6 +30,19 @@ async function ensureSchema() {
       ALTER TABLE clientes ADD COLUMN IF NOT EXISTS email VARCHAR(150);
       ALTER TABLE clientes ADD COLUMN IF NOT EXISTS telefono VARCHAR(50);
       ALTER TABLE clientes ADD COLUMN IF NOT EXISTS ubicacion VARCHAR(200);
+      ALTER TABLE clientes ADD COLUMN IF NOT EXISTS rut VARCHAR(30);
+      ALTER TABLE clientes ADD COLUMN IF NOT EXISTS direccion VARCHAR(250);
+      ALTER TABLE clientes ADD COLUMN IF NOT EXISTS comuna VARCHAR(120);
+      ALTER TABLE clientes ADD COLUMN IF NOT EXISTS ciudad VARCHAR(120);
+      ALTER TABLE clientes ADD COLUMN IF NOT EXISTS contacto VARCHAR(150);
+    `);
+    await pool.query(`
+      ALTER TABLE equipos ADD COLUMN IF NOT EXISTS cliente_id INTEGER;
+      ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_instalacion DATE;
+      ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_ingreso DATE;
+      ALTER TABLE equipos ADD COLUMN IF NOT EXISTS plazo_garantia_meses INTEGER;
+      ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_vencimiento_garantia DATE;
+      ALTER TABLE equipos ADD COLUMN IF NOT EXISTS mp_garantia_fechas JSONB DEFAULT '[]'::jsonb;
     `);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS contactos_cliente (
@@ -49,7 +67,7 @@ router.get('/', authRequired, async (req, res) => {
     const { q, limit: limitStr, offset: offsetStr } = req.query;
     const where = [];
     const values = [];
-    if (q) { values.push(`%${q}%`); where.push(`(nombre ILIKE $${values.length} OR empresa ILIKE $${values.length} OR email ILIKE $${values.length})`); }
+    if (q) { values.push(`%${q}%`); where.push(`(nombre ILIKE $${values.length} OR empresa ILIKE $${values.length} OR email ILIKE $${values.length} OR rut ILIKE $${values.length} OR contacto ILIKE $${values.length} OR ciudad ILIKE $${values.length})`); }
     let limit = parseInt(limitStr); if (isNaN(limit) || limit <= 0) limit = 50; if (limit > 100) limit = 100;
     let offset = parseInt(offsetStr); if (isNaN(offset) || offset < 0) offset = 0;
     const sql = `SELECT * FROM clientes${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
@@ -83,14 +101,41 @@ router.get('/', authRequired, async (req, res) => {
 router.post('/', authRequired, async (req, res) => {
   try {
     await ensureSchema();
-    const { nombre, empresa, email, telefono, ubicacion } = req.body;
-    console.log('Crear cliente request:', { nombre, empresa });
+    const { nombre, empresa, email, telefono, ubicacion, rut, direccion, comuna, ciudad, contacto, numero_serie, marca, modelo, equipo_marca, equipo_modelo, fecha_instalacion, plazo_garantia_meses } = req.body;
     const ins = await pool.query(`
-      INSERT INTO clientes (nombre, empresa, email, telefono, ubicacion, creado_en, actualizado_en)
-      VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING *
-    `, [nombre || null, empresa || null, email || null, telefono || null, ubicacion || null]);
+      INSERT INTO clientes (nombre, empresa, email, telefono, ubicacion, rut, direccion, comuna, ciudad, contacto, creado_en, actualizado_en)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()) RETURNING *
+    `, [
+      emptyToNull(nombre),
+      emptyToNull(empresa),
+      emptyToNull(email),
+      emptyToNull(telefono),
+      emptyToNull(ubicacion),
+      emptyToNull(rut),
+      emptyToNull(direccion),
+      emptyToNull(comuna),
+      emptyToNull(ciudad),
+      emptyToNull(contacto)
+    ]);
     console.log('Cliente creado:', ins.rows[0]);
     clearEquiposClientsCache();
+
+    try {
+      await upsertEquipoFromCliente({
+        clienteId: ins.rows[0].id,
+        clienteNombre: ins.rows[0].nombre,
+        serie: numero_serie,
+        marca: equipo_marca || marca,
+        modelo: equipo_modelo || modelo,
+        fechaInstalacion: fecha_instalacion,
+        plazoMeses: plazo_garantia_meses,
+        mpFechas: parseMpFechas(req.body),
+        ubicacion,
+        userId: req.user?.id
+      });
+    } catch (e) {
+      console.warn('No se pudo vincular equipo al cliente:', e.message);
+    }
     
     if (req.accepts('json') && !req.accepts('html')) {
       return res.status(201).json(ins.rows[0]);
@@ -146,7 +191,7 @@ router.get('/:id', authRequired, async (req, res) => {
 
     if (clientRes.rows.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
 
-    if (req.accepts('json') && !req.accepts('html')) {
+    if (String(req.get('accept') || '').includes('application/json')) {
       return res.json({
         cliente: clientRes.rows[0],
         equipos: equiposRes.rows,
@@ -183,7 +228,7 @@ router.patch('/:id', authRequired, async (req, res) => {
   try {
     await ensureSchema();
     const { id } = req.params;
-    const { nombre, empresa, email, telefono, ubicacion } = req.body;
+    const { nombre, empresa, email, telefono, ubicacion, rut, direccion, comuna, ciudad, contacto, numero_serie, marca, modelo, equipo_marca, equipo_modelo, fecha_instalacion, plazo_garantia_meses } = req.body;
     const u = await pool.query(`
       UPDATE clientes 
       SET nombre = COALESCE($1, nombre), 
@@ -191,11 +236,46 @@ router.patch('/:id', authRequired, async (req, res) => {
           email = COALESCE($3, email),
           telefono = COALESCE($4, telefono),
           ubicacion = COALESCE($5, ubicacion),
+          rut = COALESCE($6, rut),
+          direccion = COALESCE($7, direccion),
+          comuna = COALESCE($8, comuna),
+          ciudad = COALESCE($9, ciudad),
+          contacto = COALESCE($10, contacto),
           actualizado_en = NOW()
-      WHERE id = $6 RETURNING *
-    `, [nombre, empresa, email, telefono, ubicacion, id]);
+      WHERE id = $11 RETURNING *
+    `, [
+      emptyToNull(nombre),
+      emptyToNull(empresa),
+      emptyToNull(email),
+      emptyToNull(telefono),
+      emptyToNull(ubicacion),
+      emptyToNull(rut),
+      emptyToNull(direccion),
+      emptyToNull(comuna),
+      emptyToNull(ciudad),
+      emptyToNull(contacto),
+      id
+    ]);
     if (u.rows.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
     clearEquiposClientsCache();
+
+    try {
+      await upsertEquipoFromCliente({
+        clienteId: u.rows[0].id,
+        clienteNombre: u.rows[0].nombre,
+        serie: numero_serie,
+        marca: equipo_marca || marca,
+        modelo: equipo_modelo || modelo,
+        fechaInstalacion: fecha_instalacion,
+        plazoMeses: plazo_garantia_meses,
+        mpFechas: parseMpFechas(req.body),
+        ubicacion: ubicacion || u.rows[0].ubicacion,
+        userId: req.user?.id
+      });
+    } catch (e) {
+      console.warn('No se pudo vincular equipo al cliente:', e.message);
+    }
+
     res.json(u.rows[0]);
   } catch (err) {
     console.error('Error al actualizar cliente:', err);

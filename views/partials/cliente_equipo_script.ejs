@@ -1,0 +1,176 @@
+<script>
+function addMonthsYmd(dateStr, months) {
+    if (!dateStr || !months) return '';
+    const n = parseInt(months, 10);
+    if (!n || n <= 0) return '';
+    const d = new Date(String(dateStr).slice(0, 10) + 'T12:00:00');
+    if (Number.isNaN(d.getTime())) return '';
+    d.setMonth(d.getMonth() + n);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+}
+
+function formatYmdEs(ymd) {
+    if (!ymd) return '';
+    const [y, m, d] = String(ymd).slice(0, 10).split('-');
+    if (!d) return ymd;
+    return d + '/' + m + '/' + y;
+}
+
+function renderMpFechaInputs(wrap, count, existing) {
+    if (!wrap) return;
+    const n = Math.max(0, Math.min(24, parseInt(count, 10) || 0));
+    const prev = Array.from(wrap.querySelectorAll('input[type="date"]')).map(function (el) { return el.value; });
+    const seed = (existing && existing.length) ? existing : prev;
+    wrap.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+        const label = document.createElement('label');
+        label.className = 'block';
+        label.innerHTML =
+            '<span class="block text-[10px] text-slate-500 mb-1">Fecha MP ' + (i + 1) + '</span>' +
+            '<input type="date" name="mp_fechas" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white focus:outline-none focus:border-rose-500" value="' + (seed[i] || '') + '">';
+        wrap.appendChild(label);
+    }
+}
+
+function collectMpFechas(wrap) {
+    if (!wrap) return [];
+    return Array.from(wrap.querySelectorAll('input[type="date"]'))
+        .map(function (el) { return el.value; })
+        .filter(Boolean);
+}
+
+function bindGarantiaBlock(prefix) {
+    const plazo = document.getElementById(prefix + 'plazo_garantia_meses');
+    const fechaInst = document.getElementById(prefix + 'fecha_instalacion');
+    const vcto = document.getElementById(prefix + 'vcto_msg');
+    const cant = document.getElementById(prefix + 'cant_mp_garantia');
+    const wrap = document.getElementById(prefix + 'mp_fechas_wrap');
+
+    function updateVcto() {
+        if (!vcto) return;
+        const ymd = addMonthsYmd(fechaInst && fechaInst.value, plazo && plazo.value);
+        vcto.textContent = ymd ? ('Vencimiento: ' + formatYmdEs(ymd)) : '';
+    }
+
+    if (plazo) plazo.addEventListener('input', updateVcto);
+    if (fechaInst) fechaInst.addEventListener('input', updateVcto);
+    updateVcto();
+
+    if (cant && wrap) {
+        const seed = (wrap.dataset.fechas || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+        renderMpFechaInputs(wrap, cant.value || seed.length, seed);
+        cant.addEventListener('input', function () {
+            renderMpFechaInputs(wrap, cant.value, collectMpFechas(wrap));
+        });
+    }
+}
+
+function bindSerieLookup(prefix) {
+    const inputSerie = document.getElementById(prefix + 'numero_serie');
+    const inputMarca = document.getElementById(prefix + 'marca');
+    const inputModelo = document.getElementById(prefix + 'modelo');
+    const inputFecha = document.getElementById(prefix + 'fecha_instalacion');
+    const inputPlazo = document.getElementById(prefix + 'plazo_garantia_meses');
+    const inputCant = document.getElementById(prefix + 'cant_mp_garantia');
+    const wrap = document.getElementById(prefix + 'mp_fechas_wrap');
+    const msg = document.getElementById(prefix + 'serie_msg');
+    if (!inputSerie) return;
+
+    let t = null;
+    inputSerie.addEventListener('input', function () {
+        const val = inputSerie.value.trim();
+        clearTimeout(t);
+        if (val.length < 3) {
+            if (msg) msg.textContent = '';
+            return;
+        }
+        t = setTimeout(async function () {
+            if (msg) {
+                msg.textContent = 'Buscando...';
+                msg.className = 'text-[10px] mt-1 h-4 text-blue-400';
+            }
+            try {
+                const res = await fetch('/equipos?serie=' + encodeURIComponent(val), { headers: { Accept: 'application/json' } });
+                const data = await res.json();
+                const equipos = data.equipos || [];
+                const target = val.toLowerCase();
+                const exact = equipos.find(function (eq) { return String(eq.numero_serie || '').trim().toLowerCase() === target; }) || (equipos.length === 1 ? equipos[0] : null);
+                if (exact) {
+                    if (inputMarca && !inputMarca.value) inputMarca.value = exact.marca || '';
+                    if (inputModelo && !inputModelo.value) inputModelo.value = exact.modelo || '';
+                    if (inputFecha && !inputFecha.value && exact.fecha_instalacion) inputFecha.value = String(exact.fecha_instalacion).slice(0, 10);
+                    if (inputPlazo && !inputPlazo.value && exact.plazo_garantia_meses) inputPlazo.value = exact.plazo_garantia_meses;
+                    const fechas = Array.isArray(exact.mp_garantia_fechas) ? exact.mp_garantia_fechas.map(function (f) { return String(f).slice(0, 10); }) : [];
+                    if (wrap && fechas.length && inputCant) {
+                        inputCant.value = String(fechas.length);
+                        wrap.dataset.fechas = fechas.join(',');
+                        renderMpFechaInputs(wrap, fechas.length, fechas);
+                    }
+                    if (msg) {
+                        msg.textContent = 'Equipo encontrado. Datos cargados.';
+                        msg.className = 'text-[10px] mt-1 h-4 text-emerald-400';
+                    }
+                } else {
+                    if (msg) {
+                        msg.textContent = 'Equipo no encontrado. Se creará uno nuevo al guardar.';
+                        msg.className = 'text-[10px] mt-1 h-4 text-orange-400';
+                    }
+                }
+            } catch (e) {
+                if (msg) {
+                    msg.textContent = 'Error buscando equipo.';
+                    msg.className = 'text-[10px] mt-1 h-4 text-red-400';
+                }
+            }
+        }, 350);
+    });
+}
+
+function fillClienteForm(prefix, cliente, equipo) {
+    const c = cliente || {};
+    const eq = equipo || {};
+    const setVal = function (suffix, value) {
+        const el = document.getElementById(prefix + suffix);
+        if (el) el.value = value || '';
+    };
+    setVal('nombre', c.nombre);
+    setVal('rut', c.rut);
+    setVal('ubicacion', c.ubicacion);
+    setVal('direccion', c.direccion);
+    setVal('comuna', c.comuna);
+    setVal('ciudad', c.ciudad);
+    setVal('contacto', c.contacto);
+    setVal('telefono', c.telefono);
+    setVal('email', c.email);
+    setVal('numero_serie', eq.numero_serie);
+    setVal('marca', eq.marca);
+    setVal('modelo', eq.modelo);
+    setVal('fecha_instalacion', eq.fecha_instalacion ? String(eq.fecha_instalacion).slice(0, 10) : '');
+    setVal('plazo_garantia_meses', eq.plazo_garantia_meses);
+    const fechas = Array.isArray(eq.mp_garantia_fechas) ? eq.mp_garantia_fechas.map(function (f) { return String(f).slice(0, 10); }) : [];
+    const cant = document.getElementById(prefix + 'cant_mp_garantia');
+    const wrap = document.getElementById(prefix + 'mp_fechas_wrap');
+    if (cant) cant.value = fechas.length ? String(fechas.length) : '';
+    if (wrap) {
+        wrap.dataset.fechas = fechas.join(',');
+        renderMpFechaInputs(wrap, fechas.length, fechas);
+    }
+    const vcto = document.getElementById(prefix + 'vcto_msg');
+    if (vcto) {
+        const ymd = eq.fecha_vencimiento_garantia
+            ? String(eq.fecha_vencimiento_garantia).slice(0, 10)
+            : addMonthsYmd(eq.fecha_instalacion, eq.plazo_garantia_meses);
+        vcto.textContent = ymd ? ('Vencimiento: ' + formatYmdEs(ymd)) : '';
+    }
+}
+
+function collectClienteForm(prefix, form) {
+    const data = form ? Object.fromEntries(new FormData(form).entries()) : {};
+    const wrap = document.getElementById(prefix + 'mp_fechas_wrap');
+    data.mp_fechas = collectMpFechas(wrap);
+    return data;
+}
+</script>

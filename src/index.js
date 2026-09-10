@@ -272,6 +272,10 @@ async function ensureBaseSchema() {
       await pool.query(`
         ALTER TABLE equipos ADD COLUMN IF NOT EXISTS numero_orden VARCHAR(150);
         ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_embarque DATE;
+        ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_ingreso DATE;
+        ALTER TABLE equipos ADD COLUMN IF NOT EXISTS plazo_garantia_meses INTEGER;
+        ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_vencimiento_garantia DATE;
+        ALTER TABLE equipos ADD COLUMN IF NOT EXISTS mp_garantia_fechas JSONB DEFAULT '[]'::jsonb;
       `);
     } catch (e) { console.log('Columnas de equipo numero_orden/fecha_embarque:', e.message); }
 

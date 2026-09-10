@@ -91,6 +91,7 @@
                             <th class="py-2 px-3">Serie</th>
                             <th class="py-2 px-3 eq-col-extra">Nº Orden</th>
                             <th class="py-2 px-3 eq-col-extra">F. embarque</th>
+                            <th class="py-2 px-3 eq-col-extra">F. ingreso</th>
                             <th class="py-2 px-3">Cliente</th>
                             <th class="py-2 px-3">Ubicación</th>
                             <th class="py-2 px-3 eq-col-extra">F. Inst.</th>
@@ -106,6 +107,7 @@
                                 <td class="py-1.5 px-3 text-slate-400" title="<%= equipo.numero_serie || '' %>"><%= equipo.numero_serie || '—' %></td>
                                 <td class="py-1.5 px-3 text-slate-400 eq-col-extra" title="<%= equipo.numero_orden || '' %>"><%= equipo.numero_orden || '—' %></td>
                                 <td class="py-1.5 px-3 text-slate-400 eq-col-extra"><%= fmtEqDate(equipo.fecha_embarque) %></td>
+                                <td class="py-1.5 px-3 text-slate-400 eq-col-extra"><%= fmtEqDate(equipo.fecha_ingreso) %></td>
                                 <td class="py-1.5 px-3 text-slate-300" title="<%= equipo.cliente || '' %>">
                                     <% if (equipo.cliente) { %>
                                         <span class="inline-flex items-center gap-1 min-w-0 max-w-full">
@@ -192,9 +194,13 @@
                     <label class="block text-slate-400 text-sm mb-2">Nº Orden</label>
                     <input type="text" name="numero_orden" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
-                <div class="md:col-span-2">
+                <div>
                     <label class="block text-slate-400 text-sm mb-2">Fecha de embarque</label>
                     <input type="date" name="fecha_embarque" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Fecha de ingreso</label>
+                    <input type="date" name="fecha_ingreso" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
             </div>
             <div class="flex justify-end gap-3 mt-6">
@@ -236,6 +242,10 @@
                     <input type="date" id="edit-equipo-fecha_embarque" name="fecha_embarque" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
+                    <label class="block text-slate-400 text-sm mb-2">Fecha de ingreso</label>
+                    <input type="date" id="edit-equipo-fecha_ingreso" name="fecha_ingreso" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
                     <label class="block text-slate-400 text-sm mb-2">Ubicación</label>
                     <input type="text" id="edit-equipo-ubicacion" name="ubicacion" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
@@ -261,6 +271,17 @@
                 <div>
                     <label class="block text-slate-400 text-sm mb-2">Fecha de Instalación</label>
                     <input type="date" id="edit-equipo-fecha_instalacion" name="fecha_instalacion" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Plazo garantía (meses)</label>
+                    <input type="number" min="1" max="120" id="edit-equipo-plazo_garantia_meses" name="plazo_garantia_meses" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                    <p id="edit-equipo-vcto_msg" class="text-[11px] mt-1 text-emerald-400"></p>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-slate-400 text-sm mb-2">Cant. MP Garantía</label>
+                    <input type="number" min="0" max="24" id="edit-equipo-cant_mp_garantia" name="cant_mp_garantia" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                    <p class="text-[10px] text-slate-500 mt-1">Las fechas se muestran en el calendario con color distinto (MP Garantía).</p>
+                    <div id="edit-equipo-mp_fechas_wrap" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2"></div>
                 </div>
             </div>
             <div class="flex justify-end gap-3 mt-6">
@@ -350,6 +371,10 @@
                 <div>
                     <p class="text-xs text-slate-500 mb-1">Fecha de embarque</p>
                     <p id="detalle-equipo-embarque" class="text-slate-200"></p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 mb-1">Fecha de ingreso</p>
+                    <p id="detalle-equipo-ingreso" class="text-slate-200"></p>
                 </div>
                 <div>
                     <p class="text-xs text-slate-500 mb-1">Ubicación</p>
@@ -495,6 +520,7 @@ async function openDetalleEquipo(id) {
         const serieEl = document.getElementById('detalle-equipo-serie');
         const ordenEl = document.getElementById('detalle-equipo-orden');
         const embarqueEl = document.getElementById('detalle-equipo-embarque');
+        const ingresoEl = document.getElementById('detalle-equipo-ingreso');
         const ubicacionEl = document.getElementById('detalle-equipo-ubicacion');
         const clienteEl = document.getElementById('detalle-equipo-cliente');
         const aplicacionEl = document.getElementById('detalle-equipo-aplicacion');
@@ -510,6 +536,7 @@ async function openDetalleEquipo(id) {
         serieEl.textContent = e.numero_serie || '-';
         ordenEl.textContent = e.numero_orden || '-';
         embarqueEl.textContent = e.fecha_embarque ? new Date(e.fecha_embarque).toLocaleDateString('es-CL') : '-';
+        if (ingresoEl) ingresoEl.textContent = e.fecha_ingreso ? new Date(e.fecha_ingreso).toLocaleDateString('es-CL') : '-';
         ubicacionEl.textContent = e.ubicacion || '-';
         clienteEl.textContent = e.cliente || 'Sin asignar';
         aplicacionEl.textContent = e.aplicacion || '-';
@@ -677,6 +704,10 @@ async function openEditEquipo(id) {
         if (fechaEmbarqueInput) {
             fechaEmbarqueInput.value = e.fecha_embarque ? String(e.fecha_embarque).split('T')[0] : '';
         }
+        const fechaIngresoInput = document.getElementById('edit-equipo-fecha_ingreso');
+        if (fechaIngresoInput) {
+            fechaIngresoInput.value = e.fecha_ingreso ? String(e.fecha_ingreso).split('T')[0] : '';
+        }
         document.getElementById('edit-equipo-ubicacion').value = e.ubicacion || '';
         document.getElementById('edit-equipo-estado').value = e.estado || 'operativo';
         const clienteSelect = document.getElementById('edit-equipo-cliente');
@@ -685,7 +716,24 @@ async function openEditEquipo(id) {
         }
         const fechaInstInput = document.getElementById('edit-equipo-fecha_instalacion');
         if (fechaInstInput) {
-            fechaInstInput.value = e.fecha_instalacion ? e.fecha_instalacion.split('T')[0] : '';
+            fechaInstInput.value = e.fecha_instalacion ? String(e.fecha_instalacion).split('T')[0] : '';
+        }
+        const plazoInput = document.getElementById('edit-equipo-plazo_garantia_meses');
+        if (plazoInput) plazoInput.value = e.plazo_garantia_meses || '';
+        const fechas = Array.isArray(e.mp_garantia_fechas) ? e.mp_garantia_fechas.map(function (f) { return String(f).slice(0, 10); }) : [];
+        const cantInput = document.getElementById('edit-equipo-cant_mp_garantia');
+        const wrap = document.getElementById('edit-equipo-mp_fechas_wrap');
+        if (cantInput) cantInput.value = fechas.length ? String(fechas.length) : '';
+        if (wrap && typeof renderMpFechaInputs === 'function') {
+            wrap.dataset.fechas = fechas.join(',');
+            renderMpFechaInputs(wrap, fechas.length, fechas);
+        }
+        const vcto = document.getElementById('edit-equipo-vcto_msg');
+        if (vcto && typeof addMonthsYmd === 'function') {
+            const ymd = e.fecha_vencimiento_garantia
+                ? String(e.fecha_vencimiento_garantia).slice(0, 10)
+                : addMonthsYmd(e.fecha_instalacion, e.plazo_garantia_meses);
+            vcto.textContent = ymd && typeof formatYmdEs === 'function' ? ('Vencimiento: ' + formatYmdEs(ymd)) : (ymd ? ('Vencimiento: ' + ymd) : '');
         }
         document.getElementById('edit-equipo-modal').classList.remove('hidden');
     } catch (err) {
@@ -703,6 +751,8 @@ async function submitEditEquipo(ev) {
     }
     const formData = new FormData(ev.target);
     const data = Object.fromEntries(formData.entries());
+    const wrap = document.getElementById('edit-equipo-mp_fechas_wrap');
+    data.mp_fechas = typeof collectMpFechas === 'function' ? collectMpFechas(wrap) : [];
     try {
         const res = await fetch(`/equipos/${id}`, {
             method: 'PATCH',
@@ -751,4 +801,10 @@ async function deleteEquipo(id) {
         alert('Error de conexión');
     }
 }
+</script>
+<%- include('partials/cliente_equipo_script') %>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof bindGarantiaBlock === 'function') bindGarantiaBlock('edit-equipo-');
+});
 </script>
