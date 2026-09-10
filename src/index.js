@@ -215,7 +215,7 @@ async function ensureBaseSchema() {
         numero_orden VARCHAR(150),
         fecha_embarque DATE,
         ubicacion VARCHAR(150),
-        estado VARCHAR(20) NOT NULL DEFAULT 'activo',
+        estado VARCHAR(20) NOT NULL DEFAULT 'operativo',
         aplicacion VARCHAR(150),
         cliente VARCHAR(150),
         anio_venta INTEGER,

@@ -108,7 +108,7 @@ router.post('/', authRequired, async (req, res) => {
 
             const newEq = await pool.query(
                 `INSERT INTO equipos (nombre, modelo, numero_serie, cliente_id, cliente, creado_en, actualizado_en, estado, marca, ubicacion)
-                 VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), 'activo', $6, $7)
+                 VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), 'operativo', $6, $7)
                  RETURNING id`,
                 [cleanNombreEquipo, cleanModelo, cleanSerie, cid, clienteNombre, cleanMarca, cleanUbicacion]
             );

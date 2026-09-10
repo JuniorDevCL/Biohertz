@@ -49,6 +49,14 @@ function saveStore(store) {
   } catch {}
 }
 
+function compareMarca(a, b) {
+  const left = String(a || '').trim();
+  const right = String(b || '').trim();
+  if (!left && right) return 1;
+  if (left && !right) return -1;
+  return left.localeCompare(right, 'es', { sensitivity: 'base' });
+}
+
 function nowISO() {
   return new Date().toISOString();
 }
@@ -347,12 +355,27 @@ if (isOffline) {
 
       if (s.startsWith('SELECT * FROM equipos WHERE cliente_id =')) {
          const [id] = params;
-         const list = store.equipos.filter(e => String(e.cliente_id) === String(id)).sort((a, b) => String(b.actualizado_en).localeCompare(String(a.actualizado_en)));
+         const list = store.equipos.filter(e => String(e.cliente_id) === String(id)).sort((a, b) => {
+           const cmpMarca = compareMarca(a.marca, b.marca);
+           if (cmpMarca) return cmpMarca;
+           return compareMarca(a.modelo, b.modelo);
+         });
          return { rows: list, rowCount: list.length };
       }
 
-      if ((/^SELECT .* FROM equipos/i.test(s) && s.includes('ORDER BY actualizado_en DESC')) || s.startsWith('SELECT COUNT(*) FROM equipos')) {
-        let list = store.equipos.slice().sort((a, b) => String(b.actualizado_en).localeCompare(String(a.actualizado_en)));
+      if ((/^SELECT .* FROM equipos/i.test(s) && (s.includes('ORDER BY actualizado_en DESC') || s.includes("LOWER(TRIM(marca)") || s.includes("LOWER(COALESCE(marca"))) || s.startsWith('SELECT COUNT(*) FROM equipos')) {
+        let list = store.equipos.slice();
+        if (s.includes("LOWER(TRIM(marca)") || s.includes("LOWER(COALESCE(marca")) {
+          list.sort((a, b) => {
+            const marca = compareMarca(a.marca, b.marca);
+            if (marca) return marca;
+            const modelo = compareMarca(a.modelo, b.modelo);
+            if (modelo) return modelo;
+            return compareMarca(a.numero_serie, b.numero_serie);
+          });
+        } else {
+          list.sort((a, b) => String(b.actualizado_en).localeCompare(String(a.actualizado_en)));
+        }
 
         const stateMatch = s.match(/estado = \$(\d+)/);
         if (stateMatch) {
@@ -394,10 +417,13 @@ if (isOffline) {
             return { rows: [{ count: String(list.length) }], rowCount: 1 };
         }
 
-        const limit = Number(params[params.length - 2]) || 50;
-        const offset = Number(params[params.length - 1]) || 0;
-        const page = list.slice(offset, offset + limit);
-        return { rows: page, rowCount: page.length };
+        if (s.includes('LIMIT $')) {
+          const limit = Number(params[params.length - 2]) || 50;
+          const offset = Number(params[params.length - 1]) || 0;
+          const page = list.slice(offset, offset + limit);
+          return { rows: page, rowCount: page.length };
+        }
+        return { rows: list, rowCount: list.length };
       }
       if (s.includes('FROM equipos WHERE LOWER(TRIM(numero_serie))')) {
         const [serie] = params;
@@ -419,14 +445,14 @@ if (isOffline) {
           try { m = mantenciones ? JSON.parse(mantenciones) : []; } catch { m = []; }
           let mp = [];
           try { mp = mp_garantia_fechas ? (typeof mp_garantia_fechas === 'string' ? JSON.parse(mp_garantia_fechas) : mp_garantia_fechas) : []; } catch { mp = []; }
-          e = { id, nombre, marca, modelo, numero_serie, numero_orden: numero_orden || null, fecha_embarque: fecha_embarque || null, fecha_ingreso: fecha_ingreso || null, ubicacion, estado: estado || 'activo', aplicacion, cliente, cliente_id: cliente_id ? Number(cliente_id) : null, anio_venta: anio_venta ? Number(anio_venta) : null, fecha_instalacion: fecha_instalacion || null, plazo_garantia_meses: plazo_garantia_meses ? Number(plazo_garantia_meses) : null, fecha_vencimiento_garantia: fecha_vencimiento_garantia || null, mp_garantia_fechas: Array.isArray(mp) ? mp : [], mantenciones: Array.isArray(m) ? m : [], creado_en: nowISO(), actualizado_en: nowISO() };
+          e = { id, nombre, marca, modelo, numero_serie, numero_orden: numero_orden || null, fecha_embarque: fecha_embarque || null, fecha_ingreso: fecha_ingreso || null, ubicacion, estado: estado || 'operativo', aplicacion, cliente, cliente_id: cliente_id ? Number(cliente_id) : null, anio_venta: anio_venta ? Number(anio_venta) : null, fecha_instalacion: fecha_instalacion || null, plazo_garantia_meses: plazo_garantia_meses ? Number(plazo_garantia_meses) : null, fecha_vencimiento_garantia: fecha_vencimiento_garantia || null, mp_garantia_fechas: Array.isArray(mp) ? mp : [], mantenciones: Array.isArray(m) ? m : [], creado_en: nowISO(), actualizado_en: nowISO() };
         } else if (s.includes('numero_orden')) {
           const [nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, mantenciones] = params;
           const m = mantenciones ? JSON.parse(mantenciones) : [];
-          e = { id, nombre, marca, modelo, numero_serie, numero_orden: numero_orden || null, fecha_embarque: fecha_embarque || null, fecha_ingreso: null, ubicacion, estado: estado || 'activo', aplicacion, cliente, cliente_id: cliente_id ? Number(cliente_id) : null, anio_venta: anio_venta ? Number(anio_venta) : null, fecha_instalacion: fecha_instalacion || null, plazo_garantia_meses: null, fecha_vencimiento_garantia: null, mp_garantia_fechas: [], mantenciones: Array.isArray(m) ? m : [], creado_en: nowISO(), actualizado_en: nowISO() };
+          e = { id, nombre, marca, modelo, numero_serie, numero_orden: numero_orden || null, fecha_embarque: fecha_embarque || null, fecha_ingreso: null, ubicacion, estado: estado || 'operativo', aplicacion, cliente, cliente_id: cliente_id ? Number(cliente_id) : null, anio_venta: anio_venta ? Number(anio_venta) : null, fecha_instalacion: fecha_instalacion || null, plazo_garantia_meses: null, fecha_vencimiento_garantia: null, mp_garantia_fechas: [], mantenciones: Array.isArray(m) ? m : [], creado_en: nowISO(), actualizado_en: nowISO() };
         } else {
           const [nombre, modelo, numero_serie, cliente_id, cliente, marca, ubicacion] = params;
-          e = { id, nombre, marca: marca || null, modelo, numero_serie, numero_orden: null, fecha_embarque: null, fecha_ingreso: null, ubicacion: ubicacion || null, estado: 'activo', aplicacion: null, cliente, cliente_id: cliente_id ? Number(cliente_id) : null, anio_venta: null, fecha_instalacion: null, plazo_garantia_meses: null, fecha_vencimiento_garantia: null, mp_garantia_fechas: [], mantenciones: [], creado_en: nowISO(), actualizado_en: nowISO() };
+          e = { id, nombre, marca: marca || null, modelo, numero_serie, numero_orden: null, fecha_embarque: null, fecha_ingreso: null, ubicacion: ubicacion || null, estado: 'operativo', aplicacion: null, cliente, cliente_id: cliente_id ? Number(cliente_id) : null, anio_venta: null, fecha_instalacion: null, plazo_garantia_meses: null, fecha_vencimiento_garantia: null, mp_garantia_fechas: [], mantenciones: [], creado_en: nowISO(), actualizado_en: nowISO() };
         }
         store.equipos.push(e);
         saveStore(store);

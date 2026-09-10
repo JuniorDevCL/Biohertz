@@ -172,7 +172,7 @@ router.get('/:id', authRequired, async (req, res) => {
 
     const [clientRes, equiposRes, ticketsRes] = await Promise.all([
       pool.query('SELECT * FROM clientes WHERE id = $1', [id]),
-      pool.query('SELECT * FROM equipos WHERE cliente_id = $1 ORDER BY actualizado_en DESC', [id]),
+      pool.query("SELECT * FROM equipos WHERE cliente_id = $1 ORDER BY NULLIF(LOWER(TRIM(marca)), '') ASC NULLS LAST, NULLIF(LOWER(TRIM(modelo)), '') ASC NULLS LAST, id ASC", [id]),
       pool.query(
         `SELECT t.*, u.nombre AS asignado_a_nombre
          FROM tickets t
@@ -216,7 +216,7 @@ router.get('/:id/equipos', authRequired, async (req, res) => {
   try {
     await ensureSchema();
     const { id } = req.params;
-    const r = await pool.query(`SELECT * FROM equipos WHERE cliente_id = $1 ORDER BY actualizado_en DESC`, [id]);
+    const r = await pool.query(`SELECT * FROM equipos WHERE cliente_id = $1 ORDER BY NULLIF(LOWER(TRIM(marca)), '') ASC NULLS LAST, NULLIF(LOWER(TRIM(modelo)), '') ASC NULLS LAST, id ASC`, [id]);
     res.json(r.rows);
   } catch (err) {
     console.error('Error al listar equipos del cliente:', err);

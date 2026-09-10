@@ -61,6 +61,14 @@ function trimOrNull(value) {
   return trimmed || null;
 }
 
+function normalizeEstadoEquipo(estado) {
+  const v = String(estado || '').trim().toLowerCase().replace(/\s+/g, '_');
+  if (v === 'en_reparacion' || v === 'reparacion') return 'en_reparacion';
+  return 'operativo';
+}
+
+const EQUIPOS_ORDER_BY = `ORDER BY NULLIF(LOWER(TRIM(marca)), '') ASC NULLS LAST, NULLIF(LOWER(TRIM(modelo)), '') ASC NULLS LAST, NULLIF(LOWER(TRIM(numero_serie)), '') ASC NULLS LAST, id ASC`;
+
 let extendedReady = false;
 async function ensureExtendedSchema() {
   if (extendedReady) return;
@@ -79,6 +87,10 @@ async function ensureExtendedSchema() {
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS mp_garantia_fechas JSONB DEFAULT '[]'::jsonb;
       ALTER TABLE equipos ADD COLUMN IF NOT EXISTS mantenciones JSONB DEFAULT '[]'::jsonb;
     `);
+  } catch {}
+  try {
+    await pool.query(`ALTER TABLE equipos ALTER COLUMN estado SET DEFAULT 'operativo'`);
+    await pool.query(`UPDATE equipos SET estado = 'operativo' WHERE estado IS NULL OR estado NOT IN ('operativo', 'en_reparacion')`);
   } catch {}
   extendedReady = true;
 }
@@ -129,8 +141,13 @@ router.get('/', authRequired, async (req, res) => {
     if (limit > 100) limit = 100;
     if (isNaN(offset) || offset < 0) offset = 0;
 
-    const sql = `SELECT id, nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, fecha_ingreso, ubicacion, estado, cliente, cliente_id, anio_venta, fecha_instalacion, plazo_garantia_meses, fecha_vencimiento_garantia, mp_garantia_fechas, actualizado_en FROM equipos${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
-    const result = await pool.query(sql, [...values, limit, offset]);
+    const whereSql = where.length ? ' WHERE ' + where.join(' AND ') : '';
+    const selectCols = `id, nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, fecha_ingreso, ubicacion, estado, cliente, cliente_id, anio_venta, fecha_instalacion, plazo_garantia_meses, fecha_vencimiento_garantia, mp_garantia_fechas, actualizado_en`;
+    const wantsJson = String(req.get('accept') || '').includes('application/json');
+    const sql = wantsJson
+      ? `SELECT ${selectCols} FROM equipos${whereSql} ${EQUIPOS_ORDER_BY} LIMIT $${values.length + 1} OFFSET $${values.length + 2}`
+      : `SELECT ${selectCols} FROM equipos${whereSql} ${EQUIPOS_ORDER_BY}`;
+    const result = await pool.query(sql, wantsJson ? [...values, limit, offset] : values);
 
     const totalSql = 'SELECT COUNT(*) FROM equipos';
     const totalResult = await pool.query(totalSql);
@@ -276,7 +293,7 @@ router.post('/', authRequired, async (req, res) => {
       `INSERT INTO equipos (nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, fecha_ingreso, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, plazo_garantia_meses, fecha_vencimiento_garantia, mp_garantia_fechas, mantenciones, creado_en, actualizado_en)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, COALESCE($18::jsonb, '[]'::jsonb), NOW(), NOW())
        RETURNING *`,
-      [nombre, marca || null, modelo || null, numero_serie || null, numero_orden || null, emptyToNull(fecha_embarque), emptyToNull(fecha_ingreso), ubicacion || null, estado || 'activo', aplicacion || null, finalClienteName || null, finalClienteId, anio_venta ? parseInt(anio_venta) : null, fechaInst, plazoMeses, vencimiento, JSON.stringify(mpFechas), mantenciones ? JSON.stringify(mantenciones) : null]
+      [nombre, marca || null, modelo || null, numero_serie || null, numero_orden || null, emptyToNull(fecha_embarque), emptyToNull(fecha_ingreso), ubicacion || null, normalizeEstadoEquipo(estado), aplicacion || null, finalClienteName || null, finalClienteId, anio_venta ? parseInt(anio_venta) : null, fechaInst, plazoMeses, vencimiento, JSON.stringify(mpFechas), mantenciones ? JSON.stringify(mantenciones) : null]
     );
 
     try {
@@ -363,7 +380,7 @@ router.patch('/:id', authRequired, async (req, res) => {
        RETURNING *`,
       [
         nombre, marca, modelo, numero_serie, numero_orden,
-        emptyToNull(fecha_embarque), emptyToNull(fecha_ingreso), ubicacion, estado, aplicacion, finalClienteName,
+        emptyToNull(fecha_embarque), emptyToNull(fecha_ingreso), ubicacion, estado !== undefined ? normalizeEstadoEquipo(estado) : undefined, aplicacion, finalClienteName,
         (finalClienteId && finalClienteId !== 'STOCK') ? parseInt(finalClienteId) : (finalClienteId === null || finalClienteId === 'STOCK' ? null : undefined),
         anio_venta ? parseInt(anio_venta) : null,
         fechaInst,

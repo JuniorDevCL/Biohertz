@@ -122,15 +122,14 @@
                                 <td class="py-1.5 px-3 text-slate-400 eq-col-extra"><%= fmtEqDate(equipo.fecha_instalacion) %></td>
                                 <td class="py-1.5 px-3">
                                     <% 
-                                        const estado = equipo.estado || 'desconocido';
-                                        const estadoClass = estado === 'operativo' 
-                                            ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/40' 
-                                            : (estado === 'en_reparacion' 
-                                                ? 'bg-amber-500/20 text-amber-300 border-amber-400/50' 
-                                                : 'bg-red-600/20 text-red-300 border-red-500/50');
+                                        const rawEstado = String(equipo.estado || '').toLowerCase();
+                                        const enReparacion = rawEstado === 'en_reparacion' || rawEstado === 'reparacion';
+                                        const estadoClass = enReparacion
+                                            ? 'bg-amber-500/20 text-amber-300 border-amber-400/50'
+                                            : 'bg-emerald-600/20 text-emerald-400 border-emerald-500/40';
                                     %>
                                     <span class="inline-flex px-1.5 py-0.5 rounded-full text-[11px] font-medium border <%= estadoClass %>">
-                                        <%= String(estado).replace(/_/g, ' ') %>
+                                        <%= enReparacion ? 'Reparación' : 'Operativo' %>
                                     </span>
                                 </td>
                                 <td class="py-1.5 px-2 eq-actions">
@@ -264,8 +263,7 @@
                     <label class="block text-slate-400 text-sm mb-2">Estado</label>
                     <select id="edit-equipo-estado" name="estado" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                         <option value="operativo">Operativo</option>
-                        <option value="en_reparacion">En Reparación</option>
-                        <option value="baja">De Baja</option>
+                        <option value="en_reparacion">Reparación</option>
                     </select>
                 </div>
                 <div>
@@ -542,17 +540,13 @@ async function openDetalleEquipo(id) {
         aplicacionEl.textContent = e.aplicacion || '-';
         anioEl.textContent = e.anio_venta || '-';
 
-        const estado = e.estado || 'desconocido';
-        let estadoClass = 'bg-slate-700 text-slate-200 border border-slate-600';
-        if (estado === 'operativo') {
-            estadoClass = 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/40';
-        } else if (estado === 'en_reparacion') {
-            estadoClass = 'bg-amber-500/20 text-amber-200 border border-amber-400/60';
-        } else if (estado === 'baja') {
-            estadoClass = 'bg-red-600/20 text-red-300 border border-red-500/40';
-        }
+        const rawEstado = String(e.estado || '').toLowerCase();
+        const enReparacion = rawEstado === 'en_reparacion' || rawEstado === 'reparacion';
+        const estadoClass = enReparacion
+            ? 'bg-amber-500/20 text-amber-200 border border-amber-400/60'
+            : 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/40';
         estadoEl.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ' + estadoClass;
-        estadoEl.textContent = estado;
+        estadoEl.textContent = enReparacion ? 'Reparación' : 'Operativo';
 
         mantencionesEl.innerHTML = '';
         const list = Array.isArray(e.fichas_mantencion) && e.fichas_mantencion.length
@@ -709,7 +703,8 @@ async function openEditEquipo(id) {
             fechaIngresoInput.value = e.fecha_ingreso ? String(e.fecha_ingreso).split('T')[0] : '';
         }
         document.getElementById('edit-equipo-ubicacion').value = e.ubicacion || '';
-        document.getElementById('edit-equipo-estado').value = e.estado || 'operativo';
+        const rawEditEstado = String(e.estado || '').toLowerCase();
+        document.getElementById('edit-equipo-estado').value = (rawEditEstado === 'en_reparacion' || rawEditEstado === 'reparacion') ? 'en_reparacion' : 'operativo';
         const clienteSelect = document.getElementById('edit-equipo-cliente');
         if (clienteSelect) {
             clienteSelect.value = e.cliente_id || '';
