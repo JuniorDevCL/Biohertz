@@ -207,7 +207,12 @@ router.get('/:id', authRequired, async (req, res) => {
     const { id } = req.params;
     const result = await pool.query(`SELECT * FROM equipos WHERE id = $1`, [id]);
     if (result.rowCount === 0) return res.status(404).json({ error: 'Equipo no encontrado' });
-    
+
+    const accept = String(req.get('accept') || '');
+    if (accept.includes('text/html')) {
+      return res.redirect(`/equipos?detalle=${encodeURIComponent(id)}`);
+    }
+
     const equipo = result.rows[0];
 
     // Obtener tickets asociados

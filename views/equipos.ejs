@@ -801,5 +801,9 @@ async function deleteEquipo(id) {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     if (typeof bindGarantiaBlock === 'function') bindGarantiaBlock('edit-equipo-');
+    const detalleId = new URLSearchParams(window.location.search).get('detalle');
+    if (detalleId && typeof openDetalleEquipo === 'function') {
+        openDetalleEquipo(detalleId);
+    }
 });
 </script>
