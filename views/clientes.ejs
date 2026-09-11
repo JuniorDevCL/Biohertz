@@ -37,26 +37,26 @@
     <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-6">
         <% if (typeof clientes !== 'undefined' && clientes && clientes.length > 0) { %>
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse text-[13px]">
                     <thead>
-                        <tr class="bg-slate-800/30 text-xs uppercase text-slate-400 font-semibold tracking-wider">
-                            <th class="py-3 px-4">Razón social</th>
-                            <th class="py-3 px-4">RUT</th>
-                            <th class="py-3 px-4">Correo</th>
-                            <th class="py-3 px-4">Teléfono</th>
-                            <th class="py-3 px-4">Ciudad</th>
-                            <th class="py-3 px-4">Fecha Registro</th>
-                            <th class="py-3 px-4">Acciones</th>
+                        <tr class="bg-slate-800/30 text-[11px] uppercase text-slate-400 font-semibold tracking-wider">
+                            <th class="py-2 px-3">Razón social</th>
+                            <th class="py-2 px-3">RUT</th>
+                            <th class="py-2 px-3">Correo</th>
+                            <th class="py-2 px-3">Teléfono</th>
+                            <th class="py-2 px-3">Ciudad</th>
+                            <th class="py-2 px-3">Fecha Registro</th>
+                            <th class="py-2 px-3 text-right">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-800">
+                    <tbody class="divide-y divide-slate-800/80">
                         <% clientes.forEach(cliente => { %>
                             <tr class="hover:bg-slate-800/40 transition-colors group">
-                                <td class="py-3 px-4 font-medium text-white"><%= cliente.nombre %></td>
-                                <td class="py-3 px-4 text-slate-300"><%= cliente.rut || '-' %></td>
-                                <td class="py-3 px-4 text-slate-300">
+                                <td class="py-1.5 px-3 font-medium text-white"><%= cliente.nombre %></td>
+                                <td class="py-1.5 px-3 text-slate-300"><%= cliente.rut || '-' %></td>
+                                <td class="py-1.5 px-3 text-slate-300">
                                     <% if (cliente.email) { %>
-                                        <span class="inline-flex items-center px-2 py-1 rounded-full bg-slate-800 text-xs text-slate-200">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-800 text-xs text-slate-200">
                                             <i class="ph ph-envelope mr-1.5 text-slate-400"></i>
                                             <%= cliente.email %>
                                         </span>
@@ -64,21 +64,21 @@
                                         <span class="text-slate-500 text-sm">-</span>
                                     <% } %>
                                 </td>
-                                <td class="py-3 px-4 text-slate-300"><%= cliente.telefono || '-' %></td>
-                                <td class="py-3 px-4 text-slate-300"><%= cliente.ciudad || cliente.ubicacion || '-' %></td>
-                                <td class="py-3 px-4 text-slate-400"><%= new Date(cliente.creado_en).toLocaleDateString() %></td>
-                                <td class="py-3 px-4">
-                                    <div class="flex flex-wrap items-center justify-end gap-2">
-                                        <button onclick="openEditModal('<%= cliente.id %>')" class="inline-flex items-center px-3 py-1.5 rounded-full bg-yellow-600/20 hover:bg-yellow-500/30 text-yellow-200 text-xs font-medium border border-yellow-500/40 transition-colors" title="Editar cliente">
-                                            <i class="ph ph-pencil-simple text-sm mr-1.5"></i>
+                                <td class="py-1.5 px-3 text-slate-300"><%= cliente.telefono || '-' %></td>
+                                <td class="py-1.5 px-3 text-slate-300"><%= cliente.ciudad || cliente.ubicacion || '-' %></td>
+                                <td class="py-1.5 px-3 text-slate-400"><%= new Date(cliente.creado_en).toLocaleDateString() %></td>
+                                <td class="py-1.5 px-3">
+                                    <div class="flex flex-nowrap items-center justify-end gap-1.5">
+                                        <button onclick="openEditModal('<%= cliente.id %>')" class="inline-flex items-center px-2.5 py-1 rounded-full bg-yellow-600/20 hover:bg-yellow-500/30 text-yellow-200 text-xs font-medium border border-yellow-500/40 transition-colors whitespace-nowrap" title="Editar cliente">
+                                            <i class="ph ph-pencil-simple text-sm mr-1"></i>
                                             Editar
                                         </button>
-                                        <button type="button" onclick="deleteClient('<%= cliente.id %>')" class="inline-flex items-center px-3 py-1.5 rounded-full bg-red-600/20 hover:bg-red-600/40 text-red-200 text-xs font-medium border border-red-500/40 transition-colors" title="Eliminar cliente">
-                                            <i class="ph ph-trash text-sm mr-1.5"></i>
+                                        <button type="button" onclick="deleteClient('<%= cliente.id %>')" class="inline-flex items-center px-2.5 py-1 rounded-full bg-red-600/20 hover:bg-red-600/40 text-red-200 text-xs font-medium border border-red-500/40 transition-colors whitespace-nowrap" title="Eliminar cliente">
+                                            <i class="ph ph-trash text-sm mr-1"></i>
                                             Eliminar
                                         </button>
-                                        <a href="/clientes/<%= cliente.id %>" class="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-600/60 transition-colors" title="Ver equipos asignados">
-                                            <i class="ph ph-desktop text-sm mr-1.5"></i>
+                                        <a href="/clientes/<%= cliente.id %>" class="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-600/60 transition-colors whitespace-nowrap" title="Ver equipos asignados">
+                                            <i class="ph ph-desktop text-sm mr-1"></i>
                                             Ver equipos
                                         </a>
                                     </div>
