@@ -79,10 +79,8 @@
                                     <div class="font-medium text-white"><%= clienteLabel || '—' %></div>
                                 </td>
                                 <td class="py-3 px-4">
-                                    <div class="font-medium text-white"><%= f.equipo_nombre || 'Equipo' %></div>
-                                    <div class="text-xs text-slate-500">
-                                        <%= [f.equipo_marca, f.equipo_modelo].filter(Boolean).join(' · ') || '-' %>
-                                        <% if (f.equipo_serie) { %> · <%= f.equipo_serie %><% } %>
+                                    <div class="font-medium text-white">
+                                        <%= [f.equipo_marca, f.equipo_modelo, f.equipo_serie].filter(Boolean).join(' · ') || '—' %>
                                     </div>
                                 </td>
                                 <td class="py-3 px-4">

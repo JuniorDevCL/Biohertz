@@ -74,7 +74,7 @@
                                         </span>
                                     </td>
                                     <td class="py-3 px-4">
-                                        <a href="/equipos?detalle=<%= equipo.id %>" class="text-blue-400 hover:text-blue-300" title="Ver detalle del equipo"><i class="ph ph-eye"></i></a>
+                                        <button type="button" onclick="openDetalleEquipo('<%= equipo.id %>')" class="text-blue-400 hover:text-blue-300" title="Ver detalle del equipo"><i class="ph ph-eye"></i></button>
                                     </td>
                                 </tr>
                             <% }); %>
@@ -321,6 +321,7 @@ document.getElementById('edit-client-form').addEventListener('submit', async (e)
 });
 </script>
 <%- include('partials/cliente_equipo_script') %>
+<%- include('partials/detalle_equipo_modal') %>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     bindGarantiaBlock('edit-cli-');
