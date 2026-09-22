@@ -1,0 +1,160 @@
+<div id="cliente-relacion-modal" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-start justify-between gap-3 px-5 py-4 border-b border-slate-800">
+            <div class="min-w-0">
+                <p class="text-[11px] uppercase tracking-wide text-slate-500">Cliente</p>
+                <h3 id="cliente-relacion-nombre" class="text-lg font-bold text-white truncate"></h3>
+            </div>
+            <button type="button" onclick="closeClienteRelacion()" class="text-slate-400 hover:text-white" title="Cerrar">
+                <i class="ph ph-x text-lg"></i>
+            </button>
+        </div>
+        <div class="px-5 py-4 space-y-4 text-sm">
+            <div id="cliente-relacion-datos" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-300"></div>
+            <div>
+                <p class="text-xs text-slate-500 mb-2">Equipos asociados</p>
+                <div id="cliente-relacion-equipos" class="space-y-2"></div>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500 mb-2">Tickets asociados</p>
+                <div id="cliente-relacion-tickets" class="space-y-2"></div>
+            </div>
+        </div>
+        <div class="px-5 py-4 border-t border-slate-800 flex justify-end">
+            <button type="button" onclick="closeClienteRelacion()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm">Cerrar</button>
+        </div>
+    </div>
+</div>
+<script>
+function closeClienteRelacion() {
+    const modal = document.getElementById('cliente-relacion-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function relacionEstadoTicket(estado) {
+    const raw = String(estado || '');
+    if (raw === 'hecho' || raw === 'terminado') return 'Terminado';
+    if (raw === 'pendiente' || raw === 'ingresado') return 'Ingresado';
+    return raw ? raw.replace(/_/g, ' ') : 'Activo';
+}
+
+async function openClienteRelacion(id) {
+    if (!id) return;
+    const modal = document.getElementById('cliente-relacion-modal');
+    const nombreEl = document.getElementById('cliente-relacion-nombre');
+    const datosEl = document.getElementById('cliente-relacion-datos');
+    const equiposEl = document.getElementById('cliente-relacion-equipos');
+    const ticketsEl = document.getElementById('cliente-relacion-tickets');
+    if (!modal || !nombreEl || !datosEl || !equiposEl || !ticketsEl) return;
+
+    nombreEl.textContent = 'Cargando…';
+    datosEl.textContent = '';
+    equiposEl.textContent = '';
+    ticketsEl.textContent = '';
+    if (typeof focusOverlay === 'function') focusOverlay(modal);
+    else modal.classList.remove('hidden');
+
+    try {
+        const res = await fetch('/clientes/' + encodeURIComponent(id), {
+            headers: { Accept: 'application/json' }
+        });
+        if (!res.ok) {
+            nombreEl.textContent = 'No se pudo cargar el cliente';
+            return;
+        }
+        const data = await res.json();
+        const c = data.cliente || {};
+        nombreEl.textContent = c.nombre || 'Cliente';
+
+        const campos = [
+            ['RUT', c.rut],
+            ['Contacto', c.contacto],
+            ['Correo', c.email],
+            ['Teléfono', c.telefono],
+            ['Dirección', [c.direccion, c.comuna, c.ciudad, c.ubicacion].filter(Boolean).join(' · ')]
+        ];
+        campos.forEach(function (par) {
+            if (!par[1]) return;
+            const box = document.createElement('div');
+            const lbl = document.createElement('p');
+            lbl.className = 'text-[11px] uppercase tracking-wide text-slate-500';
+            lbl.textContent = par[0];
+            const val = document.createElement('p');
+            val.className = 'text-slate-200';
+            val.textContent = par[1];
+            box.appendChild(lbl);
+            box.appendChild(val);
+            datosEl.appendChild(box);
+        });
+        if (!datosEl.childNodes.length) {
+            datosEl.textContent = '';
+            const vacio = document.createElement('p');
+            vacio.className = 'text-slate-500 text-xs';
+            vacio.textContent = 'Sin datos de contacto.';
+            datosEl.appendChild(vacio);
+        }
+
+        const equipos = Array.isArray(data.equipos) ? data.equipos : [];
+        if (!equipos.length) {
+            const p = document.createElement('p');
+            p.className = 'text-slate-500 text-xs';
+            p.textContent = 'No hay equipos asociados.';
+            equiposEl.appendChild(p);
+        } else {
+            equipos.forEach(function (eq) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-full text-left bg-slate-800/70 border border-slate-700 rounded-lg px-3 py-2 hover:border-teal-500/50';
+                const title = document.createElement('div');
+                title.className = 'text-sm text-slate-100';
+                title.textContent = eq.nombre || [eq.marca, eq.modelo].filter(Boolean).join(' ') || 'Equipo';
+                const meta = document.createElement('div');
+                meta.className = 'text-[11px] text-slate-400';
+                meta.textContent = [eq.marca, eq.modelo, eq.numero_serie].filter(Boolean).join(' · ');
+                btn.appendChild(title);
+                btn.appendChild(meta);
+                btn.onclick = function () {
+                    if (typeof openDetalleEquipo === 'function') openDetalleEquipo(eq.id);
+                };
+                equiposEl.appendChild(btn);
+            });
+        }
+
+        const tickets = Array.isArray(data.tickets) ? data.tickets : [];
+        if (!tickets.length) {
+            const p = document.createElement('p');
+            p.className = 'text-slate-500 text-xs';
+            p.textContent = 'No hay tickets asociados.';
+            ticketsEl.appendChild(p);
+        } else {
+            tickets.forEach(function (t) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-full text-left bg-slate-800/70 border border-slate-700 rounded-lg px-3 py-2 hover:border-teal-500/50 flex justify-between gap-3';
+                const left = document.createElement('div');
+                left.className = 'min-w-0';
+                const code = document.createElement('div');
+                code.className = 'text-sm text-slate-100 truncate';
+                code.textContent = (t.codigo ? t.codigo + ' · ' : '#' + t.id + ' · ') + (t.titulo || 'Sin título');
+                const desc = document.createElement('div');
+                desc.className = 'text-[11px] text-slate-400 truncate';
+                desc.textContent = t.descripcion || '';
+                left.appendChild(code);
+                left.appendChild(desc);
+                const badge = document.createElement('span');
+                badge.className = 'text-[10px] text-slate-300 shrink-0';
+                badge.textContent = relacionEstadoTicket(t.estado);
+                btn.appendChild(left);
+                btn.appendChild(badge);
+                btn.onclick = function () {
+                    if (typeof openTicketDetails === 'function') openTicketDetails(t.id);
+                };
+                ticketsEl.appendChild(btn);
+            });
+        }
+    } catch (err) {
+        console.error(err);
+        nombreEl.textContent = 'Error de conexión';
+    }
+}
+</script>

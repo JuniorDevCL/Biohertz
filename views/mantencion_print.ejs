@@ -50,11 +50,19 @@
       border: none;
       font-weight: 700;
     }
-    .sheet-wrap { padding: 20px 12px 40px; display: flex; justify-content: center; }
+    .sheet-wrap { padding: 20px 12px 40px; display: flex; justify-content: center; overflow-x: auto; }
     .sheet {
-      width: 210mm;
-      max-width: 100%;
-      background: #fff;
+      width: 8.5in;
+      min-width: 8.5in;
+      min-height: 11in;
+      background-color: #fff;
+      background-image: repeating-linear-gradient(
+        to bottom,
+        #fff 0,
+        #fff calc(11in - 1px),
+        #cfcfcf calc(11in - 1px),
+        #cfcfcf 11in
+      );
       border: 1px solid #999;
       padding: 8mm 10mm 8mm;
     }
@@ -222,12 +230,25 @@
       font-size: 8pt;
       font-weight: 700;
     }
+    .sig, .photos img, table.grid tr, .checks tr, .foot {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
     @media print {
-      @page { size: A4; margin: 8mm; }
+      @page { size: letter; margin: 8mm; }
       body { background: #fff; }
       .toolbar { display: none !important; }
       .sheet-wrap { padding: 0; }
-      .sheet { width: auto; border: none; padding: 0; }
+      .sheet {
+        width: auto;
+        min-width: 0;
+        max-width: none;
+        min-height: 0 !important;
+        border: none;
+        padding: 0;
+        background: #fff;
+        background-image: none;
+      }
     }
     @media (max-width: 720px) {
       .photos, .sigs { grid-template-columns: 1fr; }
@@ -476,6 +497,23 @@
       document.querySelectorAll('.sig img').forEach(function (img) {
         if (img.complete) normalizeSigImg(img);
         else img.addEventListener('load', function () { normalizeSigImg(img); });
+      });
+
+      var sheet = document.querySelector('.sheet');
+      function fitLetterPages() {
+        if (!sheet) return;
+        sheet.style.minHeight = '11in';
+        var probe = document.createElement('div');
+        probe.style.cssText = 'position:absolute;visibility:hidden;height:11in;width:0';
+        document.body.appendChild(probe);
+        var pagePx = probe.getBoundingClientRect().height || 1056;
+        probe.remove();
+        var pages = Math.max(1, Math.ceil((sheet.scrollHeight - 2) / pagePx));
+        sheet.style.minHeight = (pages * 11) + 'in';
+      }
+      window.addEventListener('load', fitLetterPages);
+      document.querySelectorAll('.sheet img').forEach(function (img) {
+        if (!img.complete) img.addEventListener('load', fitLetterPages);
       });
     })();
   </script>

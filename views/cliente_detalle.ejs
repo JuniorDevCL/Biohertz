@@ -134,10 +134,10 @@
                                         <%= ticket.creado_en ? new Date(ticket.creado_en).toLocaleDateString() : '-' %>
                                     </td>
                                     <td class="py-3 px-3 whitespace-nowrap">
-                                        <a href="/tickets?open=<%= ticket.id %>" class="inline-flex items-center px-3 py-1.5 rounded-full bg-blue-600/20 hover:bg-blue-600/40 text-blue-200 text-xs font-medium border border-blue-500/40 transition-colors whitespace-nowrap">
-                                            <i class="ph ph-arrow-up-right text-sm mr-1.5"></i>
+                                        <button type="button" onclick="openTicketDetails('<%= ticket.id %>')" class="inline-flex items-center px-3 py-1.5 rounded-full bg-blue-600/20 hover:bg-blue-600/40 text-blue-200 text-xs font-medium border border-blue-500/40 transition-colors whitespace-nowrap">
+                                            <i class="ph ph-eye text-sm mr-1.5"></i>
                                             Ver ticket
-                                        </a>
+                                        </button>
                                     </td>
                                 </tr>
                             <% }); %>
@@ -321,7 +321,10 @@ document.getElementById('edit-client-form').addEventListener('submit', async (e)
 });
 </script>
 <%- include('partials/cliente_equipo_script') %>
+<%- include('partials/overlay_stack') %>
 <%- include('partials/detalle_equipo_modal') %>
+<%- include('partials/cliente_relacion_modal') %>
+<%- include('partials/ticket_details_modal') %>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     bindGarantiaBlock('edit-cli-');

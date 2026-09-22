@@ -107,7 +107,18 @@ async function openDetalleEquipo(id) {
         embarqueEl.textContent = e.fecha_embarque ? new Date(e.fecha_embarque).toLocaleDateString('es-CL') : '-';
         if (ingresoEl) ingresoEl.textContent = e.fecha_ingreso ? new Date(e.fecha_ingreso).toLocaleDateString('es-CL') : '-';
         ubicacionEl.textContent = e.ubicacion || '-';
-        clienteEl.textContent = e.cliente || 'Sin asignar';
+        clienteEl.textContent = '';
+        if (e.cliente_id && typeof openClienteRelacion === 'function') {
+            const cliBtn = document.createElement('button');
+            cliBtn.type = 'button';
+            cliBtn.className = 'text-teal-300 hover:text-cyan-300 underline text-left';
+            cliBtn.textContent = e.cliente || 'Ver cliente';
+            cliBtn.title = 'Ver cliente sin salir de esta pestaña';
+            cliBtn.onclick = function () { openClienteRelacion(e.cliente_id); };
+            clienteEl.appendChild(cliBtn);
+        } else {
+            clienteEl.textContent = e.cliente || 'Sin asignar';
+        }
         aplicacionEl.textContent = e.aplicacion || '-';
         anioEl.textContent = e.anio_venta || '-';
 
@@ -207,7 +218,11 @@ async function openDetalleEquipo(id) {
             } else {
                 tickets.forEach(function (t) {
                     const tDiv = document.createElement('div');
-                    tDiv.className = 'bg-slate-800/70 border border-slate-700 rounded-lg px-3 py-2 flex justify-between items-center gap-2';
+                    tDiv.className = 'bg-slate-800/70 border border-slate-700 rounded-lg px-3 py-2 flex justify-between items-center gap-2 cursor-pointer hover:border-teal-500/50';
+                    tDiv.title = 'Abrir ticket';
+                    tDiv.onclick = function () {
+                        if (typeof openTicketDetails === 'function') openTicketDetails(t.id);
+                    };
 
                     const estado = t.estado || 'pendiente';
                     let badgeClass = 'bg-slate-700 text-slate-300 border border-slate-600';
@@ -241,7 +256,8 @@ async function openDetalleEquipo(id) {
         if (actualizadoEn) partes.push('Actualizado el ' + actualizadoEn.toLocaleString('es-CL'));
         if (creadoEl) creadoEl.textContent = partes.join(' · ');
 
-        modalEl.classList.remove('hidden');
+        if (typeof focusOverlay === 'function') focusOverlay(modalEl);
+        else modalEl.classList.remove('hidden');
     } catch (err) {
         console.error(err);
         alert('Error de conexión');

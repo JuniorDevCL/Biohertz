@@ -199,10 +199,12 @@ router.get('/:id', authRequired, async (req, res) => {
       });
     }
 
+    const usuariosRes = await pool.query('SELECT id, nombre, email FROM usuarios ORDER BY nombre');
     res.render('cliente_detalle', {
       cliente: clientRes.rows[0],
       equipos: equiposRes.rows,
       tickets: ticketsRes.rows,
+      usuarios: usuariosRes.rows,
       title: `${clientRes.rows[0].nombre} - Detalle Cliente`,
       user: req.user || req.session.user || { nombre: 'Usuario' }
     });

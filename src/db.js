@@ -208,7 +208,21 @@ if (isOffline) {
         const u1 = store.usuarios.find(u => u.id === t.creado_por);
         const u2 = t.asignado_a ? store.usuarios.find(u => u.id === t.asignado_a) : null;
         const eq = t.equipo_id ? store.equipos.find(e => e.id === t.equipo_id) : null;
-        const row = { ...t, creado_por_nombre: u1 ? u1.nombre : null, asignado_a_nombre: u2 ? u2.nombre : null, equipo_nombre: eq ? eq.nombre : null };
+        const cli = t.cliente_id ? store.clientes.find(c => String(c.id) === String(t.cliente_id)) : null;
+        const eqCli = eq && eq.cliente_id ? store.clientes.find(c => String(c.id) === String(eq.cliente_id)) : null;
+        const row = {
+          ...t,
+          creado_por_nombre: u1 ? u1.nombre : null,
+          asignado_a_nombre: u2 ? u2.nombre : null,
+          equipo_nombre: eq ? eq.nombre : null,
+          equipo_marca: eq ? eq.marca : null,
+          equipo_modelo: eq ? eq.modelo : null,
+          equipo_serie: eq ? eq.numero_serie : null,
+          equipo_ubicacion: eq ? eq.ubicacion : null,
+          equipo_cliente_id: eq ? eq.cliente_id : null,
+          equipo_cliente_nombre: eqCli ? eqCli.nombre : (eq ? eq.cliente : null),
+          cliente_nombre: cli ? cli.nombre : null
+        };
         return { rows: [row], rowCount: 1 };
       }
 
@@ -393,10 +407,12 @@ if (isOffline) {
                 (e.modelo && e.modelo.toLowerCase().includes(val)) ||
                 (e.numero_serie && e.numero_serie.toLowerCase().includes(val)) ||
                 (e.numero_orden && e.numero_orden.toLowerCase().includes(val)) ||
-                (e.ubicacion && e.ubicacion.toLowerCase().includes(val))
+                (e.ubicacion && e.ubicacion.toLowerCase().includes(val)) ||
+                (e.cliente && e.cliente.toLowerCase().includes(val)) ||
+                (e.aplicacion && e.aplicacion.toLowerCase().includes(val))
              );
          }
-         const fields = ['marca', 'aplicacion', 'modelo', 'numero_serie', 'cliente'];
+         const fields = ['nombre', 'marca', 'aplicacion', 'modelo', 'numero_serie', 'numero_orden', 'ubicacion', 'cliente', 'estado'];
          fields.forEach(f => {
              const regex = new RegExp(`(?:WHERE|AND)\\s+${f} ILIKE \\$(\\d+)`);
              const m = s.match(regex);

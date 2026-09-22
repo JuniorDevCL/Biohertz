@@ -69,6 +69,76 @@ function normalizeEstadoEquipo(estado) {
 
 const EQUIPOS_ORDER_BY = `ORDER BY NULLIF(LOWER(TRIM(marca)), '') ASC NULLS LAST, NULLIF(LOWER(TRIM(modelo)), '') ASC NULLS LAST, NULLIF(LOWER(TRIM(numero_serie)), '') ASC NULLS LAST, id ASC`;
 
+const EQUIPO_BUSQUEDA = {
+  nombre: 'nombre',
+  marca: 'marca',
+  modelo: 'modelo',
+  cliente: 'cliente',
+  serie: 'numero_serie',
+  orden: 'numero_orden',
+  ubicacion: 'ubicacion',
+  aplicacion: 'aplicacion',
+  estado: 'estado'
+};
+
+const EQUIPO_CAMPO_LABEL = {
+  nombre: 'Equipo',
+  marca: 'Marca',
+  modelo: 'Modelo',
+  cliente: 'Cliente',
+  serie: 'Serie',
+  orden: 'Nº orden',
+  ubicacion: 'Ubicación',
+  aplicacion: 'Aplicación',
+  estado: 'Estado'
+};
+
+function buildEquiposWhere(query) {
+  const where = [];
+  const values = [];
+  const q = typeof query.q === 'string' ? query.q.trim() : '';
+  const campo = Object.prototype.hasOwnProperty.call(EQUIPO_BUSQUEDA, query.campo) ? String(query.campo) : '';
+
+  if (query.estado && campo !== 'estado') {
+    values.push(query.estado);
+    where.push(`estado = $${values.length}`);
+  }
+
+  if (q && campo === 'estado') {
+    const v = q.toLowerCase();
+    const estadoVal = v.includes('repar') ? 'en_reparacion' : (v.includes('oper') ? 'operativo' : null);
+    if (estadoVal) {
+      values.push(estadoVal);
+      where.push(`estado = $${values.length}`);
+    } else {
+      values.push(`%${q}%`);
+      where.push(`estado ILIKE $${values.length}`);
+    }
+  } else if (q && campo) {
+    values.push(`%${q}%`);
+    where.push(`${EQUIPO_BUSQUEDA[campo]} ILIKE $${values.length}`);
+  } else if (q) {
+    values.push(`%${q}%`);
+    const n = values.length;
+    where.push(`(nombre ILIKE $${n} OR marca ILIKE $${n} OR modelo ILIKE $${n} OR numero_serie ILIKE $${n} OR numero_orden ILIKE $${n} OR ubicacion ILIKE $${n} OR cliente ILIKE $${n} OR aplicacion ILIKE $${n})`);
+  }
+
+  if (query.marca) { values.push(`%${query.marca}%`); where.push(`marca ILIKE $${values.length}`); }
+  if (query.aplicacion) { values.push(`%${query.aplicacion}%`); where.push(`aplicacion ILIKE $${values.length}`); }
+  if (query.modelo) { values.push(`%${query.modelo}%`); where.push(`modelo ILIKE $${values.length}`); }
+  if (query.anio_venta) { values.push(parseInt(query.anio_venta, 10)); where.push(`anio_venta = $${values.length}`); }
+  if (query.serie) { values.push(`%${query.serie}%`); where.push(`numero_serie ILIKE $${values.length}`); }
+  if (query.cliente) { values.push(`%${query.cliente}%`); where.push(`cliente ILIKE $${values.length}`); }
+
+  return {
+    where,
+    values,
+    q,
+    campo,
+    campoLabel: campo ? EQUIPO_CAMPO_LABEL[campo] : 'Todos los campos'
+  };
+}
+
 let extendedReady = false;
 async function ensureExtendedSchema() {
   if (extendedReady) return;
@@ -118,23 +188,8 @@ export function clearEquiposClientsCache() {
 router.get('/', authRequired, async (req, res) => {
   try {
     await ensureExtendedSchema();
-    const { q, estado, limit: limitStr, offset: offsetStr, marca, aplicacion, modelo, anio_venta, serie, cliente } = req.query;
-    const where = [];
-    const values = [];
-    if (estado) {
-      values.push(estado);
-      where.push(`estado = $${values.length}`);
-    }
-    if (q) {
-      values.push(`%${q}%`);
-      where.push(`(nombre ILIKE $${values.length} OR marca ILIKE $${values.length} OR modelo ILIKE $${values.length} OR numero_serie ILIKE $${values.length} OR numero_orden ILIKE $${values.length} OR ubicacion ILIKE $${values.length})`);
-    }
-    if (marca) { values.push(`%${marca}%`); where.push(`marca ILIKE $${values.length}`); }
-    if (aplicacion) { values.push(`%${aplicacion}%`); where.push(`aplicacion ILIKE $${values.length}`); }
-    if (modelo) { values.push(`%${modelo}%`); where.push(`modelo ILIKE $${values.length}`); }
-    if (anio_venta) { values.push(parseInt(anio_venta)); where.push(`anio_venta = $${values.length}`); }
-    if (serie) { values.push(`%${serie}%`); where.push(`numero_serie ILIKE $${values.length}`); }
-    if (cliente) { values.push(`%${cliente}%`); where.push(`cliente ILIKE $${values.length}`); }
+    const { limit: limitStr, offset: offsetStr } = req.query;
+    const { where, values, q, campo, campoLabel } = buildEquiposWhere(req.query);
     let limit = parseInt(limitStr);
     let offset = parseInt(offsetStr);
     if (isNaN(limit) || limit <= 0) limit = 50;
@@ -164,10 +219,15 @@ router.get('/', authRequired, async (req, res) => {
       });
     }
 
+    const usuariosRes = await pool.query('SELECT id, nombre, email FROM usuarios ORDER BY nombre');
+
     res.render('equipos', {
       equipos: result.rows,
       clientes: clients,
+      usuarios: usuariosRes.rows,
       query: q || '',
+      campo,
+      campoLabel,
       totalEquipos,
       title: 'Equipos - BIODATA',
       user: req.user || req.session.user || { nombre: 'Usuario' }
@@ -181,17 +241,7 @@ router.get('/', authRequired, async (req, res) => {
 router.get('/count', authRequired, async (req, res) => {
   try {
     await ensureExtendedSchema();
-    const { q, estado, marca, aplicacion, modelo, anio_venta, serie, cliente } = req.query;
-    const where = [];
-    const values = [];
-    if (estado) { values.push(estado); where.push(`estado = $${values.length}`); }
-    if (q) { values.push(`%${q}%`); where.push(`(nombre ILIKE $${values.length} OR marca ILIKE $${values.length} OR modelo ILIKE $${values.length} OR numero_serie ILIKE $${values.length} OR numero_orden ILIKE $${values.length} OR ubicacion ILIKE $${values.length})`); }
-    if (marca) { values.push(`%${marca}%`); where.push(`marca ILIKE $${values.length}`); }
-    if (aplicacion) { values.push(`%${aplicacion}%`); where.push(`aplicacion ILIKE $${values.length}`); }
-    if (modelo) { values.push(`%${modelo}%`); where.push(`modelo ILIKE $${values.length}`); }
-    if (anio_venta) { values.push(parseInt(anio_venta)); where.push(`anio_venta = $${values.length}`); }
-    if (serie) { values.push(`%${serie}%`); where.push(`numero_serie ILIKE $${values.length}`); }
-    if (cliente) { values.push(`%${cliente}%`); where.push(`cliente ILIKE $${values.length}`); }
+    const { where, values } = buildEquiposWhere(req.query);
     const sql = `SELECT COUNT(*) FROM equipos${where.length ? ' WHERE ' + where.join(' AND ') : ''}`;
     const result = await pool.query(sql, values);
     res.json({ total: Number(result.rows[0].count) });

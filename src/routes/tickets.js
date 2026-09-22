@@ -465,12 +465,15 @@ router.get('/:id', authRequired, async (req, res) => {
               e.modelo AS equipo_modelo,
               e.numero_serie AS equipo_serie,
               e.ubicacion AS equipo_ubicacion,
+              e.cliente_id AS equipo_cliente_id,
+              ec.nombre AS equipo_cliente_nombre,
               c.nombre AS cliente_nombre
        FROM tickets t
        LEFT JOIN usuarios u ON u.id = t.creado_por
        LEFT JOIN usuarios ua ON ua.id = t.asignado_a
        LEFT JOIN equipos e ON e.id = t.equipo_id
        LEFT JOIN clientes c ON c.id = t.cliente_id
+       LEFT JOIN clientes ec ON ec.id = e.cliente_id
        WHERE t.id = $1`,
       [id]
     );

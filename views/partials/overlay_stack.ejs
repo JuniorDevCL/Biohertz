@@ -1,0 +1,12 @@
+<script>
+(function () {
+    if (window.focusOverlay) return;
+    window.__overlayZ = 50;
+    window.focusOverlay = function (el) {
+        if (!el) return;
+        window.__overlayZ += 2;
+        el.style.zIndex = String(window.__overlayZ);
+        el.classList.remove('hidden');
+    };
+})();
+</script>
