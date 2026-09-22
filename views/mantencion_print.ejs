@@ -55,6 +55,9 @@
       width: 8.5in;
       min-width: 8.5in;
       min-height: 11in;
+      height: 11in;
+      display: flex;
+      flex-direction: column;
       background-color: #fff;
       background-image: repeating-linear-gradient(
         to bottom,
@@ -65,6 +68,26 @@
       );
       border: 1px solid #999;
       padding: 8mm 10mm 8mm;
+    }
+    .sheet.measure {
+      height: auto !important;
+      min-height: 0 !important;
+    }
+    .sheet-fill {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .sheet.measure .sheet-fill,
+    .sheet.measure table.sheet-grow {
+      flex: 0 0 auto;
+      height: auto;
+    }
+    table.sheet-grow {
+      flex: 1 1 auto;
+      width: 100%;
+      height: 100%;
     }
     .head {
       display: flex;
@@ -160,8 +183,16 @@
       flex-shrink: 0;
     }
     .boxx.on { background: #111; color: #fff; }
+    table.sheet-grow tr.desc-row {
+      height: 100%;
+    }
+    table.sheet-grow tr.desc-row td {
+      height: 100%;
+      vertical-align: top;
+    }
     .desc {
-      min-height: 52px;
+      min-height: 100%;
+      height: 100%;
       white-space: pre-wrap;
       font-size: 9pt;
     }
@@ -230,7 +261,7 @@
       font-size: 8pt;
       font-weight: 700;
     }
-    .sig, .photos img, table.grid tr, .checks tr, .foot {
+    .sig, .photos img, table.grid tr:not(.desc-row), .checks tr, .foot {
       break-inside: avoid;
       page-break-inside: avoid;
     }
@@ -243,7 +274,10 @@
         width: auto;
         min-width: 0;
         max-width: none;
-        min-height: 0 !important;
+        display: flex;
+        flex-direction: column;
+        height: auto !important;
+        min-height: calc(11in - 16mm) !important;
         border: none;
         padding: 0;
         background: #fff;
@@ -377,15 +411,20 @@
             <div class="val"><%= f.motivo_atencion || (f.tipo === 'correctiva' ? 'Mantención Correctiva' : 'Mantención Preventiva') %></div>
           </td>
         </tr>
-        <tr>
-          <td colspan="5">
-            <div class="lbl">Descripción</div>
-            <div class="desc"><%= f.trabajo || f.dano_descripcion || '—' %><% if (f.nota) { %>
+      </table>
+
+      <div class="sheet-fill">
+        <table class="grid sheet-grow" style="margin-top:-1px">
+          <tr class="desc-row">
+            <td>
+              <div class="lbl">Descripción</div>
+              <div class="desc"><%= f.trabajo || f.dano_descripcion || '—' %><% if (f.nota) { %>
 
 <%= f.nota %><% } %></div>
-          </td>
-        </tr>
-      </table>
+            </td>
+          </tr>
+        </table>
+      </div>
 
       <% if (f.tipo !== 'correctiva' && items.length) { %>
         <table class="checks" style="margin-top:-1px">
@@ -502,14 +541,18 @@
       var sheet = document.querySelector('.sheet');
       function fitLetterPages() {
         if (!sheet) return;
-        sheet.style.minHeight = '11in';
         var probe = document.createElement('div');
         probe.style.cssText = 'position:absolute;visibility:hidden;height:11in;width:0';
         document.body.appendChild(probe);
         var pagePx = probe.getBoundingClientRect().height || 1056;
         probe.remove();
-        var pages = Math.max(1, Math.ceil((sheet.scrollHeight - 2) / pagePx));
-        sheet.style.minHeight = (pages * 11) + 'in';
+        sheet.classList.add('measure');
+        var natural = sheet.scrollHeight;
+        sheet.classList.remove('measure');
+        var pages = Math.max(1, Math.ceil((natural - 2) / pagePx));
+        var size = (pages * 11) + 'in';
+        sheet.style.minHeight = size;
+        sheet.style.height = size;
       }
       window.addEventListener('load', fitLetterPages);
       document.querySelectorAll('.sheet img').forEach(function (img) {
