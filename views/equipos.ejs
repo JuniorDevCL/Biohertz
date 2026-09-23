@@ -211,11 +211,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-slate-400 text-sm mb-2">Marca</label>
-                    <input type="text" name="marca" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                    <input type="text" id="new-equipo-marca" name="marca" data-catalogo="marca" data-catalogo-group="new-equipo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-slate-400 text-sm mb-2">Modelo</label>
-                    <input type="text" name="modelo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                    <input type="text" id="new-equipo-modelo" name="modelo" data-catalogo="modelo" data-catalogo-group="new-equipo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-slate-400 text-sm mb-2">Serie</label>
@@ -250,15 +250,15 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-slate-400 text-sm mb-2">Nombre</label>
-                    <input type="text" id="edit-equipo-nombre" name="nombre" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                    <input type="text" id="edit-equipo-nombre" name="nombre" data-catalogo="nombre" data-catalogo-group="edit-equipo" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-slate-400 text-sm mb-2">Marca</label>
-                    <input type="text" id="edit-equipo-marca" name="marca" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                    <input type="text" id="edit-equipo-marca" name="marca" data-catalogo="marca" data-catalogo-group="edit-equipo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-slate-400 text-sm mb-2">Modelo</label>
-                    <input type="text" id="edit-equipo-modelo" name="modelo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                    <input type="text" id="edit-equipo-modelo" name="modelo" data-catalogo="modelo" data-catalogo-group="edit-equipo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-slate-400 text-sm mb-2">N° Serie</label>
@@ -510,6 +510,7 @@ async function openEditEquipo(id) {
             vcto.textContent = ymd && typeof formatYmdEs === 'function' ? ('Vencimiento: ' + formatYmdEs(ymd)) : (ymd ? ('Vencimiento: ' + ymd) : '');
         }
         document.getElementById('edit-equipo-modal').classList.remove('hidden');
+        if (typeof window.catalogoNoteBaseline === 'function') window.catalogoNoteBaseline('edit-equipo');
     } catch (err) {
         console.error(err);
         alert('Error de conexión');
