@@ -1,4 +1,61 @@
 <script>
+// Misma regla que src/services/rut.js: 220671925 -> 22.067.192-5.
+function formatRutChileno(value) {
+    if (value === undefined || value === null) return value;
+    const raw = String(value);
+    const trimmed = raw.trim();
+    if (!trimmed) return raw;
+    const compact = trimmed.toUpperCase().replace(/[.\-\s]/g, '');
+    if (!/^\d{1,8}[0-9K]$/.test(compact)) return raw;
+    const dv = compact.slice(-1);
+    const body = compact.slice(0, -1);
+    const formattedBody = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return formattedBody + '-' + dv;
+}
+
+function rutDigitsFromText(text) {
+    const compact = String(text || '').toUpperCase().replace(/[^0-9K]/g, '');
+    const trailingK = compact.endsWith('K');
+    let digits = compact.replace(/K/g, '').slice(0, trailingK ? 8 : 9);
+    if (trailingK) digits += 'K';
+    return digits;
+}
+
+function maskRutInputValue(value) {
+    return formatRutChileno(rutDigitsFromText(value));
+}
+
+function bindRutInput(input) {
+    if (!input || input.dataset.rutMask === '1') return;
+    input.dataset.rutMask = '1';
+
+    function applyFromCaret() {
+        const start = input.selectionStart == null ? input.value.length : input.selectionStart;
+        const keptBefore = rutDigitsFromText(input.value.slice(0, start)).length;
+        const formatted = maskRutInputValue(input.value);
+        if (formatted === input.value) return;
+        input.value = formatted;
+        let pos = 0;
+        let seen = 0;
+        while (pos < formatted.length && seen < keptBefore) {
+            if (/[0-9K]/i.test(formatted.charAt(pos))) seen++;
+            pos++;
+        }
+        if (typeof input.setSelectionRange === 'function') input.setSelectionRange(pos, pos);
+    }
+
+    input.addEventListener('input', applyFromCaret);
+    if (input.value) {
+        const formatted = formatRutChileno(input.value);
+        if (formatted !== input.value) input.value = formatted;
+    }
+}
+
+function bindRutInputs(root) {
+    const scope = root && root.querySelectorAll ? root : document;
+    scope.querySelectorAll('input[name="rut"]').forEach(bindRutInput);
+}
+
 function addMonthsYmd(dateStr, months) {
     if (!dateStr || !months) return '';
     const n = parseInt(months, 10);
@@ -137,7 +194,7 @@ function fillClienteForm(prefix, cliente, equipo) {
         if (el) el.value = value || '';
     };
     setVal('nombre', c.nombre);
-    setVal('rut', c.rut);
+    setVal('rut', formatRutChileno(c.rut) || '');
     setVal('ubicacion', c.ubicacion);
     setVal('direccion', c.direccion);
     setVal('comuna', c.comuna);
@@ -171,6 +228,11 @@ function collectClienteForm(prefix, form) {
     const data = form ? Object.fromEntries(new FormData(form).entries()) : {};
     const wrap = document.getElementById(prefix + 'mp_fechas_wrap');
     data.mp_fechas = collectMpFechas(wrap);
+    if (Object.prototype.hasOwnProperty.call(data, 'rut')) data.rut = formatRutChileno(data.rut);
     return data;
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    bindRutInputs(document);
+});
 </script>

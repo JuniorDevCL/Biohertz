@@ -7,12 +7,39 @@ import {
   parseMpFechas,
   upsertEquipoFromCliente
 } from '../services/garantiaEquipo.js';
+import { compactRut, formatRutChileno } from '../services/rut.js';
 
 const router = Router();
 
 let ready = false;
+let rutsMigrated = false;
+
+async function migrateStoredRuts() {
+  const found = await pool.query(
+    `SELECT id, rut FROM clientes WHERE rut IS NOT NULL AND BTRIM(rut) <> ''`
+  );
+  for (const row of found.rows) {
+    const next = formatRutChileno(row.rut);
+    if (!next || next === row.rut) continue;
+    await pool.query(
+      `UPDATE clientes SET rut = $2 WHERE id = $1 AND rut = $3`,
+      [row.id, next, row.rut]
+    );
+  }
+}
+
 async function ensureSchema() {
-  if (ready) return;
+  if (ready) {
+    if (!rutsMigrated) {
+      try {
+        await migrateStoredRuts();
+        rutsMigrated = true;
+      } catch (err) {
+        console.error('Error al formatear RUT de clientes:', err);
+      }
+    }
+    return;
+  }
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS clientes (
@@ -55,6 +82,8 @@ async function ensureSchema() {
         creado_en TIMESTAMP DEFAULT NOW()
       );
     `);
+    await migrateStoredRuts();
+    rutsMigrated = true;
   } catch (err) {
     console.error('Error al actualizar esquema de clientes:', err);
   }
@@ -67,7 +96,24 @@ router.get('/', authRequired, async (req, res) => {
     const { q, limit: limitStr, offset: offsetStr } = req.query;
     const where = [];
     const values = [];
-    if (q) { values.push(`%${q}%`); where.push(`(nombre ILIKE $${values.length} OR empresa ILIKE $${values.length} OR email ILIKE $${values.length} OR rut ILIKE $${values.length} OR contacto ILIKE $${values.length} OR ciudad ILIKE $${values.length})`); }
+    if (q) {
+      values.push(`%${q}%`);
+      const idx = values.length;
+      const parts = [
+        `nombre ILIKE $${idx}`,
+        `empresa ILIKE $${idx}`,
+        `email ILIKE $${idx}`,
+        `rut ILIKE $${idx}`,
+        `contacto ILIKE $${idx}`,
+        `ciudad ILIKE $${idx}`
+      ];
+      const compact = compactRut(q);
+      if (compact) {
+        values.push(`%${compact}%`);
+        parts.push(`REPLACE(REPLACE(REPLACE(COALESCE(rut, ''), '.', ''), '-', ''), ' ', '') ILIKE $${values.length}`);
+      }
+      where.push(`(${parts.join(' OR ')})`);
+    }
     let limit = parseInt(limitStr); if (isNaN(limit) || limit <= 0) limit = 50; if (limit > 100) limit = 100;
     let offset = parseInt(offsetStr); if (isNaN(offset) || offset < 0) offset = 0;
     const sql = `SELECT * FROM clientes${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY actualizado_en DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
@@ -111,7 +157,7 @@ router.post('/', authRequired, async (req, res) => {
       emptyToNull(email),
       emptyToNull(telefono),
       emptyToNull(ubicacion),
-      emptyToNull(rut),
+      emptyToNull(formatRutChileno(rut)),
       emptyToNull(direccion),
       emptyToNull(comuna),
       emptyToNull(ciudad),
@@ -251,7 +297,7 @@ router.patch('/:id', authRequired, async (req, res) => {
       emptyToNull(email),
       emptyToNull(telefono),
       emptyToNull(ubicacion),
-      emptyToNull(rut),
+      emptyToNull(formatRutChileno(rut)),
       emptyToNull(direccion),
       emptyToNull(comuna),
       emptyToNull(ciudad),

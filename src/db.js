@@ -599,6 +599,20 @@ if (isOffline) {
         saveStore(store);
         return { rows: [deleted], rowCount: 1 };
       }
+      if (s.startsWith('SELECT id, rut FROM clientes')) {
+        const rows = store.clientes
+          .filter(c => c.rut != null && String(c.rut).trim() !== '')
+          .map(c => ({ id: c.id, rut: c.rut }));
+        return { rows, rowCount: rows.length };
+      }
+      if (s.startsWith('UPDATE clientes SET rut =')) {
+        const [id, rut, previous] = params;
+        const c = store.clientes.find(x => String(x.id) === String(id));
+        if (!c || (previous !== undefined && c.rut !== previous)) return { rows: [], rowCount: 0 };
+        c.rut = rut;
+        saveStore(store);
+        return { rows: [], rowCount: 1 };
+      }
       if (s.startsWith('UPDATE clientes')) {
         const [nombre, empresa, email, telefono, ubicacion, rut, direccion, comuna, ciudad, contacto, id] = params.length >= 11
           ? params
@@ -825,10 +839,16 @@ if (isOffline) {
         if (qMatch) {
             const idx = parseInt(qMatch[1]) - 1;
             const val = String(params[idx]).replace(/%/g, '').toLowerCase();
-            list = list.filter(c => 
-                (c.nombre && c.nombre.toLowerCase().includes(val)) ||
-                (c.empresa && c.empresa.toLowerCase().includes(val))
-            );
+            const rutSearch = s.includes('REPLACE(REPLACE(REPLACE(COALESCE(rut');
+            list = list.filter(c => {
+                const byNombre = c.nombre && c.nombre.toLowerCase().includes(val);
+                const byEmpresa = c.empresa && c.empresa.toLowerCase().includes(val);
+                if (!rutSearch) return byNombre || byEmpresa;
+                const compact = val.replace(/[.\-\s]/g, '');
+                const rutCompact = String(c.rut || '').replace(/[.\-\s]/g, '').toLowerCase();
+                const byRut = String(c.rut || '').toLowerCase().includes(val) || (compact && rutCompact.includes(compact));
+                return byNombre || byEmpresa || byRut;
+            });
         }
 
         if (s.startsWith('SELECT COUNT(*)')) {
