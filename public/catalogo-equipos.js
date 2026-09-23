@@ -132,7 +132,15 @@ function initCatalogoEquipos() {
 
   const groups = new Map();
   const menu = document.createElement('div');
-  menu.className = 'hidden fixed z-[200] max-h-52 overflow-auto rounded-lg border border-slate-600 bg-slate-950 shadow-2xl';
+  menu.className = 'hidden';
+  menu.style.position = 'fixed';
+  menu.style.zIndex = '400';
+  menu.style.maxHeight = '13rem';
+  menu.style.overflow = 'auto';
+  menu.style.borderRadius = '0.5rem';
+  menu.style.border = '1px solid rgb(71 85 105)';
+  menu.style.background = 'rgb(2 6 23)';
+  menu.style.boxShadow = '0 25px 50px -12px rgb(0 0 0 / 0.55)';
   menu.setAttribute('role', 'listbox');
   document.body.appendChild(menu);
 
@@ -187,13 +195,21 @@ function initCatalogoEquipos() {
       const button = document.createElement('button');
       button.type = 'button';
       button.setAttribute('role', 'option');
-      button.className = 'block w-full px-3 py-2 text-left text-sm text-white hover:bg-slate-800';
+      button.style.display = 'block';
+      button.style.width = '100%';
+      button.style.padding = '0.5rem 0.75rem';
+      button.style.textAlign = 'left';
+      button.style.fontSize = '0.875rem';
+      button.style.color = 'white';
+      button.style.background = 'transparent';
       const title = document.createElement('span');
       title.textContent = item.tipo === 'marca' ? item.marca : item.modelo;
       button.appendChild(title);
       if (item.tipo === 'modelo' && !marcaActiva(group.marca ? group.marca.value : '')) {
         const meta = document.createElement('span');
-        meta.className = 'ml-2 text-xs text-slate-400';
+        meta.style.marginLeft = '0.5rem';
+        meta.style.fontSize = '0.75rem';
+        meta.style.color = 'rgb(148 163 184)';
         meta.textContent = item.marca;
         button.appendChild(meta);
       }
@@ -215,7 +231,7 @@ function initCatalogoEquipos() {
     const buttons = menu.querySelectorAll('button');
     openState.index = index;
     buttons.forEach((button, i) => {
-      button.classList.toggle('bg-slate-800', i === index);
+      button.style.background = i === index ? 'rgb(30 41 59)' : 'transparent';
     });
   }
 
