@@ -51,6 +51,37 @@ function bindRutInput(input) {
     }
 }
 
+function textoCliente(value) {
+    if (value === undefined || value === null) return value;
+    const raw = String(value);
+    if (!raw.trim()) return raw;
+    return raw.normalize('NFD').replace(/\p{M}+/gu, '').toUpperCase();
+}
+
+function bindTextoCliente(input) {
+    if (!input || input.dataset.textoMask === '1') return;
+    input.dataset.textoMask = '1';
+    input.addEventListener('input', function () {
+        const start = input.selectionStart == null ? input.value.length : input.selectionStart;
+        const end = input.selectionEnd == null ? start : input.selectionEnd;
+        const next = textoCliente(input.value);
+        if (next === input.value) return;
+        input.value = next;
+        const pos = Math.min(start, next.length);
+        const posEnd = Math.min(end, next.length);
+        if (typeof input.setSelectionRange === 'function') input.setSelectionRange(pos, posEnd);
+    });
+    if (input.value) {
+        const next = textoCliente(input.value);
+        if (next !== input.value) input.value = next;
+    }
+}
+
+function bindTextoClienteInputs(root) {
+    const scope = root && root.querySelectorAll ? root : document;
+    scope.querySelectorAll('[data-texto-cliente]').forEach(bindTextoCliente);
+}
+
 function bindRutInputs(root) {
     const scope = root && root.querySelectorAll ? root : document;
     scope.querySelectorAll('input[name="rut"]').forEach(bindRutInput);
@@ -193,13 +224,13 @@ function fillClienteForm(prefix, cliente, equipo) {
         const el = document.getElementById(prefix + suffix);
         if (el) el.value = value || '';
     };
-    setVal('nombre', c.nombre);
+    setVal('nombre', textoCliente(c.nombre));
     setVal('rut', formatRutChileno(c.rut) || '');
-    setVal('ubicacion', c.ubicacion);
-    setVal('direccion', c.direccion);
-    setVal('comuna', c.comuna);
-    setVal('ciudad', c.ciudad);
-    setVal('contacto', c.contacto);
+    setVal('ubicacion', textoCliente(c.ubicacion));
+    setVal('direccion', textoCliente(c.direccion));
+    setVal('comuna', textoCliente(c.comuna));
+    setVal('ciudad', textoCliente(c.ciudad));
+    setVal('contacto', textoCliente(c.contacto));
     setVal('telefono', c.telefono);
     setVal('email', c.email);
     setVal('numero_serie', eq.numero_serie);
@@ -229,10 +260,14 @@ function collectClienteForm(prefix, form) {
     const wrap = document.getElementById(prefix + 'mp_fechas_wrap');
     data.mp_fechas = collectMpFechas(wrap);
     if (Object.prototype.hasOwnProperty.call(data, 'rut')) data.rut = formatRutChileno(data.rut);
+    ['nombre', 'ubicacion', 'direccion', 'comuna', 'ciudad', 'contacto'].forEach(function (key) {
+        if (Object.prototype.hasOwnProperty.call(data, key)) data[key] = textoCliente(data[key]);
+    });
     return data;
 }
 
 document.addEventListener('DOMContentLoaded', function () {
     bindRutInputs(document);
+    bindTextoClienteInputs(document);
 });
 </script>

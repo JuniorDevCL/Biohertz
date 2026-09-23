@@ -474,6 +474,21 @@ if (isOffline) {
         saveStore(store);
         return { rows: [e], rowCount: 1 };
       }
+      if (s.startsWith('SELECT id, cliente_id, cliente FROM equipos WHERE cliente_id =')) {
+        const [clienteId] = params;
+        const rows = store.equipos
+          .filter(e => String(e.cliente_id) === String(clienteId))
+          .map(e => ({ id: e.id, cliente_id: e.cliente_id, cliente: e.cliente }));
+        return { rows, rowCount: rows.length };
+      }
+      if (s.startsWith('UPDATE equipos SET cliente =')) {
+        const [id, cliente, previous] = params;
+        const e = store.equipos.find(x => String(x.id) === String(id));
+        if (!e || (previous !== undefined && e.cliente !== previous)) return { rows: [], rowCount: 0 };
+        e.cliente = cliente;
+        saveStore(store);
+        return { rows: [], rowCount: 1 };
+      }
       if (s.startsWith('UPDATE equipos') && s.includes('plazo_garantia_meses') && s.includes('cliente_id = $1')) {
         const [clienteId, clienteNombre, marca, modelo, fechaInst, plazo, vencimiento, mpjson, ubicacion, id] = params;
         const e = store.equipos.find(x => String(x.id) === String(id));
@@ -598,6 +613,34 @@ if (isOffline) {
         store.clientes.splice(idx, 1);
         saveStore(store);
         return { rows: [deleted], rowCount: 1 };
+      }
+      if (s.startsWith('SELECT id, nombre, empresa, ubicacion, direccion, comuna, ciudad, contacto FROM clientes')) {
+        const rows = store.clientes.map(c => ({
+          id: c.id,
+          nombre: c.nombre ?? null,
+          empresa: c.empresa ?? null,
+          ubicacion: c.ubicacion ?? null,
+          direccion: c.direccion ?? null,
+          comuna: c.comuna ?? null,
+          ciudad: c.ciudad ?? null,
+          contacto: c.contacto ?? null
+        }));
+        return { rows, rowCount: rows.length };
+      }
+      if (s.startsWith('UPDATE clientes SET nombre = $2')) {
+        const [id, nombre, empresa, ubicacion, direccion, comuna, ciudad, contacto, prevNombre] = params;
+        const c = store.clientes.find(x => String(x.id) === String(id));
+        const currentNombre = c ? (c.nombre ?? null) : null;
+        if (!c || currentNombre !== (prevNombre ?? null)) return { rows: [], rowCount: 0 };
+        c.nombre = nombre;
+        c.empresa = empresa;
+        c.ubicacion = ubicacion;
+        c.direccion = direccion;
+        c.comuna = comuna;
+        c.ciudad = ciudad;
+        c.contacto = contacto;
+        saveStore(store);
+        return { rows: [], rowCount: 1 };
       }
       if (s.startsWith('SELECT id, rut FROM clientes')) {
         const rows = store.clientes

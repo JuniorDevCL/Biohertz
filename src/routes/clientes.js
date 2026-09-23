@@ -8,11 +8,63 @@ import {
   upsertEquipoFromCliente
 } from '../services/garantiaEquipo.js';
 import { compactRut, formatRutChileno } from '../services/rut.js';
+import { textoCliente } from '../services/textoCliente.js';
 
 const router = Router();
 
 let ready = false;
 let rutsMigrated = false;
+let textosMigrados = false;
+
+const CAMPOS_TEXTO_CLIENTE = ['nombre', 'empresa', 'ubicacion', 'direccion', 'comuna', 'ciudad', 'contacto'];
+
+
+async function migrateTextosCliente() {
+  const found = await pool.query(
+    `SELECT id, nombre, empresa, ubicacion, direccion, comuna, ciudad, contacto FROM clientes`
+  );
+  for (const row of found.rows) {
+    const next = {
+      nombre: textoCliente(row.nombre),
+      empresa: textoCliente(row.empresa),
+      ubicacion: textoCliente(row.ubicacion),
+      direccion: textoCliente(row.direccion),
+      comuna: textoCliente(row.comuna),
+      ciudad: textoCliente(row.ciudad),
+      contacto: textoCliente(row.contacto)
+    };
+    const changed = CAMPOS_TEXTO_CLIENTE.some((key) => next[key] !== row[key]);
+    if (!changed) continue;
+    await pool.query(
+      `UPDATE clientes SET nombre = $2, empresa = $3, ubicacion = $4, direccion = $5, comuna = $6, ciudad = $7, contacto = $8 WHERE id = $1 AND nombre IS NOT DISTINCT FROM $9`,
+      [row.id, next.nombre, next.empresa, next.ubicacion, next.direccion, next.comuna, next.ciudad, next.contacto, row.nombre]
+    );
+    if (next.nombre && next.nombre !== row.nombre) {
+      const equipos = await pool.query(
+        `SELECT id, cliente FROM equipos WHERE cliente_id = $1`,
+        [row.id]
+      );
+      for (const equipo of equipos.rows) {
+        if (textoCliente(equipo.cliente) !== next.nombre || equipo.cliente === next.nombre) continue;
+        await pool.query(
+          `UPDATE equipos SET cliente = $2 WHERE id = $1 AND cliente = $3`,
+          [equipo.id, next.nombre, equipo.cliente]
+        );
+      }
+    }
+  }
+
+  const contactos = await pool.query(`SELECT id, nombre, cargo FROM contactos_cliente`);
+  for (const row of contactos.rows) {
+    const nombre = textoCliente(row.nombre);
+    const cargo = textoCliente(row.cargo);
+    if (nombre === row.nombre && cargo === row.cargo) continue;
+    await pool.query(
+      `UPDATE contactos_cliente SET nombre = $2, cargo = $3 WHERE id = $1 AND nombre = $4`,
+      [row.id, nombre, cargo, row.nombre]
+    );
+  }
+}
 
 async function migrateStoredRuts() {
   const found = await pool.query(
@@ -36,6 +88,14 @@ async function ensureSchema() {
         rutsMigrated = true;
       } catch (err) {
         console.error('Error al formatear RUT de clientes:', err);
+      }
+    }
+    if (!textosMigrados) {
+      try {
+        await migrateTextosCliente();
+        textosMigrados = true;
+      } catch (err) {
+        console.error('Error al normalizar textos de clientes:', err);
       }
     }
     return;
@@ -84,6 +144,8 @@ async function ensureSchema() {
     `);
     await migrateStoredRuts();
     rutsMigrated = true;
+    await migrateTextosCliente();
+    textosMigrados = true;
   } catch (err) {
     console.error('Error al actualizar esquema de clientes:', err);
   }
@@ -97,7 +159,7 @@ router.get('/', authRequired, async (req, res) => {
     const where = [];
     const values = [];
     if (q) {
-      values.push(`%${q}%`);
+      values.push(`%${String(textoCliente(q)).trim()}%`);
       const idx = values.length;
       const parts = [
         `nombre ILIKE $${idx}`,
@@ -152,16 +214,16 @@ router.post('/', authRequired, async (req, res) => {
       INSERT INTO clientes (nombre, empresa, email, telefono, ubicacion, rut, direccion, comuna, ciudad, contacto, creado_en, actualizado_en)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()) RETURNING *
     `, [
-      emptyToNull(nombre),
-      emptyToNull(empresa),
+      emptyToNull(textoCliente(nombre)),
+      emptyToNull(textoCliente(empresa)),
       emptyToNull(email),
       emptyToNull(telefono),
-      emptyToNull(ubicacion),
+      emptyToNull(textoCliente(ubicacion)),
       emptyToNull(formatRutChileno(rut)),
-      emptyToNull(direccion),
-      emptyToNull(comuna),
-      emptyToNull(ciudad),
-      emptyToNull(contacto)
+      emptyToNull(textoCliente(direccion)),
+      emptyToNull(textoCliente(comuna)),
+      emptyToNull(textoCliente(ciudad)),
+      emptyToNull(textoCliente(contacto))
     ]);
     console.log('Cliente creado:', ins.rows[0]);
     clearEquiposClientsCache();
@@ -176,7 +238,7 @@ router.post('/', authRequired, async (req, res) => {
         fechaInstalacion: fecha_instalacion,
         plazoMeses: plazo_garantia_meses,
         mpFechas: parseMpFechas(req.body),
-        ubicacion,
+        ubicacion: textoCliente(ubicacion),
         userId: req.user?.id
       });
     } catch (e) {
@@ -200,7 +262,7 @@ router.get('/count', authRequired, async (req, res) => {
     const { q } = req.query;
     const where = [];
     const values = [];
-    if (q) { values.push(`%${q}%`); where.push(`(nombre ILIKE $${values.length} OR empresa ILIKE $${values.length})`); }
+    if (q) { values.push(`%${String(textoCliente(q)).trim()}%`); where.push(`(nombre ILIKE $${values.length} OR empresa ILIKE $${values.length})`); }
     const sql = `SELECT COUNT(*) FROM clientes${where.length ? ' WHERE ' + where.join(' AND ') : ''}`;
     const result = await pool.query(sql, values);
     res.json({ total: Number(result.rows[0].count) });
@@ -292,16 +354,16 @@ router.patch('/:id', authRequired, async (req, res) => {
           actualizado_en = NOW()
       WHERE id = $11 RETURNING *
     `, [
-      emptyToNull(nombre),
-      emptyToNull(empresa),
+      emptyToNull(textoCliente(nombre)),
+      emptyToNull(textoCliente(empresa)),
       emptyToNull(email),
       emptyToNull(telefono),
-      emptyToNull(ubicacion),
+      emptyToNull(textoCliente(ubicacion)),
       emptyToNull(formatRutChileno(rut)),
-      emptyToNull(direccion),
-      emptyToNull(comuna),
-      emptyToNull(ciudad),
-      emptyToNull(contacto),
+      emptyToNull(textoCliente(direccion)),
+      emptyToNull(textoCliente(comuna)),
+      emptyToNull(textoCliente(ciudad)),
+      emptyToNull(textoCliente(contacto)),
       id
     ]);
     if (u.rows.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
@@ -317,7 +379,7 @@ router.patch('/:id', authRequired, async (req, res) => {
         fechaInstalacion: fecha_instalacion,
         plazoMeses: plazo_garantia_meses,
         mpFechas: parseMpFechas(req.body),
-        ubicacion: ubicacion || u.rows[0].ubicacion,
+        ubicacion: textoCliente(ubicacion) || u.rows[0].ubicacion,
         userId: req.user?.id
       });
     } catch (e) {
@@ -386,7 +448,7 @@ router.post('/:id/contactos', authRequired, async (req, res) => {
       INSERT INTO contactos_cliente (cliente_id, nombre, cargo, email, telefono)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
-    `, [id, nombre, cargo || null, email || null, telefono || null]);
+    `, [id, textoCliente(nombre), textoCliente(cargo) || null, email || null, telefono || null]);
     
     res.status(201).json(r.rows[0]);
   } catch (err) {

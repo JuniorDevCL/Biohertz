@@ -7,7 +7,7 @@
 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
     <div>
         <label class="block text-slate-400 text-sm mb-1">Razón social</label>
-        <input type="text" id="<%= p %>nombre" name="nombre" value="<%= c.nombre || '' %>" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+        <input type="text" id="<%= p %>nombre" name="nombre" data-texto-cliente="1" value="<%= c.nombre || '' %>" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
     </div>
     <div>
         <label class="block text-slate-400 text-sm mb-1">RUT</label>
@@ -15,23 +15,23 @@
     </div>
     <div>
         <label class="block text-slate-400 text-sm mb-1">Lugar de instalación</label>
-        <input type="text" id="<%= p %>ubicacion" name="ubicacion" value="<%= c.ubicacion || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+        <input type="text" id="<%= p %>ubicacion" name="ubicacion" data-texto-cliente="1" value="<%= c.ubicacion || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
     </div>
     <div>
         <label class="block text-slate-400 text-sm mb-1">Dirección</label>
-        <input type="text" id="<%= p %>direccion" name="direccion" value="<%= c.direccion || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+        <input type="text" id="<%= p %>direccion" name="direccion" data-texto-cliente="1" value="<%= c.direccion || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
     </div>
     <div>
         <label class="block text-slate-400 text-sm mb-1">Comuna</label>
-        <input type="text" id="<%= p %>comuna" name="comuna" value="<%= c.comuna || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+        <input type="text" id="<%= p %>comuna" name="comuna" data-texto-cliente="1" value="<%= c.comuna || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
     </div>
     <div>
         <label class="block text-slate-400 text-sm mb-1">Ciudad</label>
-        <input type="text" id="<%= p %>ciudad" name="ciudad" value="<%= c.ciudad || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+        <input type="text" id="<%= p %>ciudad" name="ciudad" data-texto-cliente="1" value="<%= c.ciudad || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
     </div>
     <div>
         <label class="block text-slate-400 text-sm mb-1">Contacto</label>
-        <input type="text" id="<%= p %>contacto" name="contacto" value="<%= c.contacto || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+        <input type="text" id="<%= p %>contacto" name="contacto" data-texto-cliente="1" value="<%= c.contacto || '' %>" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
     </div>
     <div>
         <label class="block text-slate-400 text-sm mb-1">Teléfono</label>
