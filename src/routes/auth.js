@@ -212,9 +212,13 @@ router.get('/logout', (req, res, next) => {
 
 router.get('/config', async (req, res) => {
   try {
-    res.json({ googleClientId: process.env.GOOGLE_CLIENT_ID || '' });
+    res.json({
+      googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+      googleApiKey: process.env.GOOGLE_API_KEY || process.env.GOOGLE_PICKER_API_KEY || '',
+      googleAppId: process.env.GOOGLE_APP_ID || '',
+    });
   } catch (error) {
-    res.json({ googleClientId: '' });
+    res.json({ googleClientId: '', googleApiKey: '', googleAppId: '' });
   }
 });
 

@@ -30,7 +30,14 @@ const app = express();
 
 // --- FIX IMPORTANTE: PERMISO PARA TAILWIND ---
 app.use((req, res, next) => {
-    res.setHeader("Content-Security-Policy", "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com");
+    res.setHeader(
+      "Content-Security-Policy",
+      [
+        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://apis.google.com https://accounts.google.com",
+        "frame-src 'self' https://accounts.google.com https://docs.google.com https://drive.google.com https://*.google.com",
+        "connect-src 'self' https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com ws: wss:",
+      ].join('; ')
+    );
     next();
 });
 // ---------------------------------------------

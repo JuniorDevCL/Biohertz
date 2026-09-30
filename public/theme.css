@@ -88,6 +88,52 @@ tbody tr:hover {
   background-color: rgba(45, 212, 191, 0.05);
 }
 
+/* Dense list pages (Equipos / Tickets / Clientes) */
+.bh-page { min-width: 0; max-width: 100%; }
+.bh-table { table-layout: fixed; width: 100%; max-width: 100%; border-collapse: collapse; }
+.bh-table th, .bh-table td {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.bh-table th.bh-cell-name,
+.bh-table td.bh-cell-name {
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.25;
+}
+.bh-table th.bh-actions,
+.bh-table td.bh-actions {
+  position: sticky;
+  right: 0;
+  width: 124px;
+  min-width: 124px;
+  max-width: 124px;
+  overflow: visible;
+  white-space: nowrap;
+  z-index: 4;
+  box-shadow: -8px 0 10px -8px rgba(0, 0, 0, 0.55);
+}
+.bh-table thead th { background: #151e30; }
+.bh-table td.bh-actions { background: #101827; }
+.bh-table tbody tr:hover td { background: rgba(30, 41, 59, 0.45); }
+.bh-table tbody tr:hover td.bh-actions { background: #1a2436; }
+.bh-icon-btn {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
 /* Primary actions that used blue-600 */
 .bg-blue-600 {
   background-image: linear-gradient(180deg, #2dd4bf, #14b8a6) !important;
