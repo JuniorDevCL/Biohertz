@@ -918,7 +918,10 @@
         }
         try {
           const remaining = 4 - fotos.length;
-          const files = await window.openDriveFotosPicker({ maxFiles: remaining });
+          const files = await window.openDriveFotosPicker({
+            maxFiles: remaining,
+            userEmail: <%- JSON.stringify((typeof user !== 'undefined' && user && user.email) ? String(user.email) : '') %>
+          });
           if (files && files.length) {
             await addFotosFromFiles(files);
             if (fotosDriveMsg) {
