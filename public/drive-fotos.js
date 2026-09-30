@@ -5,6 +5,17 @@
   let gisReady = null;
   let tokenClient = null;
   let accessToken = null;
+  let accessTokenEmail = null;
+
+  function normalizeEmail(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function emailsMatch(left, right) {
+    const a = normalizeEmail(left);
+    const b = normalizeEmail(right);
+    return !!a && !!b && a === b;
+  }
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -23,7 +34,7 @@
 
   async function getConfig() {
     if (!configPromise) {
-      configPromise = fetch('/auth/config', { headers: { Accept: 'application/json' } })
+      configPromise = fetch('/auth/config', { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
         .then((res) => res.json())
         .catch(() => ({}));
     }
@@ -46,12 +57,37 @@
     await Promise.all([gisReady, gapiReady]);
   }
 
-  function requestAccessToken(clientId) {
+  function clearAccessToken() {
+    const previous = accessToken;
+    accessToken = null;
+    accessTokenEmail = null;
+    if (previous && window.google && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.revoke === 'function') {
+      try { google.accounts.oauth2.revoke(previous); } catch (_) {}
+    }
+  }
+
+  async function verifyTokenEmail(token, expectedEmail) {
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: 'Bearer ' + token },
+    });
+    if (!res.ok) {
+      throw new Error('No se pudo verificar la cuenta de Google');
+    }
+    const profile = await res.json();
+    const tokenEmail = normalizeEmail(profile.email);
+    if (!emailsMatch(tokenEmail, expectedEmail)) {
+      throw new Error('Debes autorizar Google Drive con el mismo correo con el que iniciaste sesión (' + expectedEmail + ')');
+    }
+    return tokenEmail;
+  }
+
+  function requestAccessToken(clientId, expectedEmail) {
     return new Promise((resolve, reject) => {
-      if (accessToken) {
+      if (accessToken && emailsMatch(accessTokenEmail, expectedEmail)) {
         resolve(accessToken);
         return;
       }
+      clearAccessToken();
       if (!window.google || !google.accounts || !google.accounts.oauth2) {
         reject(new Error('Google Identity no está listo'));
         return;
@@ -60,12 +96,12 @@
       tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: clientId,
         scope: DRIVE_SCOPE,
+        hint: expectedEmail,
         callback: (response) => {
           if (settled) return;
           if (response && response.access_token) {
             settled = true;
-            accessToken = response.access_token;
-            resolve(accessToken);
+            resolve(response.access_token);
             return;
           }
           if (response && response.error === 'popup_closed_by_user') {
@@ -82,7 +118,8 @@
           reject(new Error((err && (err.message || err.type)) || 'Error al autorizar Drive'));
         },
       });
-      tokenClient.requestAccessToken({ prompt: 'consent' });
+      // hint fuerza la cuenta del login; consent pide Drive la primera vez
+      tokenClient.requestAccessToken({ prompt: 'consent', hint: expectedEmail, login_hint: expectedEmail });
     });
   }
 
@@ -152,12 +189,27 @@
     const clientId = cfg.googleClientId || '';
     const apiKey = cfg.googleApiKey || '';
     const appId = cfg.googleAppId || '';
+    const expectedEmail = normalizeEmail(opts.userEmail || cfg.userEmail || '');
     if (!clientId || !apiKey) {
       throw new Error('Falta configurar GOOGLE_CLIENT_ID y GOOGLE_API_KEY para usar Drive');
     }
+    if (!expectedEmail) {
+      throw new Error('Debes iniciar sesión con Google para usar Drive con tu misma cuenta');
+    }
 
     await ensureLibs();
-    await requestAccessToken(clientId);
+    const token = await requestAccessToken(clientId, expectedEmail);
+    try {
+      accessTokenEmail = await verifyTokenEmail(token, expectedEmail);
+      accessToken = token;
+    } catch (err) {
+      clearAccessToken();
+      if (token && window.google && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.revoke === 'function') {
+        try { google.accounts.oauth2.revoke(token); } catch (_) {}
+      }
+      throw err;
+    }
+
     return openPicker({
       clientId,
       apiKey,
@@ -166,4 +218,7 @@
       onPicked: opts.onPicked,
     });
   };
+
+  // Exposed for unit-style checks in the browser console / tests
+  window.__driveFotosHelpers = { normalizeEmail, emailsMatch };
 })();

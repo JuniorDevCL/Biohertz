@@ -212,13 +212,15 @@ router.get('/logout', (req, res, next) => {
 
 router.get('/config', async (req, res) => {
   try {
+    const sessionUser = (req.isAuthenticated && req.isAuthenticated() && req.user) ? req.user : null;
     res.json({
       googleClientId: process.env.GOOGLE_CLIENT_ID || '',
       googleApiKey: process.env.GOOGLE_API_KEY || process.env.GOOGLE_PICKER_API_KEY || '',
       googleAppId: process.env.GOOGLE_APP_ID || '',
+      userEmail: sessionUser?.email ? String(sessionUser.email).trim().toLowerCase() : '',
     });
   } catch (error) {
-    res.json({ googleClientId: '', googleApiKey: '', googleAppId: '' });
+    res.json({ googleClientId: '', googleApiKey: '', googleAppId: '', userEmail: '' });
   }
 });
 
