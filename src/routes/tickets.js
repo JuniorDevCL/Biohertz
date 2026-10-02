@@ -83,8 +83,12 @@ router.post('/', authRequired, async (req, res) => {
     
     // Lógica inteligente de equipos (Si se proporciona serie)
     if (cleanSerie) {
-        // Buscar si existe equipo con esa serie
-        const eqRes = await pool.query('SELECT id, nombre FROM equipos WHERE numero_serie = $1', [cleanSerie]);
+        // La ficha dice "equipo encontrado" con mayúsculas distintas o un prefijo
+        // que el buscador completó. Hay que reutilizar esa serie, no crear otra.
+        const eqRes = await pool.query(
+            'SELECT id, nombre FROM equipos WHERE LOWER(TRIM(numero_serie)) = LOWER(TRIM($1)) LIMIT 1',
+            [cleanSerie]
+        );
         
         if (eqRes.rowCount > 0) {
             // Equipo existe, usar su ID
