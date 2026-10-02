@@ -331,6 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         if (exact) {
+                            if (inputSerie && exact.numero_serie) inputSerie.value = exact.numero_serie;
                             if (inputNombre) inputNombre.value = exact.nombre || '';
                             if (inputModelo) inputModelo.value = exact.modelo || '';
                             if (inputMarca) inputMarca.value = exact.marca || '';
