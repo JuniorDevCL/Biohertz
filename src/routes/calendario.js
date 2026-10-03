@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import pool from '../db.js';
 import authRequired from '../middleware/authRequired.js';
+import { ymdCalendario } from '../services/fechaCalendario.js';
 
 const router = Router();
 
@@ -55,14 +56,13 @@ function getTodayChile() {
 function buildCalendarWeeks(year, month, events) {
   const eventsByDate = {};
   const todayChile = getTodayChile();
-  const todayKey = todayChile.toISOString().slice(0, 10);
+  const todayKey = ymdCalendario(todayChile);
 
   events.forEach(e => {
     const rawFecha = e.fecha;
     if (!rawFecha) return;
-    const key = typeof rawFecha === 'string'
-      ? rawFecha.slice(0, 10)
-      : rawFecha.toISOString().slice(0, 10);
+    const key = ymdCalendario(rawFecha);
+    if (!key) return;
     if (!eventsByDate[key]) eventsByDate[key] = [];
     eventsByDate[key].push(e);
   });
@@ -82,7 +82,7 @@ function buildCalendarWeeks(year, month, events) {
         done = true;
       } else {
         const dateObj = new Date(year, month - 1, currentDay);
-        const key = dateObj.toISOString().slice(0, 10);
+        const key = ymdCalendario(dateObj);
         week.push({
           day: currentDay,
           dateKey: key,
@@ -112,19 +112,23 @@ router.get('/', authRequired, async (req, res) => {
     const year = parseInt(req.query.year || nowChile.getFullYear(), 10);
     const month = parseInt(req.query.month || nowChile.getMonth() + 1, 10);
 
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 1);
+    const startDate = ymdCalendario(new Date(year, month - 1, 1));
+    const endDate = ymdCalendario(new Date(year, month, 1));
 
     const eventsRes = await pool.query(
       `SELECT id, titulo, descripcion, fecha, fecha_inicio, hora_inicio, hora_fin, color, creado_por, creado_en, tipo, ticket_id, equipo_id, cliente_id
        FROM eventos
-       WHERE (fecha >= $1 AND fecha < $2) 
-          OR (fecha_inicio >= $1 AND fecha_inicio < $2)
+       WHERE (fecha >= $1::date AND fecha < $2::date)
+          OR (fecha_inicio >= $1::date AND fecha_inicio < $2::date)
        ORDER BY COALESCE(fecha_inicio, fecha) ASC, hora_inicio ASC, creado_en ASC`,
       [startDate, endDate]
     );
 
-    const events = eventsRes.rows;
+    const events = eventsRes.rows.map((e) => ({
+      ...e,
+      fecha: e.fecha ? (ymdCalendario(e.fecha) || e.fecha) : e.fecha,
+      fecha_inicio: e.fecha_inicio ? (ymdCalendario(e.fecha_inicio) || e.fecha_inicio) : e.fecha_inicio
+    }));
     const openTicketsRes = await pool.query(
       `SELECT id, codigo, titulo, tipo, estado
        FROM tickets

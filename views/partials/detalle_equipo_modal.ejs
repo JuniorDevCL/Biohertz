@@ -74,6 +74,13 @@
     </div>
 </div>
 <script>
+function fmtFechaDia(value) {
+    if (!value) return '-';
+    const m = String(value).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:$|T00:00:00(?:\.000)?Z$)/);
+    if (!m) return '-';
+    return m[3] + '-' + m[2] + '-' + m[1];
+}
+
 async function openDetalleEquipo(id) {
     try {
         const res = await fetch('/equipos/' + id, {
@@ -104,8 +111,8 @@ async function openDetalleEquipo(id) {
         marcaEl.textContent = [e.marca || '', e.modelo || ''].filter(Boolean).join(' - ') || '-';
         serieEl.textContent = e.numero_serie || '-';
         ordenEl.textContent = e.numero_orden || '-';
-        embarqueEl.textContent = e.fecha_embarque ? new Date(e.fecha_embarque).toLocaleDateString('es-CL') : '-';
-        if (ingresoEl) ingresoEl.textContent = e.fecha_ingreso ? new Date(e.fecha_ingreso).toLocaleDateString('es-CL') : '-';
+        embarqueEl.textContent = fmtFechaDia(e.fecha_embarque);
+        if (ingresoEl) ingresoEl.textContent = fmtFechaDia(e.fecha_ingreso);
         ubicacionEl.textContent = e.ubicacion || '-';
         clienteEl.textContent = '';
         if (e.cliente_id && typeof openClienteRelacion === 'function') {

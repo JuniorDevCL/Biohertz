@@ -25,8 +25,11 @@ import { ensureMantencionesSchema, resetMantencionesCompletas } from './services
 import { ensurePortalSchema } from './services/portalSchema.js';
 import { initFotosStorage, migrateAllLegacyFotos } from './services/mantencionesFotos.js';
 import { blockPortalFromStaff } from './middleware/portalRequired.js';
+import { formatFechaCL, ymdCalendario } from './services/fechaCalendario.js';
 
 const app = express();
+app.locals.formatFechaCL = formatFechaCL;
+app.locals.ymdCalendario = ymdCalendario;
 
 // --- FIX IMPORTANTE: PERMISO PARA TAILWIND ---
 app.use((req, res, next) => {

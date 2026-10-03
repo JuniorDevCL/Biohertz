@@ -295,9 +295,7 @@
     const f = ficha;
     const catsList = typeof categoriasAtencion !== 'undefined' && categoriasAtencion ? categoriasAtencion : [];
     const selected = Array.isArray(f.categorias) ? f.categorias.map(String) : [];
-    const fechaTxt = f.fecha
-      ? new Date(f.fecha).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })
-      : '—';
+    const fechaTxt = formatFechaCL(f.fecha) || '—';
     const items = Array.isArray(f.checklist) ? f.checklist : [];
     const fotos = Array.isArray(f.fotos) ? f.fotos : [];
     const nro = String(f.id).padStart(5, '0');
@@ -475,7 +473,7 @@
           <tr>
             <td>
               <div class="lbl">Próxima mantención</div>
-              <div class="val"><%= new Date(f.proxima_mantencion).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' }) %></div>
+              <div class="val"><%= formatFechaCL(f.proxima_mantencion) || '—' %></div>
             </td>
           </tr>
         </table>
