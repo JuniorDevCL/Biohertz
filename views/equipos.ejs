@@ -1,7 +1,5 @@
 <%
-  const fmtEqDate = (d) => d
-    ? new Date(d).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'America/Santiago' })
-    : '—';
+  const fmtEqDate = (d) => (d && formatFechaCL(d, { yearDigits: 2 })) || '—';
   const campoActual = typeof campo !== 'undefined' ? campo : '';
   const camposFiltro = [
     ['', 'Todos los campos'],

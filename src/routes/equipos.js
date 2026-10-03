@@ -11,6 +11,7 @@ import {
   parseMpFechas,
   syncMpGarantiaEventos
 } from '../services/garantiaEquipo.js';
+import { filaConFechasYmd, ymdCalendario } from '../services/fechaCalendario.js';
 
 const router = Router();
 
@@ -212,7 +213,7 @@ router.get('/', authRequired, async (req, res) => {
 
     if (String(req.get('accept') || '').includes('application/json')) {
       return res.json({
-        equipos: result.rows,
+        equipos: result.rows.map(filaConFechasYmd),
         total: totalEquipos,
         limit,
         offset
@@ -290,12 +291,15 @@ router.get('/:id', authRequired, async (req, res) => {
          ORDER BY COALESCE(fecha, creado_en::date) DESC, id DESC`,
         [id]
       );
-      equipo.fichas_mantencion = fichasRes.rows;
+      equipo.fichas_mantencion = fichasRes.rows.map((f) => ({
+        ...f,
+        fecha: ymdCalendario(f.fecha) || f.fecha
+      }));
       // Compat: también exponer como mantenciones para la UI
       equipo.mantenciones = fichasRes.rows.map((f) => ({
         id: f.id,
         ficha_id: f.id,
-        fecha: f.fecha,
+        fecha: ymdCalendario(f.fecha) || f.fecha,
         hora: f.hora,
         trabajo: f.trabajo,
         nota: f.nota,
@@ -308,7 +312,7 @@ router.get('/:id', authRequired, async (req, res) => {
       console.warn('No se pudieron cargar fichas de mantención:', e.message);
     }
 
-    res.json(equipo);
+    res.json(filaConFechasYmd(equipo));
   } catch (err) {
     console.error('Error al obtener equipo:', err);
     res.status(500).json({ error: 'Error al obtener equipo' });
