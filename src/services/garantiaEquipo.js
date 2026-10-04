@@ -29,6 +29,40 @@ export function addMonthsYmd(dateStr, months) {
   return `${y}-${m}-${day}`;
 }
 
+function ymdList(value) {
+  let raw = value;
+  if (typeof raw === 'string') {
+    try { raw = JSON.parse(raw); } catch { raw = []; }
+  }
+  const list = Array.isArray(raw) ? raw : [];
+  return [...new Set(
+    list
+      .map((item) => String(item || '').trim().slice(0, 10))
+      .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+  )].sort();
+}
+
+/** True when both lists are the same set of YYYY-MM-DD dates. */
+export function sameMpFechas(left, right) {
+  const a = ymdList(left);
+  const b = ymdList(right);
+  return a.length === b.length && a.every((d, i) => d === b[i]);
+}
+
+/**
+ * null = el formulario no trae fechas de MP (no tocar las guardadas).
+ * [] = el usuario dejó la cantidad en 0 (borrarlas).
+ * Si hay fechas, se reemplazan aunque no venga la cantidad.
+ */
+export function mpUpdateFromBody(body) {
+  if (!body || typeof body !== 'object') return null;
+  const cantRaw = body.cant_mp_garantia;
+  const hasCant = cantRaw !== undefined && cantRaw !== null && String(cantRaw).trim() !== '';
+  const fechas = parseMpFechas(body);
+  if (!hasCant && fechas.length === 0) return null;
+  return fechas;
+}
+
 export function parseMpFechas(body) {
   if (!body) return [];
   let raw = body.mp_fechas;
@@ -117,13 +151,14 @@ export async function upsertEquipoFromCliente({
   const cleanFechaInst = emptyToNull(fechaInstalacion);
   const cleanPlazo = parseMonths(plazoMeses);
   const vencimiento = addMonthsYmd(cleanFechaInst, cleanPlazo);
-  const fechas = Array.isArray(mpFechas) ? mpFechas : [];
+  const fechas = Array.isArray(mpFechas) ? mpFechas : null;
   const nombre = buildEquipoNombre({ marca: cleanMarca, modelo: cleanModelo, numero_serie: numeroSerie });
 
   const existing = await pool.query(
     `SELECT * FROM equipos WHERE LOWER(TRIM(numero_serie)) = LOWER(TRIM($1)) LIMIT 1`,
     [numeroSerie]
   );
+  const previousFechas = existing.rowCount > 0 ? ymdList(existing.rows[0].mp_garantia_fechas) : [];
 
   let equipo;
   if (existing.rowCount > 0) {
@@ -149,7 +184,7 @@ export async function upsertEquipoFromCliente({
         cleanFechaInst,
         cleanPlazo,
         vencimiento,
-        JSON.stringify(fechas),
+        fechas == null ? null : JSON.stringify(fechas),
         emptyToNull(ubicacion),
         existing.rows[0].id
       ]
@@ -177,21 +212,23 @@ export async function upsertEquipoFromCliente({
         cleanFechaInst,
         cleanPlazo,
         vencimiento,
-        JSON.stringify(fechas),
+        JSON.stringify(fechas || []),
         null
       ]
     );
     equipo = ins.rows[0];
   }
 
-  const serieLabel = equipo.numero_serie || numeroSerie;
-  await syncMpGarantiaEventos({
-    equipoId: equipo.id,
-    clienteId,
-    fechas,
-    tituloBase: `MP Garantía · ${serieLabel}`,
-    userId
-  });
+  if (fechas != null && !sameMpFechas(previousFechas, fechas)) {
+    const serieLabel = equipo.numero_serie || numeroSerie;
+    await syncMpGarantiaEventos({
+      equipoId: equipo.id,
+      clienteId,
+      fechas,
+      tituloBase: `MP Garantía · ${serieLabel}`,
+      userId
+    });
+  }
 
   return equipo;
 }
