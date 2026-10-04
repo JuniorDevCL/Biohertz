@@ -447,6 +447,14 @@ if (isOffline) {
         const e = store.equipos.find(x => String(x.numero_serie || '').trim().toLowerCase() === target);
         return { rows: e ? [e] : [], rowCount: e ? 1 : 0 };
       }
+      if (s.startsWith('SELECT mp_garantia_fechas FROM equipos WHERE id')) {
+        const [id] = params;
+        const e = store.equipos.find(x => String(x.id) === String(id));
+        return {
+          rows: e ? [{ mp_garantia_fechas: e.mp_garantia_fechas || [] }] : [],
+          rowCount: e ? 1 : 0
+        };
+      }
       if (s.startsWith('SELECT * FROM equipos WHERE id =') || s.startsWith('SELECT id, cliente_id FROM equipos WHERE id =')) {
         const [id] = params;
         const e = store.equipos.find(x => String(x.id) === String(id));

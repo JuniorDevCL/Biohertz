@@ -4,7 +4,7 @@ import authRequired from '../middleware/authRequired.js';
 import { clearEquiposClientsCache } from './equipos.js';
 import {
   emptyToNull,
-  parseMpFechas,
+  mpUpdateFromBody,
   upsertEquipoFromCliente
 } from '../services/garantiaEquipo.js';
 import { compactRut, formatRutChileno } from '../services/rut.js';
@@ -237,7 +237,7 @@ router.post('/', authRequired, async (req, res) => {
         modelo: equipo_modelo || modelo,
         fechaInstalacion: fecha_instalacion,
         plazoMeses: plazo_garantia_meses,
-        mpFechas: parseMpFechas(req.body),
+        mpFechas: mpUpdateFromBody(req.body),
         ubicacion: textoCliente(ubicacion),
         userId: req.user?.id
       });
@@ -378,7 +378,7 @@ router.patch('/:id', authRequired, async (req, res) => {
         modelo: equipo_modelo || modelo,
         fechaInstalacion: fecha_instalacion,
         plazoMeses: plazo_garantia_meses,
-        mpFechas: parseMpFechas(req.body),
+        mpFechas: mpUpdateFromBody(req.body),
         ubicacion: textoCliente(ubicacion) || u.rows[0].ubicacion,
         userId: req.user?.id
       });

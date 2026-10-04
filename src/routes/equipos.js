@@ -9,6 +9,7 @@ import {
   parseMonths,
   addMonthsYmd,
   parseMpFechas,
+  sameMpFechas,
   syncMpGarantiaEventos
 } from '../services/garantiaEquipo.js';
 
@@ -390,6 +391,11 @@ router.patch('/:id', authRequired, async (req, res) => {
     const hasMpFechas = Object.prototype.hasOwnProperty.call(req.body, 'mp_fechas')
       || Object.prototype.hasOwnProperty.call(req.body, 'cant_mp_garantia');
     const mpFechas = hasMpFechas ? parseMpFechas(req.body) : null;
+    let previousMpFechas = null;
+    if (mpFechas) {
+      const prev = await pool.query('SELECT mp_garantia_fechas FROM equipos WHERE id = $1', [id]);
+      previousMpFechas = prev.rows[0]?.mp_garantia_fechas ?? null;
+    }
 
     let finalClienteName = cliente;
     let finalClienteId = cliente_id;
@@ -449,7 +455,7 @@ router.patch('/:id', authRequired, async (req, res) => {
 
     if (update.rowCount === 0) return res.status(404).json({ error: 'Equipo no encontrado' });
 
-    if (mpFechas) {
+    if (mpFechas && !sameMpFechas(previousMpFechas, mpFechas)) {
       try {
         await syncMpGarantiaEventos({
           equipoId: update.rows[0].id,
