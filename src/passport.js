@@ -6,7 +6,8 @@ import pool from './db.js';
 const HARDCODED_ALLOWED = [
   'alexis.cruces2122@gmail.com',
   'leslie_vejares@hotmail.com',
-  'israel.zamorano@gmail.com'
+  'israel.zamorano@gmail.com',
+  'aplicaciones@biohertz.cl'
 ];
 
 const envAllowed = (process.env.ALLOWED_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
