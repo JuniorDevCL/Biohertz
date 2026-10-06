@@ -200,11 +200,18 @@ export async function persistFotosFromPayload(fichaId, incoming, previous = []) 
     }
 
     if (item.data && typeof item.data === 'string') {
-      if (item.data.length > MAX_FOTO_BASE64_LEN) continue;
-      const saved = await saveFotoFromDataUrl(fichaId, item.nombre, item.data);
+      const kept = {
+        nombre: String(item.nombre || 'foto').slice(0, 80),
+        data: item.data,
+      };
+      const tooBig = item.data.length > MAX_FOTO_BASE64_LEN;
+      const saved = tooBig ? null : await saveFotoFromDataUrl(fichaId, item.nombre, item.data);
       if (saved) {
         keptArchivos.add(saved.archivo);
         result.push(saved);
+      } else {
+        // No borrar la foto si no cabe en disco: sigue viviendo en el JSON.
+        result.push(kept);
       }
     }
   }
@@ -251,14 +258,24 @@ export async function migrateLegacyFotosIfNeeded(fichaId, fotos) {
   if (!legacy.length) return { fotos: arr, changed: false };
 
   const migrated = [];
+  let changed = false;
   for (const p of arr) {
+    if (!p || typeof p !== 'object') continue;
     if (p.data && !p.archivo) {
       const saved = await saveFotoFromDataUrl(fichaId, p.nombre, p.data);
-      if (saved) migrated.push(saved);
+      if (saved) {
+        migrated.push(saved);
+        changed = true;
+      } else {
+        migrated.push(p);
+      }
     } else if (p.archivo) {
       migrated.push({ nombre: p.nombre || 'foto', archivo: p.archivo });
+    } else {
+      migrated.push(p);
     }
   }
+  if (!changed) return { fotos: arr, changed: false };
   return { fotos: migrated, changed: true };
 }
 
