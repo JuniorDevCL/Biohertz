@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import pool from '../db.js';
 import { enviarCredencialesPortal } from './mailer.js';
+import { isPortalClienteConflict } from './portalCliente.js';
 
 let ready = false;
 
@@ -71,6 +72,8 @@ function normEmail(email) {
   return String(email || '').trim().toLowerCase();
 }
 
+export { isPortalClienteConflict };
+
 /** Clave temporal legible (10 caracteres) */
 export function generatePortalPassword() {
   return crypto.randomBytes(8).toString('base64url').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
@@ -115,6 +118,23 @@ export async function ensurePortalAccessFromFicha({
     [e]
   );
 
+  if (existing.rowCount > 0 && isPortalClienteConflict(existing.rows[0].cliente_id, cliente_id)) {
+    console.warn(
+      '[portal] el correo ya pertenece a otro cliente; no se reasigna',
+      e,
+      'cliente actual',
+      existing.rows[0].cliente_id,
+      'cliente de la ficha',
+      cliente_id
+    );
+    return {
+      user: await attachClienteNombre(existing.rows[0]),
+      credentialsSent: false,
+      created: false,
+      conflict: true,
+    };
+  }
+
   const needsPassword =
     forceReset ||
     existing.rowCount === 0 ||
@@ -137,7 +157,7 @@ export async function ensurePortalAccessFromFicha({
          WHEN $5::boolean THEN EXCLUDED.password_hash
          ELSE COALESCE(portal_usuarios.password_hash, EXCLUDED.password_hash)
        END,
-       cliente_id = EXCLUDED.cliente_id,
+       cliente_id = portal_usuarios.cliente_id,
        activo = TRUE
      RETURNING id, email, nombre, cliente_id, activo, creado_en, ultimo_acceso`,
     [e, nombre || null, passwordHash, Number(cliente_id), needsPassword]
