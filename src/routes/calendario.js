@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import pool from '../db.js';
 import authRequired from '../middleware/authRequired.js';
+import { eventLinkUpdate } from '../services/eventoLinks.js';
 
 const router = Router();
 
@@ -230,14 +231,13 @@ router.patch('/eventos/:id', authRequired, async (req, res) => {
     await ensureSchema();
 
     const { id } = req.params;
-    const { titulo, descripcion, fecha, hora_inicio, hora_fin, tipo, ticket_id, equipo_id, cliente_id } = req.body;
+    const { titulo, descripcion, fecha, hora_inicio, hora_fin, tipo, ticket_id } = req.body;
+    const links = eventLinkUpdate(req.body);
 
     const cleanTitulo = String(titulo || '').trim();
     const cleanFecha = String(fecha || '').trim();
     const cleanTipo = String(tipo || '').trim() || null;
     const parsedTicketId = ticket_id ? parseInt(ticket_id, 10) : null;
-    const parsedEquipoId = equipo_id ? parseInt(equipo_id, 10) : null;
-    const parsedClienteId = cliente_id ? parseInt(cliente_id, 10) : null;
 
     if (!cleanTitulo || !cleanFecha) {
       return res.status(400).json({ error: 'Título y fecha son obligatorios' });
@@ -254,8 +254,8 @@ router.patch('/eventos/:id', authRequired, async (req, res) => {
            hora_fin = $5,
            tipo = $6,
            ticket_id = $7,
-           equipo_id = $8,
-           cliente_id = $9,
+           equipo_id = CASE WHEN $11::boolean THEN $8::integer ELSE equipo_id END,
+           cliente_id = CASE WHEN $12::boolean THEN $9::integer ELSE cliente_id END,
            actualizado_en = NOW()
        WHERE id = $10
        RETURNING id, titulo, descripcion, fecha, fecha_inicio, fecha_fin, hora_inicio, hora_fin, color, creado_por, creado_en, actualizado_en, tipo, ticket_id, equipo_id, cliente_id`,
@@ -267,9 +267,11 @@ router.patch('/eventos/:id', authRequired, async (req, res) => {
         hora_fin || null,
         cleanTipo,
         parsedTicketId,
-        parsedEquipoId,
-        parsedClienteId,
-        id
+        links.equipo_id,
+        links.cliente_id,
+        id,
+        links.set_equipo_id,
+        links.set_cliente_id,
       ]
     );
 
