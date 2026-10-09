@@ -5,7 +5,9 @@ import { clearEquiposClientsCache } from './equipos.js';
 import {
   emptyToNull,
   parseMpFechas,
-  upsertEquipoFromCliente
+  upsertEquipoFromCliente,
+  assertEquipoLink,
+  EquipoLinkError
 } from '../services/garantiaEquipo.js';
 import { compactRut, formatRutChileno } from '../services/rut.js';
 import { textoCliente } from '../services/textoCliente.js';
@@ -206,10 +208,31 @@ router.get('/', authRequired, async (req, res) => {
   }
 });
 
+function equipoLinkResponse(req, res, err) {
+  if (!(err instanceof EquipoLinkError)) return false;
+  const status = err.code === 'EQUIPO_NOT_FOUND' ? 404 : 409;
+  const wantsJson = String(req.headers['content-type'] || '').includes('application/json')
+    || (req.accepts('json') && !req.accepts('html'));
+  if (wantsJson) {
+    res.status(status).json({ error: err.message });
+    return true;
+  }
+  res.status(status).type('html').send(
+    `<!doctype html><meta charset="utf-8"><body style="font-family:sans-serif;padding:2rem"><p>${err.message}</p><p><a href="/clientes">Volver a clientes</a></p></body>`
+  );
+  return true;
+}
+
 router.post('/', authRequired, async (req, res) => {
   try {
     await ensureSchema();
     const { nombre, empresa, email, telefono, ubicacion, rut, direccion, comuna, ciudad, contacto, numero_serie, marca, modelo, equipo_marca, equipo_modelo, fecha_instalacion, plazo_garantia_meses } = req.body;
+    try {
+      await assertEquipoLink({ clienteId: null, serie: numero_serie });
+    } catch (err) {
+      if (equipoLinkResponse(req, res, err)) return;
+      throw err;
+    }
     const ins = await pool.query(`
       INSERT INTO clientes (nombre, empresa, email, telefono, ubicacion, rut, direccion, comuna, ciudad, contacto, creado_en, actualizado_en)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()) RETURNING *
@@ -242,6 +265,10 @@ router.post('/', authRequired, async (req, res) => {
         userId: req.user?.id
       });
     } catch (e) {
+      if (e instanceof EquipoLinkError) {
+        console.error('No se pudo vincular equipo al cliente nuevo:', e.message);
+        return equipoLinkResponse(req, res, e);
+      }
       console.warn('No se pudo vincular equipo al cliente:', e.message);
     }
     
@@ -338,7 +365,13 @@ router.patch('/:id', authRequired, async (req, res) => {
   try {
     await ensureSchema();
     const { id } = req.params;
-    const { nombre, empresa, email, telefono, ubicacion, rut, direccion, comuna, ciudad, contacto, numero_serie, marca, modelo, equipo_marca, equipo_modelo, fecha_instalacion, plazo_garantia_meses } = req.body;
+    const { nombre, empresa, email, telefono, ubicacion, rut, direccion, comuna, ciudad, contacto, numero_serie, marca, modelo, equipo_marca, equipo_modelo, fecha_instalacion, plazo_garantia_meses, equipo_id } = req.body;
+    try {
+      await assertEquipoLink({ clienteId: id, serie: numero_serie, equipoId: equipo_id });
+    } catch (err) {
+      if (equipoLinkResponse(req, res, err)) return;
+      throw err;
+    }
     const u = await pool.query(`
       UPDATE clientes 
       SET nombre = COALESCE($1, nombre), 
@@ -380,9 +413,13 @@ router.patch('/:id', authRequired, async (req, res) => {
         plazoMeses: plazo_garantia_meses,
         mpFechas: parseMpFechas(req.body),
         ubicacion: textoCliente(ubicacion) || u.rows[0].ubicacion,
-        userId: req.user?.id
+        userId: req.user?.id,
+        equipoId: equipo_id
       });
     } catch (e) {
+      if (e instanceof EquipoLinkError) {
+        return equipoLinkResponse(req, res, e);
+      }
       console.warn('No se pudo vincular equipo al cliente:', e.message);
     }
 

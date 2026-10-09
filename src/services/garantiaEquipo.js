@@ -72,6 +72,69 @@ function buildEquipoNombre({ marca, modelo, numero_serie }) {
   return 'Equipo';
 }
 
+export class EquipoLinkError extends Error {
+  constructor(message, code) {
+    super(message);
+    this.name = 'EquipoLinkError';
+    this.code = code;
+  }
+}
+
+function parseOptionalId(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function belongsToOtherClient(row, clienteId) {
+  if (!row || row.cliente_id == null || row.cliente_id === '') return false;
+  if (clienteId == null || clienteId === '') return true;
+  return Number(row.cliente_id) !== Number(clienteId);
+}
+
+async function resolveEquipoTarget({ clienteId, numeroSerie, equipoId }) {
+  const bySerie = await pool.query(
+    `SELECT * FROM equipos WHERE LOWER(TRIM(numero_serie)) = LOWER(TRIM($1)) LIMIT 1`,
+    [numeroSerie]
+  );
+  const serieRow = bySerie.rows[0] || null;
+  const parsedId = parseOptionalId(equipoId);
+
+  if (parsedId) {
+    const byId = await pool.query('SELECT * FROM equipos WHERE id = $1', [parsedId]);
+    if (byId.rowCount === 0) {
+      throw new EquipoLinkError('El equipo indicado no existe', 'EQUIPO_NOT_FOUND');
+    }
+    const row = byId.rows[0];
+    if (belongsToOtherClient(row, clienteId)) {
+      throw new EquipoLinkError('Ese equipo pertenece a otro cliente', 'EQUIPO_CLIENTE_CONFLICT');
+    }
+    if (serieRow && Number(serieRow.id) !== Number(row.id)) {
+      throw new EquipoLinkError(
+        'Ese número de serie ya está registrado en otro equipo',
+        'EQUIPO_CLIENTE_CONFLICT'
+      );
+    }
+    return row;
+  }
+
+  if (!serieRow) return null;
+  if (belongsToOtherClient(serieRow, clienteId)) {
+    throw new EquipoLinkError(
+      'Ese número de serie ya pertenece a otro cliente',
+      'EQUIPO_CLIENTE_CONFLICT'
+    );
+  }
+  return serieRow;
+}
+
+/** Falla antes de escribir si la serie pertenece a otro cliente o choca con otro equipo. */
+export async function assertEquipoLink({ clienteId, serie, equipoId }) {
+  const numeroSerie = emptyToNull(serie);
+  if (!numeroSerie) return;
+  await resolveEquipoTarget({ clienteId, numeroSerie, equipoId });
+}
+
 export async function syncMpGarantiaEventos({ equipoId, clienteId, fechas, tituloBase, userId }) {
   if (!equipoId) return;
   await pool.query(
@@ -107,7 +170,8 @@ export async function upsertEquipoFromCliente({
   plazoMeses,
   mpFechas,
   ubicacion,
-  userId
+  userId,
+  equipoId
 }) {
   const numeroSerie = emptyToNull(serie);
   if (!numeroSerie) return null;
@@ -120,38 +184,37 @@ export async function upsertEquipoFromCliente({
   const fechas = Array.isArray(mpFechas) ? mpFechas : [];
   const nombre = buildEquipoNombre({ marca: cleanMarca, modelo: cleanModelo, numero_serie: numeroSerie });
 
-  const existing = await pool.query(
-    `SELECT * FROM equipos WHERE LOWER(TRIM(numero_serie)) = LOWER(TRIM($1)) LIMIT 1`,
-    [numeroSerie]
-  );
+  const target = await resolveEquipoTarget({ clienteId, numeroSerie, equipoId });
 
   let equipo;
-  if (existing.rowCount > 0) {
+  if (target) {
     const upd = await pool.query(
       `UPDATE equipos
        SET cliente_id = $1,
            cliente = COALESCE($2, cliente),
            marca = COALESCE($3, marca),
            modelo = COALESCE($4, modelo),
-           fecha_instalacion = COALESCE($5, fecha_instalacion),
-           plazo_garantia_meses = COALESCE($6, plazo_garantia_meses),
-           fecha_vencimiento_garantia = COALESCE($7, fecha_vencimiento_garantia),
-           mp_garantia_fechas = COALESCE($8::jsonb, mp_garantia_fechas),
-           ubicacion = COALESCE($9, ubicacion),
+           numero_serie = COALESCE($5, numero_serie),
+           fecha_instalacion = COALESCE($6, fecha_instalacion),
+           plazo_garantia_meses = COALESCE($7, plazo_garantia_meses),
+           fecha_vencimiento_garantia = COALESCE($8, fecha_vencimiento_garantia),
+           mp_garantia_fechas = COALESCE($9::jsonb, mp_garantia_fechas),
+           ubicacion = COALESCE($10, ubicacion),
            actualizado_en = NOW()
-       WHERE id = $10
+       WHERE id = $11
        RETURNING *`,
       [
         clienteId,
         clienteNombre || null,
         cleanMarca,
         cleanModelo,
+        numeroSerie,
         cleanFechaInst,
         cleanPlazo,
         vencimiento,
         JSON.stringify(fechas),
         emptyToNull(ubicacion),
-        existing.rows[0].id
+        target.id
       ]
     );
     equipo = upd.rows[0];
