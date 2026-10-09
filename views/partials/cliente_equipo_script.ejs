@@ -187,23 +187,37 @@ function bindSerieLookup(prefix) {
                 const target = val.toLowerCase();
                 const exact = equipos.find(function (eq) { return String(eq.numero_serie || '').trim().toLowerCase() === target; }) || (equipos.length === 1 ? equipos[0] : null);
                 if (exact) {
-                    if (inputMarca && !inputMarca.value) inputMarca.value = exact.marca || '';
-                    if (inputModelo && !inputModelo.value) inputModelo.value = exact.modelo || '';
-                    if (inputFecha && !inputFecha.value && exact.fecha_instalacion) inputFecha.value = String(exact.fecha_instalacion).slice(0, 10);
-                    if (inputPlazo && !inputPlazo.value && exact.plazo_garantia_meses) inputPlazo.value = exact.plazo_garantia_meses;
-                    const fechas = Array.isArray(exact.mp_garantia_fechas) ? exact.mp_garantia_fechas.map(function (f) { return String(f).slice(0, 10); }) : [];
-                    if (wrap && fechas.length && inputCant) {
-                        inputCant.value = String(fechas.length);
-                        wrap.dataset.fechas = fechas.join(',');
-                        renderMpFechaInputs(wrap, fechas.length, fechas);
-                    }
-                    if (msg) {
-                        msg.textContent = 'Equipo encontrado. Datos cargados.';
-                        msg.className = 'text-[10px] mt-1 h-4 text-emerald-400';
+                    const ownIdEl = document.getElementById(prefix + 'equipo_id');
+                    const ownId = ownIdEl && ownIdEl.value ? String(ownIdEl.value) : '';
+                    const sameEquipo = ownId && String(exact.id) === ownId;
+                    if (!sameEquipo && exact.cliente_id) {
+                        if (msg) {
+                            msg.textContent = 'Ese número de serie ya pertenece a otro equipo.';
+                            msg.className = 'text-[10px] mt-1 h-4 text-red-400';
+                        }
+                    } else {
+                        if (inputMarca && !inputMarca.value) inputMarca.value = exact.marca || '';
+                        if (inputModelo && !inputModelo.value) inputModelo.value = exact.modelo || '';
+                        if (inputFecha && !inputFecha.value && exact.fecha_instalacion) inputFecha.value = String(exact.fecha_instalacion).slice(0, 10);
+                        if (inputPlazo && !inputPlazo.value && exact.plazo_garantia_meses) inputPlazo.value = exact.plazo_garantia_meses;
+                        const fechas = Array.isArray(exact.mp_garantia_fechas) ? exact.mp_garantia_fechas.map(function (f) { return String(f).slice(0, 10); }) : [];
+                        if (wrap && fechas.length && inputCant) {
+                            inputCant.value = String(fechas.length);
+                            wrap.dataset.fechas = fechas.join(',');
+                            renderMpFechaInputs(wrap, fechas.length, fechas);
+                        }
+                        if (msg) {
+                            msg.textContent = 'Equipo encontrado. Datos cargados.';
+                            msg.className = 'text-[10px] mt-1 h-4 text-emerald-400';
+                        }
                     }
                 } else {
                     if (msg) {
-                        msg.textContent = 'Equipo no encontrado. Se creará uno nuevo al guardar.';
+                        const ownIdEl = document.getElementById(prefix + 'equipo_id');
+                        const ownId = ownIdEl && ownIdEl.value ? String(ownIdEl.value) : '';
+                        msg.textContent = ownId
+                            ? 'La serie se actualizará en el equipo de este cliente.'
+                            : 'Equipo no encontrado. Se creará uno nuevo al guardar.';
                         msg.className = 'text-[10px] mt-1 h-4 text-orange-400';
                     }
                 }
@@ -233,6 +247,7 @@ function fillClienteForm(prefix, cliente, equipo) {
     setVal('contacto', textoCliente(c.contacto));
     setVal('telefono', c.telefono);
     setVal('email', c.email);
+    setVal('equipo_id', eq.id);
     setVal('numero_serie', eq.numero_serie);
     setVal('marca', eq.marca);
     setVal('modelo', eq.modelo);

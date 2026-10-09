@@ -490,13 +490,14 @@ if (isOffline) {
         return { rows: [], rowCount: 1 };
       }
       if (s.startsWith('UPDATE equipos') && s.includes('plazo_garantia_meses') && s.includes('cliente_id = $1')) {
-        const [clienteId, clienteNombre, marca, modelo, fechaInst, plazo, vencimiento, mpjson, ubicacion, id] = params;
+        const [clienteId, clienteNombre, marca, modelo, numeroSerie, fechaInst, plazo, vencimiento, mpjson, ubicacion, id] = params;
         const e = store.equipos.find(x => String(x.id) === String(id));
         if (!e) return { rows: [], rowCount: 0 };
         e.cliente_id = clienteId ?? e.cliente_id;
         if (clienteNombre) e.cliente = clienteNombre;
         if (marca) e.marca = marca;
         if (modelo) e.modelo = modelo;
+        if (numeroSerie) e.numero_serie = numeroSerie;
         if (fechaInst) e.fecha_instalacion = fechaInst;
         if (plazo) e.plazo_garantia_meses = plazo;
         if (vencimiento) e.fecha_vencimiento_garantia = vencimiento;

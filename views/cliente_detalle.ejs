@@ -312,7 +312,8 @@ document.getElementById('edit-client-form').addEventListener('submit', async (e)
         if (res.ok) {
             window.location.reload();
         } else {
-            alert('Error al actualizar cliente');
+            const err = await res.json().catch(function () { return {}; });
+            alert(err.error || 'Error al actualizar cliente');
         }
     } catch (err) {
         console.error(err);
