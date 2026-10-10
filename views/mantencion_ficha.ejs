@@ -1,8 +1,8 @@
 <%
   const f = typeof ficha !== 'undefined' && ficha ? ficha : null;
   const isReadonly = !!readonly;
-  const today = new Date().toISOString().slice(0, 10);
-  const nowTime = new Date().toTimeString().slice(0, 5);
+  const today = typeof fechaHoyChile !== 'undefined' && fechaHoyChile ? fechaHoyChile : '';
+  const nowTime = typeof horaHoyChile !== 'undefined' && horaHoyChile ? horaHoyChile : '';
   const initialTipo = f ? f.tipo : 'preventiva';
   const checklistJson = JSON.stringify(checklist || []);
   const pre = typeof clientePrefill !== 'undefined' && clientePrefill ? clientePrefill : {};

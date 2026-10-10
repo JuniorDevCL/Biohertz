@@ -18,6 +18,33 @@ function pad2(n) {
   return String(n).padStart(2, '0');
 }
 
+/**
+ * Fecha y hora de pared en Chile. El servidor suele estar en UTC; usar
+ * toISOString()/toTimeString() deja el informe técnico 3–4 horas adelantado
+ * y, después de las 21:00 en Santiago, en el día siguiente.
+ */
+export function santiagoDateTime(now = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Santiago',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(now);
+  const pick = (type) => {
+    const part = parts.find((p) => p.type === type);
+    return part ? part.value : '';
+  };
+  let hour = pick('hour');
+  if (hour === '24') hour = '00';
+  return {
+    fecha: `${pick('year')}-${pick('month')}-${pick('day')}`,
+    hora: `${hour}:${pick('minute')}`,
+  };
+}
+
 function formatLocalYmd(date) {
   return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
 }
