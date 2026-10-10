@@ -7,6 +7,7 @@ import {
   jsonbParam,
   publicUpdateError,
   formatFechaForInput,
+  santiagoDateTime,
 } from '../src/services/mantencionesDraft.js';
 
 test('toDateParam acepta YYYY-MM-DD e ISO', () => {
@@ -47,6 +48,23 @@ test('clipVarchar y jsonbParam no lanzan', () => {
 test('formatFechaForInput no deja Mon Mar 02 en el input date', () => {
   assert.equal(formatFechaForInput(new Date(2020, 2, 2)), '2020-03-02');
   assert.equal(formatFechaForInput('Mon Mar 02'), '');
+});
+
+test('santiagoDateTime usa la hora de Chile y no la del servidor UTC', () => {
+  // 2026-10-11 02:30 UTC es 23:30 del 10 de octubre en Santiago (UTC-3)
+  const noche = santiagoDateTime(new Date('2026-10-11T02:30:00.000Z'));
+  assert.equal(noche.fecha, '2026-10-10');
+  assert.equal(noche.hora, '23:30');
+
+  // Medianoche en Chile no puede caer en el día UTC siguiente
+  const medianoche = santiagoDateTime(new Date('2026-10-11T03:00:00.000Z'));
+  assert.equal(medianoche.fecha, '2026-10-11');
+  assert.equal(medianoche.hora, '00:00');
+
+  // Invierno (UTC-4): 2026-07-15 03:30 UTC es 23:30 del 14 de julio
+  const invierno = santiagoDateTime(new Date('2026-07-15T03:30:00.000Z'));
+  assert.equal(invierno.fecha, '2026-07-14');
+  assert.equal(invierno.hora, '23:30');
 });
 
 test('publicUpdateError traduce errores de Postgres', () => {

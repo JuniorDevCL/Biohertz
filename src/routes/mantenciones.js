@@ -27,6 +27,7 @@ import {
   publicUpdateError,
   formatFechaForInput,
   formatHoraForInput,
+  santiagoDateTime,
 } from '../services/mantencionesDraft.js';
 import fs from 'fs';
 
@@ -299,9 +300,12 @@ router.get('/nueva', authRequired, async (req, res) => {
       }
     }
 
+    const ahoraChile = santiagoDateTime();
     res.render('mantencion_ficha', {
       title: 'Nuevo informe técnico - Biohertz',
       user: req.user || req.session.user,
+      fechaHoyChile: ahoraChile.fecha,
+      horaHoyChile: ahoraChile.hora,
       ficha: null,
       equipos: equiposRes.rows,
       equipo,
@@ -491,9 +495,12 @@ router.get('/:id', authRequired, async (req, res) => {
       checklistEdit = checklistTemplateFromProtocolo(protocolo);
     }
 
+    const ahoraChile = santiagoDateTime();
     res.render('mantencion_ficha', {
       title: `Informe técnico #${ficha.id} - Biohertz`,
       user: req.user || req.session.user,
+      fechaHoyChile: ahoraChile.fecha,
+      horaHoyChile: ahoraChile.hora,
       ficha,
       equipos: equiposRes.rows,
       equipo,
