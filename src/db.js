@@ -524,8 +524,14 @@ if (isOffline) {
         if (typeof ubicacion !== 'undefined') e.ubicacion = ubicacion ?? e.ubicacion;
         if (typeof estado !== 'undefined') e.estado = estado ?? e.estado;
         if (typeof aplicacion !== 'undefined') e.aplicacion = aplicacion ?? e.aplicacion;
-        if (typeof cliente !== 'undefined') e.cliente = cliente ?? e.cliente;
-        if (typeof cliente_id !== 'undefined') e.cliente_id = cliente_id ?? e.cliente_id;
+        const applyCliente = s.includes('WHEN $20::boolean') && (params[19] === true || params[19] === 'true');
+        if (applyCliente) {
+          e.cliente_id = cliente_id == null || cliente_id === '' ? null : Number(cliente_id);
+          e.cliente = cliente ?? null;
+        } else {
+          if (typeof cliente !== 'undefined') e.cliente = cliente ?? e.cliente;
+          if (typeof cliente_id !== 'undefined') e.cliente_id = cliente_id ?? e.cliente_id;
+        }
         if (typeof anio_venta !== 'undefined') e.anio_venta = anio_venta ?? e.anio_venta;
         if (typeof fecha_instalacion !== 'undefined') e.fecha_instalacion = fecha_instalacion ?? e.fecha_instalacion;
         if (typeof plazo_garantia_meses !== 'undefined') e.plazo_garantia_meses = plazo_garantia_meses ?? e.plazo_garantia_meses;
