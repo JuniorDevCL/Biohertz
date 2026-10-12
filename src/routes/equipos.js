@@ -11,6 +11,7 @@ import {
   parseMpFechas,
   syncMpGarantiaEventos
 } from '../services/garantiaEquipo.js';
+import { resolveEquipoClientePatch } from '../services/equipoCliente.js';
 
 const router = Router();
 
@@ -381,7 +382,7 @@ router.patch('/:id', authRequired, async (req, res) => {
   try {
     const { id } = req.params;
     await ensureExtendedSchema();
-    let { nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, fecha_ingreso, ubicacion, estado, aplicacion, cliente, cliente_id, anio_venta, fecha_instalacion, plazo_garantia_meses, mantenciones } = req.body;
+    let { nombre, marca, modelo, numero_serie, numero_orden, fecha_embarque, fecha_ingreso, ubicacion, estado, aplicacion, cliente, anio_venta, fecha_instalacion, plazo_garantia_meses, mantenciones } = req.body;
     if (typeof numero_serie === 'string') numero_serie = numero_serie.trim() || null;
     if (typeof numero_orden === 'string') numero_orden = numero_orden.trim() || null;
     const plazoMeses = parseMonths(plazo_garantia_meses);
@@ -391,23 +392,22 @@ router.patch('/:id', authRequired, async (req, res) => {
       || Object.prototype.hasOwnProperty.call(req.body, 'cant_mp_garantia');
     const mpFechas = hasMpFechas ? parseMpFechas(req.body) : null;
 
-    let finalClienteName = cliente;
-    let finalClienteId = cliente_id;
-
-    // If updating client_id but not client name, try to fetch name
-    if (cliente_id !== undefined && cliente === undefined) {
-       const cid = (cliente_id && cliente_id !== 'STOCK') ? parseInt(cliente_id) : null;
-       if (cid) {
-          try {
-             const cRes = await pool.query('SELECT nombre FROM clientes WHERE id = $1', [cid]);
-             if (cRes.rowCount > 0) {
-                finalClienteName = cRes.rows[0].nombre;
-             }
-          } catch (e) { console.warn('Error fetching client name in patch', e); }
-       } else if (cliente_id === null || cliente_id === 'STOCK') {
-           // If clearing client, clear name too if not provided
-           finalClienteName = null;
-       }
+    const clientePatch = resolveEquipoClientePatch(req.body);
+    let finalClienteName = null;
+    let finalClienteId = null;
+    if (clientePatch.apply && clientePatch.clienteId) {
+      finalClienteId = clientePatch.clienteId;
+      const explicitName = typeof cliente === 'string' ? cliente.trim() : '';
+      if (explicitName) {
+        finalClienteName = explicitName;
+      } else {
+        try {
+          const cRes = await pool.query('SELECT nombre FROM clientes WHERE id = $1', [finalClienteId]);
+          finalClienteName = cRes.rowCount > 0 ? cRes.rows[0].nombre : null;
+        } catch (e) {
+          console.warn('Error fetching client name in patch', e);
+        }
+      }
     }
 
     const update = await pool.query(
@@ -422,8 +422,8 @@ router.patch('/:id', authRequired, async (req, res) => {
            ubicacion = COALESCE($8, ubicacion),
            estado = COALESCE($9, estado),
            aplicacion = COALESCE($10, aplicacion),
-           cliente = COALESCE($11, cliente),
-           cliente_id = COALESCE($12, cliente_id),
+           cliente = CASE WHEN $20::boolean THEN $11 ELSE cliente END,
+           cliente_id = CASE WHEN $20::boolean THEN $12::integer ELSE cliente_id END,
            anio_venta = COALESCE($13, anio_venta),
            fecha_instalacion = COALESCE($14, fecha_instalacion),
            plazo_garantia_meses = COALESCE($15, plazo_garantia_meses),
@@ -436,14 +436,15 @@ router.patch('/:id', authRequired, async (req, res) => {
       [
         nombre, marca, modelo, numero_serie, numero_orden,
         emptyToNull(fecha_embarque), emptyToNull(fecha_ingreso), ubicacion, estado !== undefined ? normalizeEstadoEquipo(estado) : undefined, aplicacion, finalClienteName,
-        (finalClienteId && finalClienteId !== 'STOCK') ? parseInt(finalClienteId) : (finalClienteId === null || finalClienteId === 'STOCK' ? null : undefined),
+        finalClienteId,
         anio_venta ? parseInt(anio_venta) : null,
         fechaInst,
         plazoMeses,
         vencimiento,
         mpFechas ? JSON.stringify(mpFechas) : null,
         mantenciones ? JSON.stringify(mantenciones) : null,
-        id
+        id,
+        clientePatch.apply
       ]
     );
 
