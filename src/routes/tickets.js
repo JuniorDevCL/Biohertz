@@ -3,6 +3,7 @@ import express from 'express';
 import pool from '../db.js';
 import authRequired from '../middleware/authRequired.js'; // <-- aquí usamos el mismo nombre del archivo
 import { enviarNotificacionTicket } from '../services/mailer.js';
+import { nextCodigoFromExisting } from '../services/ticketCodigo.js';
 
 const router = express.Router();
 
@@ -156,13 +157,14 @@ router.post('/', authRequired, async (req, res) => {
 
     const isGarantia = garantia === 'si' || garantia === 'on' || garantia === true || garantia === 'true';
 
-    const countRes = await pool.query(
-      'SELECT COUNT(*) FROM tickets WHERE tipo = $1',
+    const existingRes = await pool.query(
+      'SELECT codigo FROM tickets WHERE tipo = $1',
       [tipoNormalizado]
     );
-    const count = Number(countRes.rows[0]?.count || 0);
-    const nextNumber = count + 1;
-    const codigo = `${prefijo}-${String(nextNumber).padStart(3, '0')}`;
+    const codigo = nextCodigoFromExisting(
+      prefijo,
+      existingRes.rows.map((row) => row.codigo)
+    );
 
     const result = await pool.query(
       `INSERT INTO tickets (titulo, descripcion, creado_por, asignado_a, equipo_id, cliente_id, tipo, codigo, garantia, lugar_instalacion, telefono_contacto, estado, creado_en, actualizado_en)
