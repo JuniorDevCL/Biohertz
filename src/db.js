@@ -29,6 +29,7 @@ function loadStore() {
     if (typeof obj.seq.clientes !== 'number') obj.seq.clientes = 1;
     if (typeof obj.seq.mantenciones_fichas !== 'number') obj.seq.mantenciones_fichas = 1;
     if (typeof obj.seq.eventos !== 'number') obj.seq.eventos = 1;
+    if (typeof obj.seq.portal_usuarios !== 'number') obj.seq.portal_usuarios = 1;
     if (!Array.isArray(obj.usuarios)) obj.usuarios = [];
     if (!Array.isArray(obj.tickets)) obj.tickets = [];
     if (!Array.isArray(obj.comentarios)) obj.comentarios = [];
@@ -36,9 +37,10 @@ function loadStore() {
     if (!Array.isArray(obj.clientes)) obj.clientes = [];
     if (!Array.isArray(obj.mantenciones_fichas)) obj.mantenciones_fichas = [];
     if (!Array.isArray(obj.eventos)) obj.eventos = [];
+    if (!Array.isArray(obj.portal_usuarios)) obj.portal_usuarios = [];
     return obj;
   } catch {
-    return { seq: { usuarios: 1, tickets: 1, comentarios: 1, equipos: 1, clientes: 1, mantenciones_fichas: 1, eventos: 1 }, usuarios: [], tickets: [], comentarios: [], equipos: [], clientes: [], mantenciones_fichas: [], eventos: [] };
+    return { seq: { usuarios: 1, tickets: 1, comentarios: 1, equipos: 1, clientes: 1, mantenciones_fichas: 1, eventos: 1, portal_usuarios: 1 }, usuarios: [], tickets: [], comentarios: [], equipos: [], clientes: [], mantenciones_fichas: [], eventos: [], portal_usuarios: [] };
   }
 }
 
@@ -564,6 +566,44 @@ if (isOffline) {
         return { rows: [{ mantenciones: e.mantenciones }], rowCount: 1 };
       }
 
+      if (s.startsWith('SELECT cliente_id FROM portal_usuarios WHERE lower(email)') || s.startsWith('SELECT * FROM portal_usuarios WHERE lower(email)')) {
+        const [email] = params;
+        const rows = (store.portal_usuarios || []).filter((p) => String(p.email).toLowerCase() === String(email || '').toLowerCase());
+        const limited = s.includes('LIMIT 1') ? rows.slice(0, 1) : rows;
+        return { rows: limited, rowCount: limited.length };
+      }
+      if (s.startsWith('INSERT INTO portal_usuarios')) {
+        if (!Array.isArray(store.portal_usuarios)) store.portal_usuarios = [];
+        if (typeof store.seq.portal_usuarios !== 'number') store.seq.portal_usuarios = 1;
+        const [email, nombre, passwordHash, clienteId, needsPassword] = params;
+        const existing = store.portal_usuarios.find((p) => String(p.email).toLowerCase() === String(email || '').toLowerCase());
+        if (existing) {
+          if (nombre) existing.nombre = nombre;
+          if (needsPassword || !existing.password_hash) existing.password_hash = passwordHash;
+          existing.cliente_id = Number(clienteId);
+          existing.activo = true;
+          saveStore(store);
+          return { rows: [{ ...existing }], rowCount: 1 };
+        }
+        const row = {
+          id: store.seq.portal_usuarios++,
+          email,
+          nombre: nombre || null,
+          password_hash: passwordHash,
+          cliente_id: Number(clienteId),
+          activo: true,
+          creado_en: nowISO(),
+          ultimo_acceso: nowISO(),
+        };
+        store.portal_usuarios.push(row);
+        saveStore(store);
+        return { rows: [{ ...row }], rowCount: 1 };
+      }
+      if (s.startsWith('SELECT nombre FROM clientes WHERE id =')) {
+        const [id] = params;
+        const c = store.clientes.find((x) => String(x.id) === String(id));
+        return { rows: c ? [{ nombre: c.nombre }] : [], rowCount: c ? 1 : 0 };
+      }
       if (s.startsWith('INSERT INTO clientes')) {
         const [nombre, empresa, email, telefono, ubicacion, rut, direccion, comuna, ciudad, contacto] = params;
         const id = store.seq.clientes++;

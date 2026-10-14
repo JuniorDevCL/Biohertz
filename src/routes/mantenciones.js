@@ -176,6 +176,30 @@ async function maybeGrantPortalAccess(ficha, firmanteNombre) {
   }
 }
 
+/**
+ * Corregir el correo en una ficha ya firmada no pasa por el alta del portal.
+ * Crea el acceso solo si ese correo no pertenece a otro cliente.
+ */
+async function grantPortalAccessForCorrectedEmail(ficha, firmanteNombre) {
+  try {
+    await ensurePortalSchema();
+    const email = normalizeEmail(ficha.email_cliente);
+    const clienteId = ficha.cliente_id;
+    if (!email || !clienteId) return;
+    const existing = await pool.query(
+      'SELECT cliente_id FROM portal_usuarios WHERE lower(email) = $1 LIMIT 1',
+      [email]
+    );
+    if (existing.rowCount > 0 && Number(existing.rows[0].cliente_id) !== Number(clienteId)) {
+      console.warn('Portal no reasignado: el correo ya pertenece a otro cliente', email);
+      return;
+    }
+    await maybeGrantPortalAccess(ficha, firmanteNombre);
+  } catch (e) {
+    console.warn('No se pudo habilitar acceso portal tras corregir el correo:', e.message);
+  }
+}
+
 router.get('/', authRequired, async (req, res) => {
   try {
     await ensureMantencionesSchema();
@@ -675,6 +699,7 @@ router.patch('/:id/textos', authRequired, async (req, res) => {
     }
 
     const row = current.rows[0];
+    const previousEmail = normalizeEmail(row.email_cliente);
     const next = { ...row };
     for (const key of TEXTO_EDITABLE_FIELDS) {
       if (!Object.prototype.hasOwnProperty.call(edits, key)) continue;
@@ -749,6 +774,10 @@ router.patch('/:id/textos', authRequired, async (req, res) => {
 
     const ficha = mapFichaRow(updatedRow);
     await prepareFichaFotos(ficha);
+    const nextEmail = normalizeEmail(updatedRow.email_cliente);
+    if (nextEmail && nextEmail !== previousEmail) {
+      await grantPortalAccessForCorrectedEmail(ficha, ficha.firmante_cliente);
+    }
     res.json(ficha);
   } catch (err) {
     console.error('Error actualizando textos de mantención:', err);
