@@ -14,9 +14,19 @@ const HARDCODED_ALLOWED = [
   'aplicaciones@biohertz.cl',
 ];
 
+const TESTER_EMAIL = 'tester@biohertz.com';
+
+function testerLoginEnabled() {
+  return String(process.env.ALLOW_TESTER_LOGIN || '').trim().toLowerCase() === 'true';
+}
+
+function isTesterAccount(email) {
+  return String(email || '').trim().toLowerCase() === TESTER_EMAIL;
+}
+
 function isAllowed(email) {
   const emailNorm = String(email || '').toLowerCase();
-  // Siempre permitir hardcoded (admin/tester)
+  // Siempre permitir hardcoded (admin)
   if (HARDCODED_ALLOWED.includes(emailNorm)) return true;
 
   if (!allowedEmails.length) {
@@ -50,10 +60,14 @@ router.get('/google/callback',
   }
 );
 
-// TESTER MODE
+// Acceso de prueba. Apagado salvo ALLOW_TESTER_LOGIN=true: si no, cualquiera
+// entra como admin sin contraseña (y la clave tester123 queda publicada).
 router.get('/tester', async (req, res) => {
+  if (!testerLoginEnabled()) {
+    return res.status(404).send('Not found');
+  }
   try {
-    const email = 'tester@biohertz.com';
+    const email = TESTER_EMAIL;
     let result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
     
     let user;
@@ -120,7 +134,14 @@ router.post('/login', async (req, res) => {
     password = String(password || '').trim();
 
     console.log('Login attempt:', email);
-    
+
+    if (isTesterAccount(email) && !testerLoginEnabled()) {
+      if (req.accepts('html')) {
+        return res.render('login', { error: 'Usuario no encontrado' });
+      }
+      return res.status(400).json({ mensaje: 'Usuario no encontrado' });
+    }
+
     const result = await pool.query(
       'SELECT * FROM usuarios WHERE email = $1',
       [email]
