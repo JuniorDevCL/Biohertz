@@ -14,6 +14,8 @@ const HARDCODED_ALLOWED = [
   'aplicaciones@biohertz.cl',
 ];
 
+const PRINCIPAL_ADMIN_EMAIL = 'alexis.cruces2122@gmail.com';
+
 function isAllowed(email) {
   const emailNorm = String(email || '').toLowerCase();
   // Siempre permitir hardcoded (admin/tester)
@@ -24,6 +26,10 @@ function isAllowed(email) {
     return false;
   }
   return allowedEmails.includes(emailNorm);
+}
+
+function isPrincipalAdmin(user) {
+  return String(user?.email || '').trim().toLowerCase() === PRINCIPAL_ADMIN_EMAIL;
 }
 
 
@@ -84,7 +90,7 @@ router.get('/tester', async (req, res) => {
 // REGISTER
 router.post('/register', async (req, res) => {
   try {
-    let { nombre, email, password, rol } = req.body;
+    let { nombre, email, password } = req.body;
     nombre = String(nombre || '').trim();
     email = String(email || '').trim().toLowerCase();
     password = String(password || '').trim();
@@ -98,7 +104,9 @@ router.post('/register', async (req, res) => {
     }
 
     const hashed = await bcrypt.hash(password, 10);
-    const rolFinal = rol || 'user';
+    // El alta pública no puede elegir rol: si no, un correo de la lista blanca
+    // se registra como admin y puede borrar todos los informes.
+    const rolFinal = 'user';
 
     await pool.query(
       'INSERT INTO usuarios (nombre, email, password, rol) VALUES ($1, $2, $3, $4)',
@@ -287,6 +295,10 @@ router.get('/users', authRequired, async (req, res) => {
 // Editar usuario (email, rol, etc.)
 router.put('/users/:id', authRequired, async (req, res) => {
   try {
+    if (!isPrincipalAdmin(req.user)) {
+      return res.status(403).json({ mensaje: 'Acceso denegado' });
+    }
+
     const { id } = req.params;
     const { email } = req.body; // Por ahora solo editamos email según requerimiento
 
@@ -318,6 +330,10 @@ router.put('/users/:id', authRequired, async (req, res) => {
 // Eliminar usuario
 router.delete('/users/:id', authRequired, async (req, res) => {
   try {
+    if (!isPrincipalAdmin(req.user)) {
+      return res.status(403).json({ mensaje: 'Acceso denegado' });
+    }
+
     const { id } = req.params;
     
     // Evitar que uno se borre a sí mismo (opcional pero recomendado)
