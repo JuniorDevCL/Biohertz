@@ -208,7 +208,7 @@
 
     <section id="section-dano" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 <%= initialTipo === 'correctiva' ? '' : 'hidden' %>">
       <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Daño / motivo (correctiva)</h2>
-      <textarea name="dano_descripcion" rows="3" <%= isReadonly ? 'disabled' : '' %>
+      <textarea name="dano_descripcion" rows="3" lang="es" spellcheck="true" <%= isReadonly ? 'disabled' : '' %>
         placeholder="Describe el daño o falla atendida"
         class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f ? (f.dano_descripcion || '') : '' %></textarea>
     </section>
@@ -217,15 +217,15 @@
       <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Motivo y descripción</h2>
       <div>
         <label class="block text-xs text-slate-400 mb-1 uppercase">Motivo de atención</label>
-        <input type="text" name="motivo_atencion" <%= isReadonly ? 'disabled' : '' %>
+        <input type="text" name="motivo_atencion" lang="es" spellcheck="true" <%= isReadonly ? 'disabled' : '' %>
           value="<%= f ? (f.motivo_atencion || '') : '' %>"
           placeholder="Ej: Reparación y mantención de equipo"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
       </div>
-      <textarea name="trabajo" rows="4" <%= isReadonly ? 'disabled' : '' %>
+      <textarea name="trabajo" rows="4" lang="es" spellcheck="true" <%= isReadonly ? 'disabled' : '' %>
         placeholder="Descripción de los trabajos realizados"
         class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f ? (f.trabajo || '') : '' %></textarea>
-      <textarea name="nota" rows="2" <%= isReadonly ? 'disabled' : '' %>
+      <textarea name="nota" rows="2" lang="es" spellcheck="true" <%= isReadonly ? 'disabled' : '' %>
         placeholder="Observaciones adicionales (opcional)"
         class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f ? (f.nota || '') : '' %></textarea>
       <div>
