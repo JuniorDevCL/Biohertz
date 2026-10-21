@@ -58,7 +58,7 @@ app.set('views', path.join(process.cwd(), 'views'));
 app.use(express.urlencoded({ extended: true, limit: '8mb' }));
 app.use(express.json({ limit: '8mb' }));
 
-app.use(session({
+const sessionMiddleware = session({
   secret: process.env.JWT_SECRET || 'secret_key_biohertz',
   resave: false,
   saveUninitialized: false,
@@ -66,7 +66,8 @@ app.use(session({
     secure: false, 
     maxAge: 24 * 60 * 60 * 1000
   }
-}));
+});
+app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -193,6 +194,14 @@ const io = new Server(server, {
 
 // Disponibilizar io para las rutas
 app.set('io', io);
+
+// Los eventos llevan filas de tickets (teléfono, lugar, descripción). Sin esta
+// sesión, cualquiera que abra /socket.io las recibe en tiempo real.
+io.engine.use(sessionMiddleware);
+io.use((socket, next) => {
+  if (socket.request?.session?.passport?.user) return next();
+  next(new Error('unauthorized'));
+});
 
 io.on('connection', (socket) => {
   console.log('Cliente conectado:', socket.id);
