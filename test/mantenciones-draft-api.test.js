@@ -157,6 +157,66 @@ test('PATCH borrador: se puede guardar varias veces sin tocar otras fichas', asy
   assert.equal(second.data.hora, '21:15');
   assert.equal(second.data.estado, 'borrador');
 
+  const withSchedule = await jsonReq('PATCH', `/mantenciones/${fichaId}`, {
+    email_cliente: 'cliente-equivocado@ejemplo.cl',
+    proxima_mantencion: '2026-11-01',
+    fecha: '2020-03-02',
+    hora: '21:15',
+    guardar_y_firmar: 'false',
+  }, token);
+  assert.equal(withSchedule.status, 200, JSON.stringify(withSchedule.data));
+  assert.equal(withSchedule.data.email_cliente, 'cliente-equivocado@ejemplo.cl');
+  assert.equal(withSchedule.data.proxima_mantencion, '2026-11-01');
+
+  const omitted = await jsonReq('PATCH', `/mantenciones/${fichaId}`, {
+    trabajo: 'Cambio 2',
+    guardar_y_firmar: 'false',
+  }, token);
+  assert.equal(omitted.status, 200, JSON.stringify(omitted.data));
+  assert.equal(omitted.data.email_cliente, 'cliente-equivocado@ejemplo.cl');
+  assert.equal(omitted.data.proxima_mantencion, '2026-11-01');
+  assert.equal(omitted.data.fecha, '2020-03-02');
+  assert.equal(omitted.data.hora, '21:15');
+
+  const cleared = await jsonReq('PATCH', `/mantenciones/${fichaId}`, {
+    email_cliente: '',
+    proxima_mantencion: '',
+    fecha: '',
+    hora: '',
+    guardar_y_firmar: 'false',
+  }, token);
+  assert.equal(cleared.status, 200, JSON.stringify(cleared.data));
+  assert.equal(cleared.data.email_cliente, null);
+  assert.equal(cleared.data.proxima_mantencion, null);
+  assert.equal(cleared.data.fecha, null);
+  assert.equal(cleared.data.hora, null);
+  assert.equal(cleared.data.trabajo, 'Cambio 2');
+
+  const restored = await jsonReq('PATCH', `/mantenciones/${fichaId}`, {
+    email_cliente: 'cliente-equivocado@ejemplo.cl',
+    proxima_mantencion: '2026-11-01',
+    fecha: '2020-03-02',
+    hora: '21:15',
+    guardar_y_firmar: 'false',
+  }, token);
+  assert.equal(restored.status, 200, JSON.stringify(restored.data));
+
+  const signedCleared = await jsonReq('PATCH', `/mantenciones/${fichaId}`, {
+    email_cliente: '',
+    proxima_mantencion: '',
+    fecha: '2020-04-01',
+    hora: '09:00',
+    firmante_cliente: 'Cliente',
+    firma_tecnico: `data:image/png;base64,${'A'.repeat(80)}`,
+    firma_cliente: `data:image/png;base64,${'B'.repeat(80)}`,
+    guardar_y_firmar: 'true',
+  }, token);
+  assert.equal(signedCleared.status, 200, JSON.stringify(signedCleared.data));
+  assert.equal(signedCleared.data.estado, 'firmada');
+  assert.equal(signedCleared.data.email_cliente, null);
+  assert.equal(signedCleared.data.proxima_mantencion, null);
+  assert.equal(signedCleared.data.fecha, '2020-04-01');
+
   const otherAfter = await jsonReq('GET', `/mantenciones/${otherId}`, null, token);
   assert.equal(otherAfter.status, 200);
   assert.equal(otherAfter.data.trabajo, otherTrabajo);

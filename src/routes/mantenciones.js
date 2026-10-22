@@ -145,6 +145,37 @@ function normalizeEmail(email) {
   return e || null;
 }
 
+function fieldWasSent(body, key) {
+  return Object.prototype.hasOwnProperty.call(body || {}, key);
+}
+
+function isBlankField(value) {
+  return value == null || String(value).trim() === '';
+}
+
+/**
+ * Empty clears the stored value. A non-empty value that does not parse keeps
+ * the previous one so a bad keystroke cannot wipe a valid date or time.
+ * Omitted keys leave the stored value unchanged.
+ */
+function resolveOptionalDate(body, key, currentValue) {
+  if (!fieldWasSent(body, key)) return currentValue || null;
+  if (isBlankField(body[key])) return null;
+  return toDateParam(body[key]) || currentValue || null;
+}
+
+function resolveOptionalTime(body, key, currentValue) {
+  if (!fieldWasSent(body, key)) return currentValue || null;
+  if (isBlankField(body[key])) return null;
+  return toTimeParam(body[key]) || currentValue || null;
+}
+
+function resolveOptionalEmail(body, currentValue) {
+  if (!fieldWasSent(body, 'email_cliente')) return currentValue || null;
+  if (isBlankField(body.email_cliente)) return null;
+  return clipField(normalizeEmail(body.email_cliente), 'email_cliente');
+}
+
 /** Persiste firmas también en borrador; ignora pads vacíos / data URLs inválidas. */
 function normalizeFirmaDataUrl(value) {
   if (value == null) return null;
@@ -771,15 +802,11 @@ router.patch('/:id', authRequired, async (req, res) => {
     const {
       equipo_id,
       tipo,
-      fecha,
-      hora,
       trabajo,
       nota,
       dano_descripcion,
       realizado_por,
       firmante_cliente,
-      email_cliente,
-      proxima_mantencion,
       checklist,
       firma_tecnico,
       firma_cliente,
@@ -829,9 +856,11 @@ router.patch('/:id', authRequired, async (req, res) => {
       return res.status(400).json({ error: 'Se requieren ambas firmas para cerrar la ficha' });
     }
 
-    const emailNorm = email_cliente !== undefined
-      ? clipField(normalizeEmail(email_cliente), 'email_cliente')
-      : current.rows[0].email_cliente;
+    const row = current.rows[0];
+    const fechaSave = resolveOptionalDate(req.body, 'fecha', row.fecha);
+    const horaSave = resolveOptionalTime(req.body, 'hora', row.hora);
+    const proximaSave = resolveOptionalDate(req.body, 'proxima_mantencion', row.proxima_mantencion);
+    const emailSave = resolveOptionalEmail(req.body, row.email_cliente);
 
     const categoriasData = categorias !== undefined
       ? sanitizeCategorias(categorias)
@@ -862,8 +891,8 @@ router.patch('/:id', authRequired, async (req, res) => {
          equipo_id = $26,
          cliente_id = $27,
          tipo = COALESCE($1::varchar, tipo),
-         fecha = COALESCE($2::date, fecha),
-         hora = COALESCE($3::time, hora),
+         fecha = $2::date,
+         hora = $3::time,
          trabajo = COALESCE($4, trabajo),
          nota = COALESCE($5, nota),
          dano_descripcion = COALESCE($6, dano_descripcion),
@@ -872,8 +901,8 @@ router.patch('/:id', authRequired, async (req, res) => {
          firmante_cliente = COALESCE($9, firmante_cliente),
          firma_tecnico = $10,
          firma_cliente = $11,
-         email_cliente = COALESCE($12, email_cliente),
-         proxima_mantencion = COALESCE($13::date, proxima_mantencion),
+         email_cliente = $12,
+         proxima_mantencion = $13::date,
          estado = $14::varchar,
          firmada_en = CASE WHEN $14::varchar = 'firmada' THEN COALESCE(firmada_en, NOW()) ELSE firmada_en END,
          rut_cliente = COALESCE($15, rut_cliente),
@@ -892,8 +921,8 @@ router.patch('/:id', authRequired, async (req, res) => {
        RETURNING *`,
       [
         nextTipo,
-        toDateParam(fecha),
-        toTimeParam(hora),
+        fechaSave,
+        horaSave,
         trabajo ?? null,
         nota ?? null,
         dano_descripcion ?? null,
@@ -902,8 +931,8 @@ router.patch('/:id', authRequired, async (req, res) => {
         clipField(firmante_cliente, 'firmante_cliente'),
         firmaTecnicoSave ?? null,
         firmaClienteSave ?? null,
-        emailNorm,
-        toDateParam(proxima_mantencion),
+        emailSave,
+        proximaSave,
         estado,
         clipField(rut_cliente, 'rut_cliente'),
         clipField(senores, 'senores'),
