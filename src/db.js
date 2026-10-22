@@ -792,10 +792,9 @@ if (isOffline) {
           if (typeof v === 'object') return v;
           try { return JSON.parse(v); } catch { return fb; }
         };
-        const keep = (incoming, prev) => (incoming == null || incoming === '' ? prev : incoming);
         m.tipo = params[0] || m.tipo;
-        m.fecha = keep(params[1], m.fecha);
-        m.hora = keep(params[2], m.hora);
+        m.fecha = params[1] ?? null;
+        m.hora = params[2] ?? null;
         m.trabajo = params[3] ?? m.trabajo;
         m.nota = params[4] ?? m.nota;
         m.dano_descripcion = params[5] ?? m.dano_descripcion;
@@ -804,8 +803,8 @@ if (isOffline) {
         m.firmante_cliente = params[8] ?? m.firmante_cliente;
         m.firma_tecnico = params[9];
         m.firma_cliente = params[10];
-        m.email_cliente = params[11] ?? m.email_cliente;
-        m.proxima_mantencion = keep(params[12], m.proxima_mantencion);
+        m.email_cliente = params[11] ?? null;
+        m.proxima_mantencion = params[12] ?? null;
         m.estado = params[13] || m.estado;
         if (params[13] === 'firmada') m.firmada_en = m.firmada_en || nowISO();
         m.rut_cliente = params[14] ?? m.rut_cliente;
