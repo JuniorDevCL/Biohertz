@@ -614,21 +614,57 @@ router.patch('/:id/asignado', authRequired, async (req, res) => {
   }
 });
 
+function blankToNull(value) {
+  if (value == null) return null;
+  const text = String(value);
+  return text.trim() === '' ? null : text;
+}
+
+function optionalInt(value) {
+  if (value == null || String(value).trim() === '') return { ok: true, value: null };
+  const n = parseInt(value, 10);
+  if (!Number.isFinite(n)) return { ok: false, value: null };
+  return { ok: true, value: n };
+}
+
 router.patch('/:id', authRequired, async (req, res) => {
   try {
     const { id } = req.params;
-    const { titulo, descripcion, asignado_a, equipo_id } = req.body;
+    const body = req.body || {};
+    const hasTitulo = Object.prototype.hasOwnProperty.call(body, 'titulo');
+    const hasDescripcion = Object.prototype.hasOwnProperty.call(body, 'descripcion');
+    const hasAsignado = Object.prototype.hasOwnProperty.call(body, 'asignado_a');
+    const hasEquipo = Object.prototype.hasOwnProperty.call(body, 'equipo_id');
 
+    const titulo = hasTitulo ? blankToNull(body.titulo) : null;
+    const descripcion = hasDescripcion ? blankToNull(body.descripcion) : null;
+
+    let asignado = null;
+    if (hasAsignado) {
+      const parsed = optionalInt(body.asignado_a);
+      if (!parsed.ok) return res.status(400).json({ error: 'Asignado inválido' });
+      asignado = parsed.value;
+    }
+
+    let equipo = null;
+    if (hasEquipo) {
+      const parsed = optionalInt(body.equipo_id);
+      if (!parsed.ok) return res.status(400).json({ error: 'Equipo inválido' });
+      equipo = parsed.value;
+    }
+
+    // Campos ausentes no se tocan. Un null explícito (Sin asignar, descripción vacía)
+    // sí se guarda: COALESCE no puede escribir NULL y dejaba al responsable anterior.
     const result = await pool.query(
       `UPDATE tickets
-       SET titulo = COALESCE($1, titulo),
-           descripcion = COALESCE($2, descripcion),
-           asignado_a = COALESCE($3, asignado_a),
-           equipo_id = COALESCE($4, equipo_id),
+       SET titulo = CASE WHEN $5::boolean THEN COALESCE($1, titulo) ELSE titulo END,
+           descripcion = CASE WHEN $6::boolean THEN $2 ELSE descripcion END,
+           asignado_a = CASE WHEN $7::boolean THEN $3::integer ELSE asignado_a END,
+           equipo_id = CASE WHEN $8::boolean THEN $4::integer ELSE equipo_id END,
            actualizado_en = NOW()
-       WHERE id = $5
+       WHERE id = $9
        RETURNING *`,
-      [titulo || null, descripcion || null, asignado_a ?? null, equipo_id ?? null, id]
+      [titulo, descripcion, asignado, equipo, hasTitulo, hasDescripcion, hasAsignado, hasEquipo, id]
     );
 
     if (result.rowCount === 0) {
