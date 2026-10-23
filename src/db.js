@@ -314,13 +314,13 @@ if (isOffline) {
         return { rows: [t], rowCount: 1 };
       }
       if (s.startsWith('UPDATE tickets') && s.includes('SET titulo')) {
-        const [titulo, descripcion, asignado_a, equipo_id, id] = params;
+        const [titulo, descripcion, asignado_a, equipo_id, setTitulo, setDescripcion, setAsignado, setEquipo, id] = params;
         const t = store.tickets.find(x => String(x.id) === String(id));
         if (!t) return { rows: [], rowCount: 0 };
-        if (titulo !== null) t.titulo = titulo;
-        if (descripcion !== null) t.descripcion = descripcion;
-        if (typeof asignado_a !== 'undefined') t.asignado_a = asignado_a;
-        if (typeof equipo_id !== 'undefined') t.equipo_id = equipo_id;
+        if (setTitulo && titulo != null) t.titulo = titulo;
+        if (setDescripcion) t.descripcion = descripcion ?? null;
+        if (setAsignado) t.asignado_a = asignado_a ?? null;
+        if (setEquipo) t.equipo_id = equipo_id ?? null;
         t.actualizado_en = nowISO();
         saveStore(store);
         return { rows: [t], rowCount: 1 };
