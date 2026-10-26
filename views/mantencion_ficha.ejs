@@ -142,7 +142,7 @@
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">RUT</label>
           <input type="text" name="rut_cliente" maxlength="30" <%= isReadonly ? 'disabled' : '' %>
-            value="<%= f ? (f.rut_cliente || '') : '' %>"
+            value="<%= f ? (f.rut_cliente || '') : (pre.rut_cliente || '') %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div>
@@ -160,7 +160,7 @@
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Ciudad - Comuna</label>
           <input type="text" name="ciudad_comuna" maxlength="150" <%= isReadonly ? 'disabled' : '' %>
-            value="<%= f ? (f.ciudad_comuna || '') : '' %>"
+            value="<%= f ? (f.ciudad_comuna || '') : (pre.ciudad_comuna || '') %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div>
@@ -172,7 +172,7 @@
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Contacto</label>
           <input type="text" name="contacto_nombre" maxlength="150" <%= isReadonly ? 'disabled' : '' %>
-            value="<%= f ? (f.contacto_nombre || '') : '' %>"
+            value="<%= f ? (f.contacto_nombre || '') : (pre.contacto_nombre || '') %>"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
         </div>
         <div class="sm:col-span-2">
@@ -351,10 +351,7 @@
     modelo: eq.modelo || '',
     numero_serie: eq.numero_serie || '',
     cliente: eq.cliente || eq.cliente_nombre || '',
-    senores: eq.cliente_nombre || eq.cliente || '',
-    direccion: eq.cliente_direccion || eq.ubicacion || '',
-    telefono: eq.cliente_telefono || '',
-    email: eq.cliente_email || ''
+    prefill: eq.prefill || {}
   }))) %>;
   let selectedEquipoMarca = <%- JSON.stringify(equipo && equipo.marca ? equipo.marca : (f && f.equipo_marca ? f.equipo_marca : '')) %>;
 
@@ -445,10 +442,14 @@
       const el = document.querySelector('[name="' + name + '"]');
       if (el && !el.value && value) el.value = value;
     };
-    setIf('senores', eq.senores || eq.cliente);
-    setIf('direccion', eq.direccion);
-    setIf('telefono_cliente', eq.telefono);
-    setIf('email_cliente', eq.email);
+    const pf = eq.prefill || {};
+    setIf('rut_cliente', pf.rut_cliente);
+    setIf('senores', pf.senores || eq.cliente);
+    setIf('direccion', pf.direccion);
+    setIf('ciudad_comuna', pf.ciudad_comuna);
+    setIf('telefono_cliente', pf.telefono_cliente);
+    setIf('contacto_nombre', pf.contacto_nombre);
+    setIf('email_cliente', pf.email_cliente);
   }
 
   function clearEquipo() {
