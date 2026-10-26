@@ -9,6 +9,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" href="/img/biodata-logo.svg" type="image/svg+xml">
+    <script>
+        // Apply the saved theme before first paint to avoid a flash
+        try { if (localStorage.getItem('bd-theme') === 'light') document.documentElement.setAttribute('data-theme', 'light'); } catch (e) {}
+    </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -16,17 +20,17 @@
     <link rel="stylesheet" href="/theme.css">
 
     <style>
-        body { background-color: #070b12; color: #e8eef8; font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif; }
+        body { font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.8); border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 1); }
     </style>
 </head>
-<body class="h-screen flex overflow-hidden" style="background:#070b12">
+<body class="h-screen flex overflow-hidden">
 
     <!-- Sidebar -->
-    <aside class="w-64 border-r flex flex-col transition-all duration-300" id="sidebar" style="background:rgba(11,18,32,.88);backdrop-filter:blur(18px);border-color:rgba(148,163,184,.13)">
+    <aside class="bd-sidebar w-64 border-r flex flex-col transition-all duration-300" id="sidebar">
         <div class="px-5 py-5 flex items-center gap-3">
             <img src="/img/biodata-logo.svg" alt="BIODATA" class="h-10 w-10 rounded-xl object-cover shrink-0">
             <div class="min-w-0">
@@ -71,7 +75,11 @@
         </nav>
 
         <div class="p-3">
-            <div class="flex items-center gap-3 px-3 py-2.5 rounded-2xl" style="border:1px solid rgba(148,163,184,.13);background:rgba(255,255,255,.03)">
+            <button type="button" id="theme-toggle" class="bd-theme-toggle" title="Cambiar tema">
+                <i class="ph ph-sun bd-when-dark"></i><span class="bd-when-dark">Modo día</span>
+                <i class="ph ph-moon bd-when-light"></i><span class="bd-when-light">Modo noche</span>
+            </button>
+            <div class="bd-user-card flex items-center gap-3 px-3 py-2.5 rounded-2xl">
                 <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style="background:linear-gradient(135deg,#14b8a6,#38bdf8);color:#042f2e">
                     <%= typeof user !== 'undefined' ? user.nombre.charAt(0).toUpperCase() : 'U' %>
                 </div>
@@ -93,7 +101,7 @@
     <!-- Main Content -->
     <div class="flex-1 flex flex-col overflow-hidden min-w-0">
         <!-- Header Mobile (Visible only on small screens) -->
-        <header class="border-b p-4 flex items-center justify-between md:hidden" style="background:#0b1220;border-color:rgba(148,163,184,.13)">
+        <header class="bd-mobile-header border-b p-4 flex items-center justify-between md:hidden">
             <div class="flex items-center gap-2">
                 <img src="/img/biodata-logo.svg" alt="BIODATA" class="h-9 w-9 rounded-xl object-cover">
                 <span class="text-sm font-bold tracking-[0.14em]">BIODATA</span>
@@ -136,6 +144,14 @@
             if (window.location.pathname === '/dashboard') {
                 window.location.reload();
             }
+        });
+
+        // Day / night toggle
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const light = document.documentElement.getAttribute('data-theme') !== 'light';
+            if (light) document.documentElement.setAttribute('data-theme', 'light');
+            else document.documentElement.removeAttribute('data-theme');
+            try { localStorage.setItem('bd-theme', light ? 'light' : 'dark'); } catch (e) {}
         });
 
         // Highlight active link
