@@ -50,8 +50,9 @@ router.get('/google/callback',
   }
 );
 
-// TESTER MODE
+// TESTER MODE — solo en modo offline (desarrollo local); en producción daría admin sin contraseña.
 router.get('/tester', async (req, res) => {
+  if (!OFFLINE) return res.status(404).send('Not found');
   try {
     const email = 'tester@biohertz.com';
     let result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
@@ -81,8 +82,9 @@ router.get('/tester', async (req, res) => {
   }
 });
 
-// REGISTER
+// REGISTER — solo en modo offline; en producción el alta de usuarios es vía Google.
 router.post('/register', async (req, res) => {
+  if (!OFFLINE) return res.status(404).json({ mensaje: 'No disponible' });
   try {
     let { nombre, email, password, rol } = req.body;
     nombre = String(nombre || '').trim();
@@ -98,7 +100,7 @@ router.post('/register', async (req, res) => {
     }
 
     const hashed = await bcrypt.hash(password, 10);
-    const rolFinal = rol || 'user';
+    const rolFinal = rol === 'admin' ? 'admin' : 'user';
 
     await pool.query(
       'INSERT INTO usuarios (nombre, email, password, rol) VALUES ($1, $2, $3, $4)',
