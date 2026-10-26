@@ -9,6 +9,7 @@ import {
   resetMantencionesCompletas,
 } from '../services/mantencionesSchema.js';
 import { ensurePortalSchema, ensurePortalAccessFromFicha } from '../services/portalSchema.js';
+import { CLIENTE_PREFILL_SQL, clientePrefillFromEquipo } from '../services/clientePrefill.js';
 import {
   FICHA_LIST_COLUMNS,
   persistFotosFromPayload,
@@ -264,8 +265,7 @@ router.get('/nueva', authRequired, async (req, res) => {
     await ensurePortalSchema();
     const equiposRes = await pool.query(
       `SELECT e.id, e.nombre, e.marca, e.modelo, e.numero_serie, e.cliente, e.cliente_id, e.estado, e.ubicacion,
-              c.nombre AS cliente_nombre, c.email AS cliente_email, c.telefono AS cliente_telefono,
-              c.ubicacion AS cliente_direccion
+              ${CLIENTE_PREFILL_SQL}
        FROM equipos e
        LEFT JOIN clientes c ON c.id = e.cliente_id
        ORDER BY e.nombre ASC`
@@ -278,8 +278,7 @@ router.get('/nueva', authRequired, async (req, res) => {
     const equipoId = req.query.equipo_id ? Number(req.query.equipo_id) : null;
     if (equipoId) {
       const er = await pool.query(
-        `SELECT e.*, c.nombre AS cliente_nombre, c.email AS cliente_email, c.telefono AS cliente_telefono,
-                c.ubicacion AS cliente_direccion
+        `SELECT e.*, ${CLIENTE_PREFILL_SQL}
          FROM equipos e
          LEFT JOIN clientes c ON c.id = e.cliente_id
          WHERE e.id = $1`,
@@ -290,12 +289,7 @@ router.get('/nueva', authRequired, async (req, res) => {
         protocolo = await getProtocoloByMarca(equipo.marca);
         checklist = checklistTemplateFromProtocolo(protocolo);
         emailClientePrefill = equipo.cliente_email || '';
-        clientePrefill = {
-          senores: equipo.cliente_nombre || equipo.cliente || '',
-          direccion: equipo.cliente_direccion || equipo.ubicacion || '',
-          telefono_cliente: equipo.cliente_telefono || '',
-          email_cliente: equipo.cliente_email || '',
-        };
+        clientePrefill = clientePrefillFromEquipo(equipo);
       }
     }
 
@@ -303,7 +297,7 @@ router.get('/nueva', authRequired, async (req, res) => {
       title: 'Nuevo informe técnico - Biohertz',
       user: req.user || req.session.user,
       ficha: null,
-      equipos: equiposRes.rows,
+      equipos: equiposRes.rows.map(eq => ({ ...eq, prefill: clientePrefillFromEquipo(eq) })),
       equipo,
       checklist,
       emailClientePrefill,
@@ -464,8 +458,7 @@ router.get('/:id', authRequired, async (req, res) => {
 
     const equiposRes = await pool.query(
       `SELECT e.id, e.nombre, e.marca, e.modelo, e.numero_serie, e.cliente, e.cliente_id, e.estado, e.ubicacion,
-              c.nombre AS cliente_nombre, c.email AS cliente_email, c.telefono AS cliente_telefono,
-              c.ubicacion AS cliente_direccion
+              ${CLIENTE_PREFILL_SQL}
        FROM equipos e
        LEFT JOIN clientes c ON c.id = e.cliente_id
        ORDER BY e.nombre ASC`
@@ -495,7 +488,7 @@ router.get('/:id', authRequired, async (req, res) => {
       title: `Informe técnico #${ficha.id} - Biohertz`,
       user: req.user || req.session.user,
       ficha,
-      equipos: equiposRes.rows,
+      equipos: equiposRes.rows.map(eq => ({ ...eq, prefill: clientePrefillFromEquipo(eq) })),
       equipo,
       checklist: checklistEdit,
       emailClientePrefill: ficha.email_cliente || '',
