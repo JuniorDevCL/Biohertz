@@ -286,8 +286,15 @@ router.get('/users', authRequired, async (req, res) => {
   }
 });
 
+function adminRequired(req, res, next) {
+  if (req.user?.rol !== 'admin') {
+    return res.status(403).json({ mensaje: 'Solo administradores pueden modificar usuarios' });
+  }
+  next();
+}
+
 // Editar usuario (email, rol, etc.)
-router.put('/users/:id', authRequired, async (req, res) => {
+router.put('/users/:id', authRequired, adminRequired, async (req, res) => {
   try {
     const { id } = req.params;
     const { email } = req.body; // Por ahora solo editamos email según requerimiento
@@ -318,7 +325,7 @@ router.put('/users/:id', authRequired, async (req, res) => {
 });
 
 // Eliminar usuario
-router.delete('/users/:id', authRequired, async (req, res) => {
+router.delete('/users/:id', authRequired, adminRequired, async (req, res) => {
   try {
     const { id } = req.params;
     

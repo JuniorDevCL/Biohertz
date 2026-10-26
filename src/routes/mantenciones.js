@@ -990,6 +990,14 @@ router.delete('/:id', authRequired, async (req, res) => {
   try {
     await ensureMantencionesSchema();
     const { id } = req.params;
+    const user = req.user || req.session?.user;
+    const current = await pool.query('SELECT estado FROM mantenciones_fichas WHERE id = $1', [id]);
+    if (current.rowCount === 0) {
+      return res.status(404).json({ error: 'Ficha no encontrada' });
+    }
+    if (current.rows[0].estado === 'firmada' && user?.rol !== 'admin') {
+      return res.status(403).json({ error: 'Solo administradores pueden eliminar fichas firmadas' });
+    }
     const del = await pool.query(
       'DELETE FROM mantenciones_fichas WHERE id = $1 RETURNING id',
       [id]
