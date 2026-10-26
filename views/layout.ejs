@@ -154,6 +154,28 @@
             try { localStorage.setItem('bd-theme', light ? 'light' : 'dark'); } catch (e) {}
         });
 
+        // Row action menus ("⋯"): the list is position:fixed so table scroll containers don't clip it
+        const closeRowMenus = (except) => {
+            document.querySelectorAll('details.bh-menu[open]').forEach(d => { if (d !== except) d.removeAttribute('open'); });
+        };
+        document.addEventListener('toggle', (e) => {
+            const menu = e.target;
+            if (!(menu instanceof HTMLDetailsElement) || !menu.classList.contains('bh-menu') || !menu.open) return;
+            closeRowMenus(menu);
+            const list = menu.querySelector('.bh-menu-list');
+            const r = menu.querySelector('summary').getBoundingClientRect();
+            const w = list.offsetWidth, h = list.offsetHeight;
+            list.style.left = Math.max(8, r.right - w) + 'px';
+            list.style.top = (r.bottom + 4 + h > window.innerHeight ? Math.max(8, r.top - 4 - h) : r.bottom + 4) + 'px';
+        }, true);
+        document.addEventListener('click', (e) => {
+            const menu = e.target.closest('details.bh-menu');
+            if (!menu) return closeRowMenus();
+            if (e.target.closest('.bh-menu-item')) menu.removeAttribute('open');
+        });
+        document.addEventListener('scroll', () => closeRowMenus(), true);
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeRowMenus(); });
+
         // Highlight active link
         const currentPath = window.location.pathname;
         document.querySelectorAll('.sidebar-link').forEach(link => {
