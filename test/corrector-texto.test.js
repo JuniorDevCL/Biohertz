@@ -42,6 +42,19 @@ test('ordena espacios, puntuación y mayúscula al inicio de cada oración', () 
   assert.equal(corregirTexto('empresa S.A. y otra'), 'Empresa S.A. y otra');
 });
 
+test('no parte nombres de archivo ni le pone tilde a la marca Alpinion', () => {
+  assert.equal(
+    corregirTexto('Se copió estudio.dcm e informe.pdf al pendrive'),
+    'Se copió estudio.dcm e informe.pdf al pendrive',
+  );
+  assert.equal(
+    corregirTexto('firmware desde archivo.bin, manual.PDF y foto.jpg'),
+    'Firmware desde archivo.bin, manual.PDF y foto.jpg',
+  );
+  assert.equal(corregirTexto('equipo alpinion modelo e-cube'), 'Equipo alpinion modelo e-cube');
+  assert.equal(corregirTexto('falla.se limpio el modulo'), 'Falla. Se limpió el módulo');
+});
+
 test('cuenta las palabras corregidas y deja vacío lo vacío', () => {
   assert.equal(revisarTexto('se realizo mantencion').cambios, 2);
   assert.equal(revisarTexto('Todo correcto').cambios, 0);

@@ -81,8 +81,8 @@ for (const raiz of ESDRUJULAS_ICO) {
   }
 }
 
-// Palabras en -ion que NO llevan tilde (monosílabos por hiato).
-const ION_SIN_TILDE = new Set(['ion', 'guion', 'prion', 'muon', 'pion', 'sion']);
+// Palabras en -ion que NO llevan tilde (monosílabos por hiato, o marcas del catálogo).
+const ION_SIN_TILDE = new Set(['ion', 'guion', 'prion', 'muon', 'pion', 'sion', 'alpinion']);
 
 // Verbos que tras "se" van en pretérito: "se realizo" -> "se realizó".
 const PRETERITOS_TRAS_SE = new Set([
@@ -109,6 +109,14 @@ const TRAS_ESTA = new Set([
 
 // Terminaciones de dominio: "biohertz.cl" no es fin de oración.
 const DOMINIOS = new Set(['cl', 'com', 'net', 'org', 'io', 'es', 'gob', 'gov', 'edu', 'info']);
+
+// Extensiones de archivo: "estudio.dcm" no es el fin de una oración.
+const EXTENSIONES = new Set([
+  'pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tif', 'tiff', 'webp', 'heic', 'raw', 'svg',
+  'dcm', 'zip', 'rar', '7z', 'bin', 'hex', 'bak', 'iso', 'img',
+  'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt', 'xml', 'json', 'log', 'cfg', 'dat', 'ini',
+  'mp4', 'mov', 'avi', 'mp3', 'wav',
+]);
 
 // Abreviaturas tras las que el punto no cierra la oración.
 const ABREVIATURAS = new Set([
@@ -175,7 +183,7 @@ function corregirEspacios(text) {
       .replace(/ +([,;:.!?)])/g, '$1')
       .replace(/([,;])(?=[\p{L}])/gu, '$1 ')
       .replace(/(^|[^\p{L}.@/])(\p{L}{2,})\.(\p{L}{2,})(?![\p{L}.@/])/gu, (m, antes, a, b) => (
-        DOMINIOS.has(b.toLowerCase()) ? m : `${antes}${a}. ${b}`
+        DOMINIOS.has(b.toLowerCase()) || EXTENSIONES.has(b.toLowerCase()) ? m : `${antes}${a}. ${b}`
       ))
       .replace(/([¿¡(]) +/g, '$1')
       .replace(/\s+$/, ''))
