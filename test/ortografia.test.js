@@ -31,6 +31,26 @@ test('en palabras cortas solo sugiere', async () => {
   assert.equal(r.ise.auto, null);
 });
 
+test('no reescribe términos del informe que ya significan otra cosa', async () => {
+  const r = await revisarPalabras([
+    'preset', 'probe', 'leads', 'upgrade', 'siemens', 'esaote', 'sonosite',
+    'driver', 'reboot', 'encoder', 'phase', 'photo', 'cardiac', 'liver', 'echo', 'android',
+    'mamografo', 'aliasing', 'depth',
+  ]);
+  assert.equal(r.preset.correcta, true);
+  assert.equal(r.probe.correcta, true);
+  assert.equal(r.leads.correcta, true);
+  assert.equal(r.phase.correcta, true);
+  assert.equal(r.photo.correcta, true);
+  assert.equal(r.cardiac.correcta, true);
+  assert.equal(r.liver.correcta, true);
+  assert.equal(r.echo.correcta, true);
+  assert.equal(r.android.correcta, true);
+  for (const [palabra, res] of Object.entries(r)) {
+    assert.equal(res.auto, null, palabra);
+  }
+});
+
 test('prefiere el vocabulario técnico ante un error de tipeo', async () => {
   const r = await revisarPalabras(['trasductor', 'desfibrilado']);
   assert.equal(r.trasductor.auto, 'transductor');

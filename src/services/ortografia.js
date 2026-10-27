@@ -13,6 +13,9 @@ const VOCABULARIO = [
   'firmware', 'software', 'hardware', 'ok', 'backup', 'reset', 'resetear', 'reseteo',
   'reseteó', 'testear', 'testeo', 'testeó', 'chequeo', 'chequeos', 'chequear', 'chequeó',
   'setup', 'display', 'touch', 'mouse', 'led', 'leds', 'usb', 'wifi', 'bluetooth',
+  // Términos de ecografía que el diccionario general convierte en otra palabra.
+  'preset', 'presets', 'probe', 'probes', 'leads', 'open', 'restore', 'broken',
+  'photo', 'phase', 'cardiac', 'liver', 'echo', 'android',
   'transductor', 'transductores', 'electrodo', 'electrodos', 'termocupla', 'termocuplas',
   'ultrasonido', 'doppler', 'cardiotocógrafo', 'desfibrilador', 'electrobisturí',
   'autoclave', 'oxímetro', 'saturómetro', 'multímetro', 'tester', 'cooler', 'coolers',
@@ -31,7 +34,7 @@ const FONETICOS = [
   ['j', 'g', 0.3], ['g', 'j', 0.3], ['cc', 'x', 0.3], ['x', 'cc', 0.3], ['cs', 'x', 0.3],
   ['x', 's', 0.35], ['s', 'x', 0.35], ['k', 'c', 0.3], ['k', 'qu', 0.3], ['qu', 'c', 0.3],
   ['cu', 'qu', 0.3], ['c', 'qu', 0.35], ['nb', 'mb', 0.2], ['np', 'mp', 0.2],
-  ['r', 'rr', 0.35], ['rr', 'r', 0.35], ['h', '', 0.3], ['gu', 'g', 0.35], ['g', 'gu', 0.35],
+  ['r', 'rr', 0.35], ['rr', 'r', 0.35], ['gu', 'g', 0.35], ['g', 'gu', 0.35],
   ['i', 'y', 0.35], ['y', 'i', 0.35],
 ];
 
@@ -88,14 +91,45 @@ function variantesFoneticas(word) {
       idx = word.indexOf(de, idx + 1);
     }
   }
-  // h muda que falta: al inicio o entre vocales (ubo -> hubo, aora -> ahora).
+  // h muda que falta o sobra: al inicio o entre vocales (ubo -> hubo, ahhora -> ahora).
+  // No se toca la h de "ph"/"th" ("photo", "phase"), porque no es la h muda del español.
   out.push(['h' + word, 0.3]);
+  if (word.startsWith('h')) out.push([word.slice(1), 0.3]);
   for (let i = 1; i < word.length; i += 1) {
     if (/[aeiou]/.test(word[i - 1]) && /[aeiou]/.test(word[i])) {
       out.push([word.slice(0, i) + 'h' + word.slice(i), 0.35]);
     }
+    if (word[i] === 'h' && /[aeiou]/.test(word[i - 1]) && /[aeiou]/.test(word[i + 1] || '')) {
+      out.push([word.slice(0, i) + word.slice(i + 1), 0.3]);
+    }
   }
   return out;
+}
+
+const VOCALES = new Set(['a', 'e', 'i', 'o', 'u']);
+
+/** true si la sugerencia solo agrega o quita una vocal (equpo -> equipo). */
+function cambiaSoloUnaVocal(typed, suggestion) {
+  const a = sinMarcas(typed);
+  const b = sinMarcas(suggestion);
+  if (!a || !b || Math.abs(a.length - b.length) !== 1) return false;
+  const [shorter, longer] = a.length < b.length ? [a, b] : [b, a];
+  let i = 0;
+  let j = 0;
+  let extra = '';
+  while (i < shorter.length && j < longer.length) {
+    if (shorter[i] === longer[j]) {
+      i += 1;
+      j += 1;
+    } else if (!extra) {
+      extra = longer[j];
+      j += 1;
+    } else {
+      return false;
+    }
+  }
+  if (!extra) extra = longer.slice(j);
+  return extra.length === 1 && VOCALES.has(extra);
 }
 
 /**
@@ -152,6 +186,17 @@ function preferencia(w) {
   return /^\p{Lu}/u.test(w) ? 2 : 1;
 }
 
+function sinMarcas(word) {
+  return String(word || '').normalize('NFD').replace(/\p{M}+/gu, '').toLowerCase();
+}
+
+// "preset" contiene "reset": la palabra más corta ya está escrita dentro y no es un typo.
+function sugerenciaIncrustada(original, sugerida) {
+  const a = sinMarcas(original);
+  const b = sinMarcas(sugerida);
+  return Boolean(a && b && a !== b && a.includes(b));
+}
+
 /**
  * Revisa una palabra (en minúsculas o no). Devuelve
  * { correcta, sugerencias: [hasta 3], auto: palabra a aplicar sola | null }.
@@ -190,10 +235,23 @@ export function revisarPalabra(sp, palabra) {
       const clara = !segunda || segunda.costo > primera.costo
         || preferencia(primera.w) < preferencia(segunda.w);
       // En palabras cortas solo se aplican solas las tildes y la ñ.
+      // Las sugerencias del diccionario (costo >= 1) no se aplican solas: Hunspell
+      // a menudo propone una única palabra distinta (upgrade → degrade, siemens → sienes).
       const umbral = word.length >= 4 ? UMBRAL_AUTO : 0.2;
-      if (primera.costo <= umbral && clara) auto = primera.w.toLowerCase();
-      // Un solo candidato por error de tipeo en palabra larga: también se aplica.
-      if (!auto && lista.length === 1 && word.length >= 5 && primera.costo < 1.5) {
+      if (primera.costo <= umbral && clara && !sugerenciaIncrustada(word, primera.w)) {
+        auto = primera.w.toLowerCase();
+      }
+      // Un typo de una vocal (equpo -> equipo) sí se aplica. Una sugerencia lejana
+      // del diccionario (upgrade -> degrade, siemens -> sienes) no.
+      if (
+        !auto
+        && lista.length === 1
+        && word.length >= 5
+        && primera.costo > umbral
+        && primera.costo < 1.5
+        && cambiaSoloUnaVocal(word, primera.w)
+        && !sugerenciaIncrustada(word, primera.w)
+      ) {
         auto = primera.w.toLowerCase();
       }
     }
