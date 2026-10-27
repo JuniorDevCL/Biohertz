@@ -1,6 +1,8 @@
 /**
  * Corrector de los textos libres del informe técnico (motivo, daño, trabajos,
  * observaciones): tildes, ñ, errores frecuentes, espacios y mayúscula inicial.
+ * Mientras se escribe actúa como el teclado del celular, apoyado en el
+ * diccionario del servidor (src/services/ortografia.js, ruta /ortografia).
  * Solo cambia palabras sin ambigüedad; "esta", "si", "el", "se", etc. quedan
  * como el técnico las escribió salvo en contextos claros.
  * Lo usan views/mantencion_ficha.ejs y views/mantencion_editar_textos.ejs.
@@ -217,45 +219,301 @@ export function corregirTexto(value) {
   return revisarTexto(value).texto;
 }
 
+/* ------------------------------------------------------------------------ */
+/* Autocorrector mientras se escribe, como el teclado del celular.          */
+/* ------------------------------------------------------------------------ */
+
+const SEPARADOR = /[\s.,;:!?)]/;
+const LETRA = /\p{L}/u;
+
+/** Palabra que termina justo antes de `pos` (el separador recién escrito). */
+export function palabraAntesDe(value, pos) {
+  let fin = pos;
+  let inicio = fin;
+  while (inicio > 0 && LETRA.test(value[inicio - 1])) inicio -= 1;
+  if (inicio === fin) return null;
+  // Correos, URLs y palabras con números no se tocan.
+  const antes = value[inicio - 1] || '';
+  if (/[\p{N}_@/.\-]/u.test(antes) && !(antes === '.' && /\s/.test(value[inicio - 2] || ' '))) return null;
+  return { inicio, fin, palabra: value.slice(inicio, fin) };
+}
+
+/** Palabra que contiene la posición `pos` (para tocar una palabra y corregirla). */
+export function palabraEn(value, pos) {
+  let inicio = pos;
+  let fin = pos;
+  while (inicio > 0 && LETRA.test(value[inicio - 1])) inicio -= 1;
+  while (fin < value.length && LETRA.test(value[fin])) fin += 1;
+  if (inicio === fin) return null;
+  return { inicio, fin, palabra: value.slice(inicio, fin) };
+}
+
+/** Indica si la palabra que empieza en `inicio` abre una oración. */
+export function esInicioOracion(value, inicio) {
+  const antes = value.slice(0, inicio).replace(/[ \t"'¿¡(\-•*]+$/, '');
+  if (!antes || antes.endsWith('\n')) return true;
+  const ultimo = antes[antes.length - 1];
+  if (ultimo === '!' || ultimo === '?') return true;
+  if (ultimo !== '.') return false;
+  const previa = (antes.slice(0, -1).match(/\p{L}+$/u) || [''])[0].toLowerCase();
+  return !(previa.length === 1 || ABREVIATURAS.has(previa));
+}
+
+/** Palabra anterior si entre medio solo hay espacios (contexto para "se realizo"). */
+function palabraPrevia(value, inicio) {
+  const m = value.slice(0, inicio).match(/(\p{L}+) +$/u);
+  return m ? m[1].toLowerCase() : '';
+}
+
+const IGNORADAS_KEY = 'corrector-ignoradas';
+let ignoradas = null;
+
+function palabrasIgnoradas() {
+  if (ignoradas) return ignoradas;
+  try {
+    ignoradas = new Set(JSON.parse(localStorage.getItem(IGNORADAS_KEY) || '[]'));
+  } catch {
+    ignoradas = new Set();
+  }
+  return ignoradas;
+}
+
+/** Como el celular: si el técnico deshace una corrección, aprende la palabra. */
+function aprender(palabra) {
+  const set = palabrasIgnoradas();
+  set.add(palabra.toLowerCase());
+  try {
+    localStorage.setItem(IGNORADAS_KEY, JSON.stringify([...set].slice(-500)));
+  } catch {}
+}
+
+const remotas = new Map();
+
+/** Pregunta al servidor por las palabras; sin conexión devuelve null y solo quedan las reglas locales. */
+async function consultar(palabras) {
+  const claves = [...new Set(palabras.map((p) => p.toLowerCase()))];
+  const faltan = claves.filter((p) => !remotas.has(p));
+  if (faltan.length) {
+    const pedido = fetch('/ortografia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ palabras: faltan }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => (d && d.resultados) || null)
+      .catch(() => null);
+    for (const p of faltan) {
+      remotas.set(p, pedido.then((res) => {
+        if (!res || !res[p]) remotas.delete(p);
+        return res ? res[p] || null : null;
+      }));
+    }
+  }
+  const out = {};
+  for (const p of claves) out[p] = await remotas.get(p);
+  return out;
+}
+
+/** Decide la corrección automática de una palabra recién terminada. */
+async function correccionPara(value, { inicio, palabra }) {
+  const lower = palabra.toLowerCase();
+  if (palabra.length < 2 || palabrasIgnoradas().has(lower)) return { auto: null, sugerencias: [] };
+  const inicioOracion = esInicioOracion(value, inicio);
+
+  let auto = corregirPalabra(palabra, palabraPrevia(value, inicio), '');
+  let sugerencias = [];
+  const sigla = palabra === palabra.toUpperCase() && palabra.length <= 5;
+  // Una mayúscula a mitad de oración suele ser un nombre propio: solo se sugiere.
+  const nombrePropio = !inicioOracion && /^\p{Lu}/u.test(palabra) && palabra !== palabra.toUpperCase();
+
+  if (auto === palabra && !sigla) {
+    const r = (await consultar([palabra]))[lower];
+    if (r && !r.correcta) {
+      sugerencias = r.sugerencias.map((s) => aplicarMayusculas(palabra, s));
+      if (r.auto && !nombrePropio) auto = aplicarMayusculas(palabra, r.auto);
+    }
+  }
+  if (inicioOracion && /^\p{Ll}/u.test(auto)) auto = auto[0].toUpperCase() + auto.slice(1);
+  return { auto: auto === palabra ? null : auto, sugerencias: sugerencias.filter((s) => s !== auto) };
+}
+
+function crearChip(texto, titulo) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-100';
+  b.textContent = texto;
+  if (titulo) b.title = titulo;
+  // Que tocar la sugerencia no le quite el foco al campo (no dispara la revisión final).
+  b.addEventListener('pointerdown', (e) => e.preventDefault());
+  b.addEventListener('mousedown', (e) => e.preventDefault());
+  return b;
+}
+
 /**
- * Corrige el campo al terminar de escribir (evento change) y muestra
- * "N correcciones · Deshacer". Si el técnico deshace, ese texto se respeta.
+ * Engancha el autocorrector a un campo:
+ *  - al terminar cada palabra (espacio o puntuación) corrige tildes, ñ y errores
+ *    de tipeo, y pone mayúscula al inicio de la oración;
+ *  - bajo el campo muestra sugerencias y la palabra original para deshacer;
+ *  - al salir del campo hace una revisión completa con aviso "Deshacer".
  */
 export function bindCorrector(el) {
   if (!el || el.dataset.correctorBound === '1') return;
   el.dataset.correctorBound = '1';
 
-  const aviso = document.createElement('p');
-  aviso.className = 'text-[11px] text-teal-300 mt-1 hidden';
-  el.insertAdjacentElement('afterend', aviso);
-  let respetar = null;
+  const ui = document.createElement('div');
+  const barra = document.createElement('div');
+  barra.className = 'flex flex-wrap items-center gap-1.5 mt-1.5 hidden';
+  const aviso = document.createElement('div');
+  aviso.className = 'flex flex-wrap items-center gap-1.5 text-[11px] text-teal-300 mt-1 hidden';
+  ui.append(barra, aviso);
+  el.insertAdjacentElement('afterend', ui);
 
-  el.addEventListener('change', () => {
+  let respetar = null;
+  let turno = 0;
+
+  const ocultarBarra = () => {
+    barra.classList.add('hidden');
+    barra.innerHTML = '';
+  };
+
+  const reemplazar = (inicio, fin, esperado, texto) => {
+    if (el.value.slice(inicio, fin) !== esperado) return false;
+    el.setRangeText(texto, inicio, fin, 'preserve');
+    return true;
+  };
+
+  const mostrarBarra = ({ inicio, palabra, original, sugerencias }) => {
+    barra.innerHTML = '';
+    const fin = inicio + palabra.length;
+    if (original) {
+      const chip = crearChip(`↶ ${original}`, 'Dejar como lo escribí');
+      chip.addEventListener('click', () => {
+        if (reemplazar(inicio, fin, palabra, original)) aprender(original);
+        ocultarBarra();
+      });
+      barra.append(chip);
+    }
+    for (const s of sugerencias.slice(0, 3)) {
+      const chip = crearChip(s);
+      chip.addEventListener('click', () => {
+        reemplazar(inicio, fin, palabra, s);
+        ocultarBarra();
+      });
+      barra.append(chip);
+    }
+    barra.classList.toggle('hidden', !barra.children.length);
+  };
+
+  const alTerminarPalabra = async (pos) => {
+    const p = palabraAntesDe(el.value, pos);
+    if (!p) return;
+    const mio = ++turno;
+    const { auto, sugerencias } = await correccionPara(el.value, p);
+    if (mio !== turno) return;
+    if (auto && reemplazar(p.inicio, p.fin, p.palabra, auto)) {
+      // Solo la mayúscula inicial no ofrece deshacer, igual que el celular.
+      const soloMayuscula = auto.toLowerCase() === p.palabra.toLowerCase();
+      if (soloMayuscula && !sugerencias.length) return ocultarBarra();
+      return mostrarBarra({
+        inicio: p.inicio, palabra: auto, original: soloMayuscula ? null : p.palabra, sugerencias,
+      });
+    }
+    if (sugerencias.length) return mostrarBarra({ inicio: p.inicio, palabra: p.palabra, sugerencias });
+    ocultarBarra();
+  };
+
+  const alTocarPalabra = async () => {
+    if (el.selectionStart !== el.selectionEnd) return;
+    const p = palabraEn(el.value, el.selectionStart);
+    if (!p || p.palabra.length < 3 || palabrasIgnoradas().has(p.palabra.toLowerCase())) return ocultarBarra();
+    const mio = ++turno;
+    const r = (await consultar([p.palabra]))[p.palabra.toLowerCase()];
+    if (mio !== turno) return;
+    if (!r || r.correcta || !r.sugerencias.length) return ocultarBarra();
+    mostrarBarra({
+      inicio: p.inicio,
+      palabra: p.palabra,
+      sugerencias: r.sugerencias.map((s) => aplicarMayusculas(p.palabra, s)),
+    });
+  };
+
+  el.addEventListener('input', (ev) => {
+    if (ev.isComposing) return;
+    const pos = el.selectionStart;
+    const tipo = ev.inputType || '';
+    if (tipo.startsWith('delete')) return;
+    if (pos > 0 && SEPARADOR.test(el.value[pos - 1])) alTerminarPalabra(pos - 1);
+  });
+  // Teclados Android que componen la palabra completa: se revisa al cerrarla.
+  el.addEventListener('compositionend', () => {
+    const pos = el.selectionStart;
+    if (pos > 0 && SEPARADOR.test(el.value[pos - 1])) alTerminarPalabra(pos - 1);
+  });
+  el.addEventListener('click', alTocarPalabra);
+
+  el.addEventListener('change', async () => {
+    turno += 1;
+    ocultarBarra();
     if (respetar !== null && el.value === respetar) return;
     const antes = el.value;
-    const { texto: despues, cambios: n } = revisarTexto(antes);
-    if (despues === antes) {
-      aviso.classList.add('hidden');
-      return;
-    }
+    let { texto: despues, cambios } = revisarTexto(antes);
     el.value = despues;
+
+    // Segunda pasada con el diccionario completo del servidor.
+    const dudosas = new Map();
+    const partes = despues.split(/(\S*[@/]\S*|[\p{L}\p{N}_]+)/u);
+    const indices = partes.map((p, i) => (/^\p{L}{2,}$/u.test(p) ? i : -1)).filter((i) => i >= 0);
+    const revisables = indices.map((i) => partes[i]).filter((w) => !palabrasIgnoradas().has(w.toLowerCase())
+      && !(w === w.toUpperCase() && w.length <= 5));
+    if (revisables.length) {
+      const res = await consultar(revisables);
+      if (el.value !== despues) return;
+      for (const i of indices) {
+        const w = partes[i];
+        const r = res[w.toLowerCase()];
+        if (!r || r.correcta || palabrasIgnoradas().has(w.toLowerCase())) continue;
+        const enOracion = !esInicioOracion(partes.slice(0, i).join(''), partes.slice(0, i).join('').length);
+        const nombrePropio = enOracion && /^\p{Lu}/u.test(w) && w !== w.toUpperCase();
+        if (r.auto && !nombrePropio) {
+          partes[i] = aplicarMayusculas(w, r.auto);
+          cambios += 1;
+        } else if (r.sugerencias.length) {
+          dudosas.set(w, r.sugerencias.map((s) => aplicarMayusculas(w, s)));
+        }
+      }
+      despues = partes.join('');
+      el.value = despues;
+    }
+
     aviso.innerHTML = '';
-    const txt = document.createElement('span');
-    txt.textContent = n > 0
-      ? `✓ ${n} ${n === 1 ? 'corrección' : 'correcciones'} de ortografía · `
-      : '✓ Formato corregido · ';
-    const undo = document.createElement('button');
-    undo.type = 'button';
-    undo.className = 'underline font-semibold';
-    undo.textContent = 'Deshacer';
-    undo.addEventListener('click', () => {
-      el.value = antes;
-      respetar = antes;
-      aviso.classList.add('hidden');
-      el.focus();
-    });
-    aviso.append(txt, undo);
-    aviso.classList.remove('hidden');
+    if (despues !== antes) {
+      const txt = document.createElement('span');
+      txt.textContent = cambios > 0
+        ? `✓ ${cambios} ${cambios === 1 ? 'corrección' : 'correcciones'} de ortografía ·`
+        : '✓ Formato corregido ·';
+      const undo = document.createElement('button');
+      undo.type = 'button';
+      undo.className = 'underline font-semibold';
+      undo.textContent = 'Deshacer';
+      undo.addEventListener('click', () => {
+        el.value = antes;
+        respetar = antes;
+        aviso.classList.add('hidden');
+        el.focus();
+      });
+      aviso.append(txt, undo);
+    }
+    // Palabras que el diccionario no conoce y no se pudieron corregir solas.
+    for (const [w, sugs] of [...dudosas].slice(0, 5)) {
+      const chip = crearChip(`${w} → ${sugs[0]}`, 'Tocar para corregir');
+      chip.addEventListener('click', () => {
+        el.value = el.value.replace(new RegExp(`(^|[^\\p{L}])${w}(?![\\p{L}])`, 'gu'), `$1${sugs[0]}`);
+        chip.remove();
+      });
+      aviso.append(chip);
+    }
+    aviso.classList.toggle('hidden', !aviso.children.length);
   });
 }
 

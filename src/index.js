@@ -20,6 +20,8 @@ import calendarioRoutes from './routes/calendario.js';
 import usuariosRoutes from './routes/usuarios.js';
 import mantencionesRoutes from './routes/mantenciones.js';
 import portalRoutes from './routes/portal.js';
+import ortografiaRoutes from './routes/ortografia.js';
+import { cargarOrtografia } from './services/ortografia.js';
 import pool from './db.js';
 import { ensureMantencionesSchema, resetMantencionesCompletas } from './services/mantencionesSchema.js';
 import { ensurePortalSchema } from './services/portalSchema.js';
@@ -164,6 +166,7 @@ app.use('/clientes', clientesRoutes);
 app.use('/calendario', calendarioRoutes);
 app.use('/usuarios', usuariosRoutes);
 app.use('/mantenciones', mantencionesRoutes);
+app.use('/ortografia', ortografiaRoutes);
 
 app.use((err, req, res, next) => {
   if (err && (err.status === 413 || err.type === 'entity.too.large')) {
@@ -333,4 +336,6 @@ function start(port, tries = 10) {
   try { await initFotosStorage(); } catch (e) { console.warn('[fotos] init:', e.message); }
   try { await migrateAllLegacyFotos(pool); } catch (e) { console.warn('[fotos] migrate:', e.message); }
   start(BASE);
+  // Deja el diccionario listo para que la primera revisión no espere.
+  cargarOrtografia().catch((e) => console.warn('[ortografia] carga:', e.message));
 })();
