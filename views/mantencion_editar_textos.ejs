@@ -71,13 +71,13 @@
       </div>
       <div>
         <label class="block text-xs text-slate-400 mb-1 uppercase">Motivo de atención</label>
-        <input type="text" name="motivo_atencion" value="<%= f.motivo_atencion || '' %>"
+        <input type="text" name="motivo_atencion" data-corregir lang="es" spellcheck="true" value="<%= f.motivo_atencion || '' %>"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
       </div>
       <% if (f.tipo === 'correctiva') { %>
         <div>
           <label class="block text-xs text-slate-400 mb-1 uppercase">Daño / motivo (correctiva)</label>
-          <textarea name="dano_descripcion" rows="3"
+          <textarea name="dano_descripcion" data-corregir lang="es" spellcheck="true" rows="3"
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f.dano_descripcion || '' %></textarea>
         </div>
       <% } else { %>
@@ -85,12 +85,12 @@
       <% } %>
       <div>
         <label class="block text-xs text-slate-400 mb-1 uppercase">Descripción de trabajos</label>
-        <textarea name="trabajo" rows="4"
+        <textarea name="trabajo" data-corregir lang="es" spellcheck="true" rows="4"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f.trabajo || '' %></textarea>
       </div>
       <div>
         <label class="block text-xs text-slate-400 mb-1 uppercase">Observaciones</label>
-        <textarea name="nota" rows="2"
+        <textarea name="nota" data-corregir lang="es" spellcheck="true" rows="2"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><%= f.nota || '' %></textarea>
       </div>
       <div>
@@ -125,6 +125,7 @@
   </form>
 </div>
 
+<script type="module" src="/corrector-texto.js"></script>
 <script>
 (() => {
   const fichaId = <%= Number(f.id) %>;
